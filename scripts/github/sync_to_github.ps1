@@ -18,7 +18,7 @@ if (-not $Token) {
 }
 
 $owner   = "Marques-svnt"
-$repo    = "IC-PID-Neural-Agents"
+$repo    = "IC-CSTR-Control-Benchmark"
 $base    = (Get-Item $PSScriptRoot).Parent.Parent.FullName  # raiz do IC (scripts/github/../../)
 $apiBase = "https://api.github.com/repos/$owner/$repo/contents"
 

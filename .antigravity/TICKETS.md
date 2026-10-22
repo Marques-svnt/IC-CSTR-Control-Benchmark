@@ -380,7 +380,7 @@
 - Decide whether the $T_f = 320$ K operating point of Artigo 3 is acceptable or whether the paper should be reframed.
 - Artigos 2 and 3 have no `ready-to-overleaf/` folder or ZIP (not requested by their tickets).
 - Prose of Artigos 2 and 3 was checked for compilation, table integrity and the saddle physics, not read line by line by the parent session.
-- The Data Availability statements point to `https://github.com/Marques-svnt/IC-PID-Neural-Agents`; the repository content was not verified (the local folder is not a git repo).
+- The Data Availability statements point to `https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark`; the repository content was not verified (the local folder is not a git repo).
 - `generate_maximum_paper_figures.py` and `generate_fig4_springer.py` remain obsolete; do not run them.
 
 
@@ -389,7 +389,7 @@
 ## Wave 5 — Git Scaffolding, Repository Normalization & Zenodo Protocol (`IC-T17` $\to$ `IC-T20`)
 
 > **Instructions for Claude PRO:**
-> Execute Wave 5 to transform the IC directory into the canonical public monorepo (`Marques-svnt/IC-PID-Neural-Agents`).
+> Execute Wave 5 to transform the IC directory into the canonical public monorepo (`Marques-svnt/IC-CSTR-Control-Benchmark`).
 > Maintain the Single Source of Truth for simulations (`src/`), clean up obsolete legacy artifacts, normalize the papers directory, configure strict `.gitignore` rules, initialize git, create the initial semantic commit, and tag `v1.0.0-jpc-submission`.
 
 ---
@@ -431,13 +431,13 @@
   - Tag `v1.0.0-jpc-submission` created and pushed to GitHub.
   - Full pytest verification: 124 passed, 1 expected xfail (TL-PID).
   - All 3 manuscripts compile with 0 errors.
-  - Pushed to `git@github.com:Marques-svnt/IC-PID-Neural-Agents.git` with legacy branch preserved at `archive/legacy-monolith`.
+  - Pushed to `git@github.com:Marques-svnt/IC-CSTR-Control-Benchmark.git` with legacy branch preserved at `archive/legacy-monolith`.
 
 ---
 
 ## Execution Report — Wave 5 (`IC-T17` → `IC-T20`) (2026-10-22)
 - **Status:** All four tickets completed, audited, hardened and pushed to GitHub.
-- **Remote URL:** `git@github.com:Marques-svnt/IC-PID-Neural-Agents.git`
+- **Remote URL:** `git@github.com:Marques-svnt/IC-CSTR-Control-Benchmark.git`
 - **Branch `main`:** Synchronized with commit `c9ac4b5`.
 - **Branch `archive/legacy-monolith`:** Preserves old history (`1c840b5`).
 - **Release Tag:** `v1.0.0-jpc-submission` points to `c9ac4b5`.

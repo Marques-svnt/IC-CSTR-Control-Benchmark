@@ -340,7 +340,7 @@ Todos os scripts em `experiments/` utilizam demarcadores de célula padrão `# %
 
 ## Sincronização com o GitHub
 
-Para sincronizar o código-fonte, tabelas, gráficos e documentações com o repositório remoto oficial no GitHub ([https://github.com/Marques-svnt/IC-PID-Neural-Agents](https://github.com/Marques-svnt/IC-PID-Neural-Agents)), utilize o script automatizado via REST API:
+Para sincronizar o código-fonte, tabelas, gráficos e documentações com o repositório remoto oficial no GitHub ([https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark](https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark)), utilize o script automatizado via REST API:
 
 ```powershell
 # Execução da sincronização com mensagem de commit explicativa
