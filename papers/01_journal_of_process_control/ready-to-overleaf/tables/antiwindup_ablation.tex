@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Anti-windup ablation on the nominal $-2$~K step (same gains, valve and protocol as Table~\ref{tab:classical_benchmark}): amplitude-only, sign-blind clamping (naive) versus the directional amplitude- and rate-aware rule of Eq.~\eqref{eq:clamping_antiwindup}.}
+\label{tab:antiwindup_ablation}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Method & IAE (naive) & \(M_p\) naive (\%) & TV naive (L/min) & IAE (directional) & \(M_p\) directional (\%) & TV directional (L/min) \\
+\midrule
+Ziegler-Nichols & 104.123 & 842.5 & 491.9 & 0.940 & 22.6 & 81.9 \\
+Cohen-Coon & 102.668 & 842.5 & 478.4 & 1.017 & 31.0 & 104.0 \\
+Tyreus-Luyben & 1.263 & 38.6 & 82.0 & 0.917 & 0.0 & 48.8 \\
+AMIGO & 1.604 & 68.6 & 107.6 & 0.925 & 9.7 & 40.4 \\
+Skogestad SIMC & 1.089 & 2.1 & 22.5 & 1.288 & 0.0 & 15.7 \\
+Optimal ITAE ($M_s \leq 1.6$) & 1.508 & 66.0 & 112.2 & 0.827 & 2.2 & 48.6 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Quantitative trade-off along the continuous Pareto frontier: impact of closed-loop tuning parameter $\tau_c$ and classical rules on robustness ($M_s$) and actuator effort ($TV$).}
+\label{tab:pareto_tradeoff}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+Strategy & $K_{p}$ & $T_{i}$ (min) & $T_{d}$ (min) & $M_{s}$ & IAE (K$\cdot$min) & TV (L/min) & $M_{p}$ (\%) \\
+\midrule
+SIMC ($\tau_c=0.03$) & -28.08 & 0.49 & 0.03 & 1.79 & 0.83 & 54.2 & 0.3 \\
+SIMC ($\tau_c=0.10$) & -18.28 & 0.64 & 0.03 & 1.41 & 0.95 & 41.0 & 0.0 \\
+SIMC ($\tau_c=0.24$) & -10.27 & 0.64 & 0.03 & 1.20 & 1.08 & 24.3 & 0.0 \\
+SIMC ($\tau_c=0.39$) & -7.19 & 0.64 & 0.03 & 1.13 & 1.27 & 16.3 & 0.0 \\
+SIMC ($\tau_c=0.78$) & -3.97 & 0.64 & 0.03 & 1.07 & 1.90 & 10.9 & 0.0 \\
+SIMC ($\tau_c=1.57$) & -2.09 & 0.64 & 0.03 & 1.04 & 3.40 & 10.9 & 0.0 \\
+Ziegler-Nichols & -44.56 & 0.19 & 0.05 & 4.14 & 0.94 & 81.9 & 22.6 \\
+Cohen-Coon & -50.86 & 0.22 & 0.03 & 4.54 & 1.02 & 104.0 & 31.0 \\
+Tyreus-Luyben & -28.10 & 0.78 & 0.06 & 2.32 & 0.92 & 48.8 & 0.0 \\
+AMIGO & -17.79 & 0.33 & 0.04 & 1.45 & 0.93 & 40.4 & 9.7 \\
+2-DOF AMIGO & -17.79 & 0.33 & 0.04 & 1.45 & 0.96 & 29.3 & 5.3 \\
+Skogestad SIMC & -7.03 & 0.64 & 0.03 & 1.13 & 1.29 & 15.7 & 0.0 \\
+Optimal ITAE ($M_s \leq 1.6$) & -23.55 & 0.47 & 0.03 & 1.60 & 0.83 & 48.6 & 2.2 \\
+2-DOF Optimal ITAE & -23.55 & 0.47 & 0.03 & 1.60 & 1.08 & 25.0 & 0.0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

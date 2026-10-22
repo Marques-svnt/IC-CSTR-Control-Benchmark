@@ -1,0 +1,23 @@
+\section{Reaction-driven fouling and time to runaway}
+\label{sec:fouling}
+
+\subsection{Fouling kinetics}
+Fouling of reactor jackets by deposits that form from the reacting medium, e.g.\ polymer films, is commonly described by a deposition rate proportional to the reaction rate and an asymptotic fouling resistance \cite{bott1995fouling}. We adopt the simplest law with these two features,
+\begin{equation}
+\frac{d(UA)}{dt} = -\kappa_{\mathrm{foul}}\; r_A(C_A,T)\;\bigl(UA-UA_{\min}\bigr),
+\label{eq:fouling}
+\end{equation}
+with $UA(0)=UA_0$, and append it to Eqs.~\eqref{eq:mass}--\eqref{eq:jacket} as a fourth state. Because $r_A\ge0$, the right-hand side is non-positive whenever $UA\ge UA_{\min}$ and vanishes at $UA=UA_{\min}$; by uniqueness of solutions, $UA(t)$ is non-increasing and never crosses $UA_{\min}$. The coupling with the reaction rate makes fouling faster at hot, high-rate operating points. The values $\kappa_{\mathrm{foul}}=\kappaFoul$~L/mol and $UA_{\min}=\uaMin\%\,UA_0$ are scenario parameters: $\kappa_{\mathrm{foul}}$ compresses into tens of minutes a degradation that in practice takes days or weeks, so the results below are reported against the prediction of Eq.~\eqref{eq:t_pred}, whose time scale is $1/(\kappa_{\mathrm{foul}}r_A)$, rather than as absolute times. $UA_{\min}$ is chosen below the critical value of Eq.~\eqref{eq:ua_crit} at both operating points, so that the valve must eventually saturate.
+
+The four-state system is integrated between control samples with an adaptive Runge--Kutta method (relative and absolute tolerances $10^{-8}$ and $10^{-10}$) with the coolant flow held constant over each interval. The monotonicity and the lower bound of $UA(t)$ are verified by property-based tests over random $(\kappa_{\mathrm{foul}},UA_{\min})$ pairs.
+
+\subsection{Quasi-steady time to valve saturation}
+While the controller holds $T$ and $C_A$ at their setpoints, $r_A$ in Eq.~\eqref{eq:fouling} is constant and the fouling law integrates in closed form, $UA(t)=UA_{\min}+(UA_0-UA_{\min})\,e^{-\kappa_{\mathrm{foul}}\bar r_At}$. The valve must reach $u_{\max}$ when $UA(t)=UA_{\mathrm{crit}}$, i.e.\ at
+\begin{equation}
+t_{\mathrm{pred}} = \frac{1}{\kappa_{\mathrm{foul}}\,\bar r_A}\,\ln\frac{UA_0-UA_{\min}}{UA_{\mathrm{crit}}-UA_{\min}},
+\label{eq:t_pred}
+\end{equation}
+and the temperature leaves the setpoint after that. With $\bar r_A=\rANom$ and $\rASad$~mol/(L\,min) at the nominal point and at the saddle, Eq.~\eqref{eq:t_pred} gives $t_{\mathrm{pred}}=\tpredNom$ and $\tpredSad$~min respectively. Equation~\eqref{eq:t_pred} assumes that the loop tracks the slow drift of the plant; whether it does is exactly what the simulations test. We report the first time the valve reaches $u_{\max}$, $t_{\mathrm{sat}}$, and the first time the temperature exceeds the setpoint by more than $\bandRun$~K, $t_{\mathrm{runaway}}$.
+
+\subsection{Frozen-fouling stability of fixed-gain loops}
+Fouling changes the plant seen by the controller. For a frozen value of $UA$, the equilibrium at the same setpoint has a lower jacket temperature, $\bar T_j=\bar T-Q_{\mathrm{load}}/UA$, and therefore, by Eq.~\eqref{eq:jacobian}, a smaller actuator gain $|b_3|=(\bar T_j-T_{jf})/V_j$. At the saddle $b_3$ falls from $\bThreeNom$ at $UA_0$ to $\bThreeCrit$~K/L at the critical capacity, a factor of $\bThreeRatio$. To see what this does to a controller tuned at $UA_0$, the saddle equilibrium is recomputed for frozen values of $UA$ between $UA_0$ and $UA_{\mathrm{crit}}$, and the spectral abscissa of the linearized loop is evaluated with the gains of Section~\ref{sec:design}. The value of $UA$ at which it crosses zero, found by Brent's method, is the fixed-gain stability boundary. It does not depend on $\kappa_{\mathrm{foul}}$.

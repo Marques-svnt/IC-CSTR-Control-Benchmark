@@ -1,0 +1,61 @@
+\subsection{Discrete PID with filtered derivative}
+The controller is a parallel PID sampled at $\Delta t = 0.02$~min, with $u_{\text{raw},k} = u_{\text{bias}} + P_k + I_k + D_k$, $u_{\text{bias}} = q_{j,ss}$ and $e_k = y_{sp,k} - y_{pv,k}$ \cite{astrom2006pid, seborg2010process}:
+\begin{align}
+    P_k &= K_p e_k, \label{eq:proportional_term} \\
+    I_k &= I_{k-1} + \frac{K_p}{T_i}\,\frac{e_k + e_{k-1}}{2}\,\Delta t, \label{eq:integral_trapezoidal} \\
+    D_k &= \frac{\tau_f}{\tau_f + \Delta t} D_{k-1} - \frac{K_p T_d}{\tau_f + \Delta t}\,(y_{pv,k} - y_{pv,k-1}), \label{eq:derivative_filtered}
+\end{align}
+with derivative on the measurement and filter time $\tau_f = T_d/N$, $N = 10$ \cite{astrom1995pid, visioli2006practical}. The loop is reverse-acting: more coolant lowers the temperature, so all tunings have $K_p < 0$.
+
+\subsection{Directional amplitude- and rate-aware clamping}
+Let $u_{\text{act},k-1}$ be the valve position actually reached at the previous sample after amplitude \emph{and} slew-rate limitation. With the trapezoidal increment $\delta I_k = (K_p/T_i)\,\tfrac{1}{2}(e_k + e_{k-1})\,\Delta t$ of Eq.~\eqref{eq:integral_trapezoidal}, the integrator is frozen when the previous command was cut by either limit and the increment pushes further in the same direction:
+\begin{equation}
+    I_k = \begin{cases}
+        I_{k-1}, & \text{if } \left(u_{\text{raw},k-1} - u_{\text{act},k-1}\right)\delta I_k > 0, \\
+        I_{k-1} + \delta I_k, & \text{otherwise.}
+    \end{cases}
+    \label{eq:clamping_antiwindup}
+\end{equation}
+Evaluating the saturation residual at the previous sample avoids an algebraic loop between $I_k$, $u_{\text{raw},k}$ and the nonlinear valve map. The product form contains the sign of the loop: with $K_p < 0$ a negative error drives the command towards $u_{\max}$, so the textbook condition ``$u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$'' never triggers. It also covers rate saturation: a $2$~K setpoint step demands more than $S_{\max}\Delta t = 1.6$~L/min per sample from most tunings, so the valve spends the first part of the transient rate-limited but far from its amplitude stops, and an amplitude-only rule keeps integrating during the whole ramp \cite{bohn1995analysis, peng1996nonlinear}. Section~\ref{subsec:ablation} quantifies the difference against this textbook rule (``naive'' clamping).
+
+\subsection{FOPTD identification}
+\label{subsec:foptd_identification}
+Since $\mathbf{x}_{ss}$ is open-loop stable, a $+10$~L/min coolant step was applied to the nonlinear model and a first-order-plus-dead-time (FOPTD) model
+\begin{equation}
+    G_p(s) = \frac{K}{\tau s + 1}\,e^{-\theta s}
+    \label{eq:foptd}
+\end{equation}
+was fitted by the two-point method of Sundaresan and Krishnaswamy followed by nonlinear least squares, giving $K = -0.1852$~K/(L/min), $\tau = 0.6427$~min, $\theta = 0.0935$~min (RMSE $0.0092$~K) and a lag-dominant ratio $r = \theta/\tau = 0.1455$ \cite{shinskey1996process, odwyer2009handbook}. The apparent delay lumps the two fast poles and the zero of $G_{\text{true}}$ in Eq.~\eqref{eq:g_true_exact}; Section~\ref{subsec:margins} examines the consequence for the robustness margins.
+
+\subsection{Tuning rules}
+\label{subsec:tuning_rules}
+The eight tunings span the main design philosophies for a lag-dominant loop:
+\begin{enumerate}
+    \item \textbf{Ziegler--Nichols (ZN)} \cite{ziegler1942optimum}: $K_p = 1.2\tau/(K\theta)$, $T_i = 2\theta$, $T_d = 0.5\theta$.
+    \item \textbf{Cohen--Coon (CC)} \cite{cohen1953theoretical}: $K_p = \tau/(K\theta)\,(4/3 + r/4)$, $T_i = \theta(32 + 6r)/(13 + 8r)$, $T_d = 4\theta/(11 + 2r)$.
+    \item \textbf{Tyreus--Luyben (TL)} \cite{tyreus1992tuning, luyben2007chemical}: the ultimate frequency solves $\theta\omega_u + \arctan(\tau\omega_u) = \pi$ exactly (Brent's method), $P_u = 2\pi/\omega_u$, $K_u = \operatorname{sign}(K)\sqrt{1 + (\tau\omega_u)^2}/|K|$, and $K_p = K_u/2.2$, $T_i = 2.2P_u$, $T_d = P_u/6.3$. Here $\omega_u = 17.74$~rad/min and $K_u = -61.81$. The rule was calibrated for PI control; its PID form yields $M_s = 2.32$ on this loop.
+    \item \textbf{AMIGO} \cite{astrom2004revisiting, astrom2006pid}: $K_p = (0.2 + 0.45\,\tau/\theta)/K$, $T_i = \theta\,(0.4\theta + 0.8\tau)/(\theta + 0.1\tau)$, $T_d = 0.5\theta\tau/(0.3\theta + \tau)$, designed for $M_s \approx 1.4$ by maximizing the integral gain.
+    \item \textbf{2-DOF AMIGO}: the AMIGO gains with setpoint weights $\beta = 0.5$, $\gamma = 0$ (Section~\ref{subsec:two_dof}), the use for which AMIGO is intended in servo tasks \cite{astrom2004revisiting}.
+    \item \textbf{SIMC} \cite{skogestad2003simple, grimholt2018optimal}: $K_p = \tau/(K(\tau_c + \theta))$, $T_i = \min(\tau, 4(\tau_c + \theta))$, $T_d = 0.33\theta$, with $\tau_c = 0.40$~min.
+    \item \textbf{Optimal ITAE ($M_s \le 1.6$)}: Nelder--Mead minimization of the ITAE of a $-2$~K step on the nonlinear plant and the benchmark valve, with the penalty $10^4\max(0, M_s - 1.6)^2$ and $M_s$ evaluated on the dead-time loop of Eq.~\eqref{eq:foptd}. Evaluating $M_s$ on the delay-free Jacobian instead would return values close to one for almost any gain and silently disable the constraint. Because the simplex is local, it is started from a default guess and from every analytical tuning already inside the robust set (AMIGO, SIMC). The default start stops at a PI-like local optimum ($T_d = 0$, $\mathrm{ITAE} = 0.34$~K$\cdot$min$^2$); the analytical starts reach $0.20$--$0.21$~K$\cdot$min$^2$. The retained optimum has $M_s = 1.60$: the constraint is active, and the derivative action is kept because it buys the phase margin that allows a higher proportional gain at the same $M_s$.
+    \item \textbf{2-DOF Optimal ITAE}: the optimal gains with $\beta = 0.5$, $\gamma = 0$.
+\end{enumerate}
+The resulting gains are listed in Table~\ref{tab:classical_benchmark}.
+
+\subsection{Two-degree-of-freedom setpoint weighting}
+\label{subsec:two_dof}
+A 2-DOF structure weights the reference in the proportional and derivative paths \cite{astrom2006pid}. To avoid a bias from absolute temperatures when $\beta < 1$, the weights act on deviations from $y_{ss} = 396.65$~K:
+\begin{equation}
+    e_p = \beta\,\Delta y_{sp} - \Delta y_{pv}, \qquad e_i = y_{sp} - y_{pv}, \qquad e_d = \gamma\,\Delta y_{sp} - \Delta y_{pv},
+    \label{eq:two_dof}
+\end{equation}
+with $\Delta y = y - y_{ss}$, so that $P_k = K_p e_{p,k}$, the integrator is driven by $e_{i,k}$ and the derivative by $e_{d,k}$; $\gamma = 0$ recovers derivative on the measurement. Because $\beta$ and $\gamma$ act only on the reference path, the loop transfer function $L(s) = G_p(s)C(s)$, and therefore $M_s$ and the load response, are those of the 1-DOF controller with the same gains.
+
+\subsection{Sensitivity peak and margins}
+\label{subsec:sensitivity_theory}
+Robustness is quantified by the sensitivity peak \cite{astrom2006pid, skogestad2005multivariable}
+\begin{equation}
+    M_s = \sup_{\omega \ge 0} \left|\frac{1}{1 + G_p(j\omega)C(j\omega)}\right|,
+    \label{eq:sensitivity_func}
+\end{equation}
+evaluated with the exact delay $e^{-j\omega\theta}$ and $C(s) = K_p\,(1 + 1/(T_i s) + T_d s/(\tau_f s + 1))$. The bound $M_s \le 1.6$ guarantees a gain margin of at least $2.67$ and a phase margin of at least $36.4^\circ$ \cite{garpinger2014performance, padula2012optimal}. The FOPTD and the true plant agree at low frequency but diverge above the identification bandwidth: the delay adds phase lag without bound, whereas the phase of the relative-degree-two $G_{\text{true}}$ saturates. The FOPTD therefore overestimates the high-frequency lag, which makes $M_s$ conservative for loops whose peak lies at high frequency, while near crossover the comparison can go either way. Section~\ref{subsec:margins} evaluates both loops.

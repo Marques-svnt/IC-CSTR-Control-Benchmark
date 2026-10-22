@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cstr-control-research"
+version = "0.1.0"
+description = "Research framework for classical, neural, and agentic PID control of non-linear chemical processes (PROIC/UESC)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Research Team", email = "research@uesc.br" }
+]
+dependencies = [
+    "numpy>=1.26.0",
+    "scipy>=1.12.0",
+    "pandas>=2.2.0",
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "pydantic>=2.6.0",
+    "pandera>=0.20.0",
+    "control>=0.10.0",
+    "pymoo>=0.6.1",
+    "SALib>=1.5.0",
+    "tueplots>=0.0.15",
+    "adjustText>=1.2.0",
+    "sippy-unipi>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "hypothesis>=6.100.0",
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+]
+ai = [
+    "torch>=2.2.0",
+    "torchdiffeq>=0.2.4",
+    "neuromancer>=1.5.0",
+    "do-mpc>=4.6.0",
+    "casadi>=3.6.0",
+    "langgraph>=0.0.30",
+    "langchain-core>=0.1.30",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "D"]
+ignore = [
+    "D100",  # Missing docstring in public module
+    "D104",  # Missing docstring in public package
+    "D105",  # Missing docstring in magic method (__post_init__, etc.)
+    "N803",  # Argument name should be lowercase (allowed for scientific math: C_A, T)
+    "N806",  # Variable name in function should be lowercase (allowed for math: A, B, C_A, T)
+    "N815",  # Variable in class scope should not be mixedCase (allowed for math: delta_H)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"experiments/*" = ["E402", "E501"]
+"tests/*" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,5 @@
+Point,Architecture,$t_{\mathrm{pred}}$ (min),$t_{\mathrm{sat}}$ (min),$UA(t_{\mathrm{sat}})/UA_0$ (\%),$t_{\mathrm{runaway}}$ (min),$T(80$ min) (K)
+Nominal,SISO SIMC,8.92,10.02,57.0,13.18,416.40
+Nominal,Cascade,8.92,9.26,59.0,13.18,416.40
+Saddle,SISO SIMC,46.36,32.32,44.8,28.06,387.87
+Saddle,Cascade,46.36,33.06,43.3,4.06,387.88

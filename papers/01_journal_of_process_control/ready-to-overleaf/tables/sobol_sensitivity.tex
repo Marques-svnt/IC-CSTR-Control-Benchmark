@@ -1,0 +1,34 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Global Sobol indices (Saltelli sampling, $N=512$, $3072$ closed-loop runs per controller) of IAE and TV for a $-2$~K setpoint step under simultaneous uncertainty $E_a/R \in [0.97, 1.03]$, $UA \in [0.65, 1.05]\,UA_{\mathrm{nom}}$, $C_{Af} \in [0.85, 1.15]$~mol/L and sensor dead time $\theta_{\mathrm{sensor}} \in [0, 0.1]$~min.}
+\label{tab:sobol_sensitivity}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Controller & Parameter & $S_1$ (IAE) & $S_T$ (IAE) & $S_1$ (TV) & $S_T$ (TV) \\
+\midrule
+Ziegler-Nichols & $E_a/R$ & 0.006 & 0.113 & 0.234 & 0.350 \\
+Ziegler-Nichols & $UA$ & 0.168 & 0.559 & 0.060 & 0.193 \\
+Ziegler-Nichols & $C_{Af}$ & 0.354 & 0.703 & 0.111 & 0.365 \\
+Ziegler-Nichols & $\theta_{\mathrm{sensor}}$ & 0.013 & 0.017 & 0.331 & 0.519 \\
+Tyreus-Luyben & $E_a/R$ & 0.009 & 0.083 & 0.292 & 0.705 \\
+Tyreus-Luyben & $UA$ & 0.183 & 0.523 & 0.041 & 0.475 \\
+Tyreus-Luyben & $C_{Af}$ & 0.414 & 0.708 & 0.041 & 0.404 \\
+Tyreus-Luyben & $\theta_{\mathrm{sensor}}$ & 0.006 & 0.007 & 0.070 & 0.320 \\
+AMIGO & $E_a/R$ & 0.008 & 0.067 & 0.174 & 0.451 \\
+AMIGO & $UA$ & 0.198 & 0.527 & 0.081 & 0.396 \\
+AMIGO & $C_{Af}$ & 0.410 & 0.696 & 0.334 & 0.623 \\
+AMIGO & $\theta_{\mathrm{sensor}}$ & 0.003 & 0.001 & 0.111 & 0.291 \\
+Skogestad SIMC & $E_a/R$ & 0.018 & 0.063 & 0.021 & 0.057 \\
+Skogestad SIMC & $UA$ & 0.205 & 0.485 & 0.211 & 0.449 \\
+Skogestad SIMC & $C_{Af}$ & 0.454 & 0.695 & 0.580 & 0.813 \\
+Skogestad SIMC & $\theta_{\mathrm{sensor}}$ & 0.000 & 0.000 & 0.002 & 0.001 \\
+2-DOF Optimal ITAE & $E_a/R$ & 0.008 & 0.083 & 0.246 & 0.634 \\
+2-DOF Optimal ITAE & $UA$ & 0.186 & 0.525 & 0.007 & 0.415 \\
+2-DOF Optimal ITAE & $C_{Af}$ & 0.409 & 0.707 & 0.100 & 0.554 \\
+2-DOF Optimal ITAE & $\theta_{\mathrm{sensor}}$ & 0.005 & 0.005 & 0.087 & 0.257 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

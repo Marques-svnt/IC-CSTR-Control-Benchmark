@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Regulation at the open-loop unstable saddle ($T_{sp}=345$ K) after shocks at $t=2$ min; metrics over $t\ge 2$ min.}
+\label{tab:saddle_shocks}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Shock & Architecture & IAE (K min) & Peak $|e|$ (K) & TV (L/min) & $\max q_j$ (L/min) & $T$ p-p, last 20 min (K) \\
+\midrule
+$\Delta T_{jf}=+10$ K & SISO SIMC & 497.11 & 19.33 & 1561.7 & 177.3 & 30.46 \\
+$\Delta T_{jf}=+10$ K & Cascade & 23.28 & 1.83 & 152.9 & 97.7 & 0.36 \\
+$\Delta T_{jf}=+10$ K & Cascade + FF & 12.89 & 1.01 & 96.4 & 91.6 & 0.21 \\
+$\Delta T_f=+5$ K & SISO SIMC & 230.03 & 19.24 & 740.8 & 167.6 & 8.34 \\
+$\Delta T_f=+5$ K & Cascade & 132.07 & 24.82 & 584.4 & 190.0 & 0.84 \\
+$\Delta T_f=+5$ K & Cascade + FF & 132.07 & 24.82 & 584.4 & 190.0 & 0.84 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

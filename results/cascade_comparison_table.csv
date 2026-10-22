@@ -1,0 +1,3 @@
+Architecture,Coolant Shock IAE,Peak Dev. (K),TV (L/min),Fouling ($UA/UA_{\mathrm{nom}}$)
+SIMC (SISO Direct),2.38,1.48,26.1,"held at 60\%, lost at 55\%"
+Cascade ($T \rightarrow T_j \rightarrow q_j$),0.83,0.75,43.7,"held at 60\%, lost at 55\%"

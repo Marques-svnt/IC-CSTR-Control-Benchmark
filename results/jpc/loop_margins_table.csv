@@ -1,0 +1,7 @@
+Method,\(M_s\) (FOPTD),"PM (FOPTD, \(^\circ\))",\(M_s\) (lin.),"PM (lin., \(^\circ\))"
+Ziegler-Nichols,4.14,36.6,1.57,38.4
+Cohen-Coon,4.54,25.3,1.75,35.1
+Tyreus-Luyben,2.32,72.3,1.15,71.1
+AMIGO,1.45,59.3,1.26,53.9
+Skogestad SIMC,1.13,81.7,1.11,78.7
+Optimal ITAE ($M_s \leq 1.6$),1.60,61.1,1.31,57.1

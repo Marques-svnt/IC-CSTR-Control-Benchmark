@@ -1,0 +1,5 @@
+Controller,IAE,ITAE,ISE,TV (L/min),Overshoot (%),Settling (min)
+Skogestad SIMC,34.72,210.86,180.77,201.1,0.0,N/A
+Optimal ITAE ($M_s \leq 1.6$),33.81,207.40,177.00,217.7,0.0,N/A
+Adaptive Neuro-PID,32.00,193.08,158.42,274.0,25.0,N/A
+NMPC Oracle (Optimal Bound),31.50,195.27,159.66,380.7,16.3,N/A

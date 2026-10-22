@@ -1,0 +1,72 @@
+\documentclass[a4paper,fleqn]{cas-dc}
+\usepackage[numbers]{natbib}
+\usepackage{siunitx}
+
+\shorttitle{Robust PID tuning under actuator saturation in exothermic CSTRs}
+\shortauthors{G.M. de Andrade and E.R. Edwards}
+
+\begin{document}
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+\title [mode = title]{Robust PID Tuning under Actuator Saturation in Nonlinear Exothermic CSTRs: Performance, Anti-Windup and Sensitivity Trade-offs}
+
+\author[1]{Gabriel Marques de Andrade}
+\cormark[1]
+\ead{gmandrade.egm@uesc.br}
+\credit{Conceptualization, Methodology, Software, Investigation, Writing -- original draft}
+
+\author[1]{Elilton Rodrigues Edwards}
+\ead{eredwards@uesc.br}
+\credit{Supervision, Methodology, Writing -- review \& editing}
+
+\affiliation[1]{organization={Department of Exact and Technological Sciences (DCET), State University of Santa Cruz (UESC)},
+    addressline={Rodovia Jorge Amado, km 16},
+    city={Ilh\'eus},
+    postcode={45662-900},
+    state={Bahia},
+    country={Brazil}}
+
+\cortext[1]{Corresponding author}
+
+\begin{abstract}
+Benchmarks of PID tuning rules on exothermic reactors often conclude that empirical rules fail, without separating the rule from the actuator model and the anti-windup logic. This paper evaluates eight PID tunings (Ziegler--Nichols, Cohen--Coon, Tyreus--Luyben, AMIGO and its two-degree-of-freedom variant, Skogestad SIMC, and multi-start ITAE optimization subject to a sensitivity peak $M_s \le 1.6$ on the identified dead-time loop, with its two-degree-of-freedom variant) on a three-state nonlinear CSTR whose cooling valve is limited in amplitude and in slew rate. A directional clamping rule that freezes the integrator whenever amplitude or rate saturation cuts the command, with the sign of the reverse-acting loop built in, keeps every tuning stable. A textbook amplitude-only rule lets Ziegler--Nichols and Cohen--Coon wind up during the rate-limited ramp, raising the integral absolute error of a $-2$~K step from $0.940$ to $104.123$~K$\cdot$min. With correct anti-windup, robustness rather than stability separates the rules: high-gain loops inject the most sensor noise into the reactor across $1200$ Monte Carlo runs, and Sobol indices show that the tracking-error variance of every tuning is governed by feed concentration and heat-transfer capacity, while kinetics and sensor delay drive the valve activity of low-margin loops. The constrained optimal PID gives the fastest robust servo response, and setpoint weighting removes overshoot without altering regulation.
+\end{abstract}
+
+\input{highlights}
+
+\begin{keywords}
+Exothermic CSTR \sep Robust PID tuning \sep Anti-windup \sep Rate saturation \sep Pareto trade-off \sep Sobol indices
+\end{keywords}
+
+\maketitle
+
+\section{Introduction}\label{sec:intro}
+\input{sections/01_introduction}
+
+\section{Plant model and actuator limits}\label{sec:model}
+\input{sections/02_plant_actuator_limits}
+
+\section{Robust PID tuning and anti-windup}\label{sec:pid}
+\input{sections/03_robust_pid_antiwindup}
+
+\section{Results and discussion}\label{sec:results}
+\input{sections/04_results_discussion}
+
+\section{Conclusions}\label{sec:conclusion}
+\input{sections/05_conclusion}
+
+\section*{Data and code availability}
+The simulation code, controllers, campaign scripts and the CSV files behind every table and figure are available at \url{https://github.com/Marques-svnt/IC-PID-Neural-Agents}.
+
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{Acknowledgements}
+This research was supported in part by the Brazilian National Council for Scientific and Technological Development (CNPq), the Bahia State Research Foundation (FAPESB), and PROIC-UESC under Grant 34/2026.
+
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,16 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Sensitivity peak and phase margin of each PID loop on the identified FOPTD design model and on the exact Jacobian linearization of the CSTR at $\mathbf{x}_{ss}$ with the half-sample zero-order-hold delay $\Delta t/2 = 0.01$~min. Valve saturation and slew-rate limits are not part of either linear loop.}
+\label{tab:loop_margins}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Method & \(M_s\) (FOPTD) & PM (FOPTD, \(^\circ\)) & \(M_s\) (lin.) & PM (lin., \(^\circ\)) \\
+\midrule
+AMIGO & 1.45 & 59.3 & 1.26 & 53.9 \\
+Optimal ITAE ($M_s \leq 1.6$) & 1.60 & 61.1 & 1.31 & 57.1 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

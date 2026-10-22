@@ -1,0 +1,48 @@
+% ============================================================
+%  Section 3: Robust PID baselines
+% ============================================================
+
+\subsection{Discrete PID with directional rate-aware clamping}
+\label{subsec:pid}
+Both baselines use the same discrete parallel PID with derivative on measurement \cite{astrom2006pid}, sampled at $\Delta t = 0.02$~min:
+\begin{align}
+    u_{\text{raw},k} &= \bar q_j + K_p e_k + I_k + D_k, \nonumber \\
+    D_k &= \frac{\tau_f D_{k-1} - K_p T_d (y_k - y_{k-1})}{\tau_f + \Delta t}, \quad \tau_f = \frac{T_d}{10}, \label{eq:pid}
+\end{align}
+with $e_k = T_{sp,k} - y_k$, $y_k$ the measured temperature and $\bar q_j = 100$~L/min. Because the valve of Eq.~\eqref{eq:valve} is limited in amplitude \emph{and} rate, the applied input $u_{\text{act},k}$ differs from $u_{\text{raw},k}$ whenever either limit is active. The trapezoidal integrator is frozen when the previous command was cut and the current increment pushes in the same direction:
+\begin{equation}
+    I_k = \begin{cases}
+        I_{k-1}, & \text{if } \left(u_{\text{raw},k-1} - u_{\text{act},k-1}\right)\delta I_k > 0, \\
+        I_{k-1} + \delta I_k, & \text{otherwise,}
+    \end{cases}
+    \label{eq:clamping}
+\end{equation}
+with $\delta I_k = (K_p/T_i)\,\tfrac12(e_k + e_{k-1})\,\Delta t$. The product form handles the sign of the reverse-acting loop ($K_p < 0$) automatically, and including the slew-rate cut matters on this valve because a $2$~K setpoint step already demands more than $1.6$~L/min per sample from both tunings; an amplitude-only rule would keep integrating throughout the rate-limited ramp \cite{bohn1995analysis, peng1996nonlinear, hippe2006windup}. Evaluating the saturation residual at the previous sample avoids an algebraic loop between $I_k$ and the nonlinear valve map.
+
+\subsection{Identified design model and tunings}
+\label{subsec:tunings}
+Both tunings use a first-order-plus-dead-time (FOPTD) model $G_p(s) = K e^{-\theta s}/(\tau s + 1)$ identified by least squares from an open-loop step $\Delta q_j = +10$~L/min at $\mathbf{x}_{ss}$; its parameters are listed in the caption of Table~\ref{tab:classical_benchmark}. The dead time is apparent: it lumps the lag of the jacket, and the loop is lag dominant ($\theta/\tau < 0.2$). Robustness is measured by the maximum sensitivity on this dead-time loop,
+\begin{equation}
+    M_s = \max_\omega \left|\frac{1}{1 + G_p(j\omega)C(j\omega)}\right|,
+    \label{eq:ms}
+\end{equation}
+which is the relevant quantity for this loop: the delay-free Jacobian linearization has relative degree two and returns $M_s \approx 1$ for almost any gain, which would silently disable a robustness constraint.
+\begin{itemize}
+    \item \textbf{AMIGO} maximizes integral gain subject to a robustness constraint and is given in closed form for FOPTD processes \cite{astrom2006pid}:
+    \begin{equation}
+        \begin{gathered}
+        K_p = \frac{1}{K}\left(0.2 + 0.45\frac{\tau}{\theta}\right), \\
+        T_i = \frac{0.4\theta + 0.8\tau}{\theta + 0.1\tau}\,\theta, \quad T_d = \frac{0.5\theta\tau}{0.3\theta + \tau}.
+        \end{gathered}
+        \label{eq:amigo}
+    \end{equation}
+    \item \textbf{Optimal ITAE ($M_s \le 1.6$)} minimizes the closed-loop ITAE of the nominal servo step simulated on the nonlinear plant with the same valve,
+    \begin{equation}
+        \min_{K_p, T_i, T_d} \int_0^{t_{\text{sim}}} t\,|e(t)|\,dt \quad \text{s.t.} \quad M_s \le 1.6,
+        \label{eq:opt}
+    \end{equation}
+    with $M_s$ from Eq.~\eqref{eq:ms} enforced by the quadratic penalty $10^4\max(0, M_s - 1.6)^2$. The Nelder--Mead search is started from a default guess and from every analytical tuning that already satisfies the constraint, and the best feasible optimum is kept, because the default start alone stops at a PI-like local optimum. The constraint is active at the optimum.
+\end{itemize}
+The resulting gains, and $M_s$, are listed in Table~\ref{tab:classical_benchmark}. Both PIDs are one-degree-of-freedom; setpoint weighting would change their servo response but not their disturbance rejection \cite{astrom2006pid}, which is where the comparison with NMPC is decided (Section~\ref{subsec:nmpc_results}).
+
+These two tunings are the strongest linear competitors available for this loop: in a broader benchmark of the same plant and valve [CITATION NEEDED: companion PID study], Optimal ITAE gave the lowest nominal servo IAE of all PID tunings considered, and AMIGO the fastest recovery from the fouling event of Section~\ref{subsec:nmpc_results} among the robust PID loops.

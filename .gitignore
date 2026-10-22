@@ -1,0 +1,79 @@
+# ========================
+# Python & Virtual Environments
+# ========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+.venv*/
+.tools-venv/
+env/
+venv/
+*.egg
+*.egg-info/
+dist/
+build/
+
+# ========================
+# Caching, Linting & Testing
+# ========================
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.hypothesis/
+
+# ========================
+# IDE & System Files
+# ========================
+.vscode/
+*.code-workspace
+.spyproject/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========================
+# Literature PDFs (Copyright / Large Files)
+# ========================
+Biblioteca/**/*.pdf
+*.pdf
+
+# ========================
+# LaTeX Build Temporaries
+# ========================
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.nav
+*.snm
+*.vrb
+
+# ========================
+# Local-only (size limit): legacy drafts and raw run logs
+# ========================
+archive/
+results/log_*.txt
+results/**/log_*.txt
+
+# ========================
+# Whitelist Exceptions (Must be tracked)
+# ========================
+!papers/**/figures/*.pdf
+!papers/**/tables/*.tex
+!papers/**/ready_to_overleaf.zip
+!results/*.csv
+!results/**/*.csv
+!Biblioteca/README.md

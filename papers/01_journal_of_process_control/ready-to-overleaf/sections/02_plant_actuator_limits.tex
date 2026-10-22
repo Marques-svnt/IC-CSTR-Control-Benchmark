@@ -1,0 +1,80 @@
+\subsection{Nonlinear CSTR model}
+An irreversible, exothermic, liquid-phase reaction $A \rightarrow B$ takes place in a CSTR cooled by a jacket \cite{luyben2007chemical, seborg2010process}. The jacket is modelled as a dynamic lumped thermal capacity rather than as an instantaneous heat sink \cite{uppal1974dynamic}. Species and energy balances give
+\begin{align}
+    \frac{dC_A}{dt} &= \frac{q}{V}(C_{Af} - C_A) - r_A, \label{eq:cstr_ca} \\
+    \frac{dT}{dt}   &= \frac{q}{V}(T_f - T) + \frac{(-\Delta H)}{\rho C_p} r_A - \frac{UA}{V \rho C_p}(T - T_j), \label{eq:cstr_t} \\
+    \frac{dT_j}{dt} &= \frac{q_j}{V_j}(T_{jf} - T_j) + \frac{UA}{V_j \rho_j C_{pj}}(T - T_j), \label{eq:cstr_tj}
+\end{align}
+with first-order Arrhenius kinetics $r_A = k_0 \exp(-E/(R\,T))\,C_A$. The state is $\mathbf{x} = [C_A, T, T_j]^\top$, the manipulated input is the coolant flow $u = q_j$ and the controlled output is the reactor temperature $y = T$. Densities, heat capacities and $UA$ are constant, as in the standard benchmark literature \cite{uppal1974dynamic, seborg2010process}. The parameters are listed in Table~\ref{tab:cstr_parameters}. At $q_{j,ss} = 100$~L/min the steady state is
+\begin{equation}
+    C_{A,ss} = 0.0502~\text{mol/L}, \quad T_{ss} = 396.65~\text{K}, \quad T_{j,ss} = 348.33~\text{K},
+    \label{eq:nominal_ss}
+\end{equation}
+a high-conversion point ($X_A \approx 95\%$) close to the maximum heat release of the reactor.
+
+\begin{table}[t]
+\centering
+\caption{Nominal parameters of the CSTR.}\label{tab:cstr_parameters}
+\footnotesize
+\begin{tabular}{llrl}
+\toprule
+Parameter & Symbol & Value & Unit \\
+\midrule
+Reactor volume & $V$ & $100.0$ & \si{L} \\
+Jacket volume & $V_j$ & $20.0$ & \si{L} \\
+Process flow & $q$ & $100.0$ & \si{L/min} \\
+Feed concentration & $C_{Af}$ & $1.0$ & \si{mol/L} \\
+Feed temperature & $T_f$ & $350.0$ & \si{K} \\
+Coolant supply temperature & $T_{jf}$ & $300.0$ & \si{K} \\
+Pre-exponential factor & $k_0$ & $7.2 \times 10^{10}$ & \si{min^{-1}} \\
+Activation energy & $E/R$ & $8750.0$ & \si{K} \\
+Reaction enthalpy & $-\Delta H$ & $5.0 \times 10^4$ & \si{cal/mol} \\
+Heat capacity (reactor) & $\rho C_p$ & $500.0$ & $\text{cal}/(\text{L}\cdot\text{K})$ \\
+Heat capacity (coolant) & $\rho_j C_{pj}$ & $500.0$ & $\text{cal}/(\text{L}\cdot\text{K})$ \\
+Heat transfer coefficient & $UA$ & $5.0 \times 10^4$ & $\text{cal}/(\text{min}\cdot\text{K})$ \\
+Nominal coolant flow & $q_{j,ss}$ & $100.0$ & \si{L/min} \\
+Valve slew-rate limit & $S_{\max}$ & $80.0$ & \si{L/min^2} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Local stability and heat-removal limit}
+The thermal stability of the reactor is governed by the balance between Arrhenius heat generation $Q_g(T) = (-\Delta H)\,V\,r_A$ and heat removal $Q_r(T, q_j) = q \rho C_p (T - T_f) + UA\,(T - T_j)$ \cite{aris1958analysis, uppal1974dynamic}. By the Van Heerden criterion \cite{seborg2010process, bequette2003process}, an operating point is unstable in open loop when
+\begin{equation}
+    \left.\frac{\partial Q_g}{\partial T}\right|_{\mathbf{x}_{ss}} > \left.\frac{\partial Q_r}{\partial T}\right|_{\mathbf{x}_{ss}}.
+    \label{eq:van_heerden}
+\end{equation}
+At $\mathbf{x}_{ss}$ reactant depletion flattens the generation curve, so the inequality is reversed and the point is stable. The Jacobian of Eqs.~\eqref{eq:cstr_ca}--\eqref{eq:cstr_tj} confirms it:
+\begin{equation}
+    \setlength{\arraycolsep}{5pt}
+    \mathbf{A} = \begin{bmatrix}
+        -19.923 & -0.0528 & 0 \\
+        1892.33 & 3.282 & 1.0 \\
+        0 & 5.000 & -10.00
+    \end{bmatrix}, \quad
+    \mathbf{B} = \begin{bmatrix} 0 \\ 0 \\ -2.416 \end{bmatrix},
+    \label{eq:jacobian_matrices}
+\end{equation}
+with eigenvalues $-1.5712$, $-11.8006$ and $-13.2693$~min$^{-1}$. The exact linearized transfer function from coolant flow to reactor temperature is
+\begin{equation}
+    G_{\text{true}}(s) = \frac{-2.416\,(s + 19.923)}{(s + 1.5712)(s + 11.8006)(s + 13.2693)},
+    \label{eq:g_true_exact}
+\end{equation}
+which has relative degree two: its phase saturates at $-180^\circ$ at high frequency.
+
+Local stability does not guarantee global controllability. With the valve fully open, the jacket temperature cannot fall below
+\begin{equation}
+    T_{j,\min}(T) = \frac{u_{\max} T_{jf} + (UA/\rho_j C_{pj})\,T}{u_{\max} + UA/\rho_j C_{pj}} > T_{jf},
+    \label{eq:tj_min_bound}
+\end{equation}
+so the heat that the reactor can reject is bounded by $Q_{r,\max}(T) = q \rho C_p (T - T_f) + UA\,(T - T_{j,\min}(T))$. Whenever a disturbance or a loss of heat-transfer capacity raises the required heat removal above $Q_{r,\max}$, no control law acting through this valve can hold the temperature; this bound is the physical controllability limit against which the PID loops are evaluated.
+
+\subsection{Valve amplitude and slew-rate limits}
+\label{subsec:actuator_limits}
+The coolant valve is bounded in amplitude and in travel speed \cite{hippe2006windup, tarbouriech2009antiwindup}:
+\begin{align}
+    0 \le q_j(t) &\le u_{\max} = 300~\text{L/min}, \nonumber \\
+    \left|dq_j/dt\right| &\le S_{\max} = 80~\text{L/min}^2.
+    \label{eq:actuator_limits}
+\end{align}
+The rate limit corresponds to $1.33$~(L/min)/s, or $0.44\%$ of the stroke per second, so a full stroke takes $3.75$~min, which is representative of a large electro-pneumatic actuator. At the sampling interval $\Delta t = 0.02$~min the valve moves at most $S_{\max}\Delta t = 1.6$~L/min per sample. Deadband, hysteresis and stiction are not modelled \cite{choudhury2005modelling}; amplitude and rate saturation are the first-order mechanisms behind windup in this loop.

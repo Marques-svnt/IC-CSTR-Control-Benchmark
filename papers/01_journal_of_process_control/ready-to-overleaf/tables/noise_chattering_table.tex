@@ -1,0 +1,54 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Sensitivity of tracking error (IAE) and actuator effort (TV) to measurement noise levels across $30$ Monte Carlo runs.}
+\label{tab:noise_sensitivity}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Method & Noise $\sigma$ (K) & IAE (mean $\pm$ std) & TV (L/min) \\
+\midrule
+Ziegler-Nichols & 0.0 & 0.94 $\pm$ 0.00 & 81.9 $\pm$ 0.0 \\
+Ziegler-Nichols & 0.1 & 2.03 $\pm$ 0.18 & 773.7 $\pm$ 4.6 \\
+Ziegler-Nichols & 0.2 & 3.26 $\pm$ 0.45 & 786.3 $\pm$ 3.9 \\
+Ziegler-Nichols & 0.5 & 5.54 $\pm$ 1.26 & 796.0 $\pm$ 2.1 \\
+Ziegler-Nichols & 1.0 & 7.45 $\pm$ 1.90 & 798.0 $\pm$ 1.9 \\
+Cohen-Coon & 0.0 & 1.02 $\pm$ 0.00 & 104.0 $\pm$ 0.0 \\
+Cohen-Coon & 0.1 & 2.12 $\pm$ 0.15 & 773.1 $\pm$ 4.4 \\
+Cohen-Coon & 0.2 & 3.16 $\pm$ 0.40 & 786.2 $\pm$ 4.7 \\
+Cohen-Coon & 0.5 & 5.19 $\pm$ 1.11 & 794.7 $\pm$ 2.8 \\
+Cohen-Coon & 1.0 & 7.03 $\pm$ 1.60 & 798.3 $\pm$ 1.6 \\
+Tyreus-Luyben & 0.0 & 0.92 $\pm$ 0.00 & 48.8 $\pm$ 0.0 \\
+Tyreus-Luyben & 0.1 & 1.51 $\pm$ 0.07 & 759.4 $\pm$ 7.5 \\
+Tyreus-Luyben & 0.2 & 2.04 $\pm$ 0.18 & 778.8 $\pm$ 4.3 \\
+Tyreus-Luyben & 0.5 & 3.27 $\pm$ 0.59 & 792.4 $\pm$ 3.0 \\
+Tyreus-Luyben & 1.0 & 4.58 $\pm$ 0.81 & 796.1 $\pm$ 2.3 \\
+AMIGO & 0.0 & 0.93 $\pm$ 0.00 & 40.4 $\pm$ 0.0 \\
+AMIGO & 0.1 & 1.24 $\pm$ 0.05 & 727.0 $\pm$ 7.7 \\
+AMIGO & 0.2 & 1.67 $\pm$ 0.14 & 762.2 $\pm$ 6.5 \\
+AMIGO & 0.5 & 2.96 $\pm$ 0.46 & 785.0 $\pm$ 5.0 \\
+AMIGO & 1.0 & 4.38 $\pm$ 0.92 & 793.5 $\pm$ 1.9 \\
+2-DOF AMIGO & 0.0 & 0.96 $\pm$ 0.00 & 29.3 $\pm$ 0.0 \\
+2-DOF AMIGO & 0.1 & 1.53 $\pm$ 0.07 & 725.8 $\pm$ 7.3 \\
+2-DOF AMIGO & 0.2 & 1.99 $\pm$ 0.13 & 761.7 $\pm$ 5.7 \\
+2-DOF AMIGO & 0.5 & 3.07 $\pm$ 0.41 & 785.7 $\pm$ 4.3 \\
+2-DOF AMIGO & 1.0 & 4.46 $\pm$ 0.72 & 793.3 $\pm$ 2.9 \\
+Skogestad SIMC & 0.0 & 1.29 $\pm$ 0.00 & 15.7 $\pm$ 0.0 \\
+Skogestad SIMC & 0.1 & 1.71 $\pm$ 0.07 & 603.0 $\pm$ 11.4 \\
+Skogestad SIMC & 0.2 & 2.06 $\pm$ 0.11 & 688.5 $\pm$ 8.8 \\
+Skogestad SIMC & 0.5 & 2.76 $\pm$ 0.20 & 753.1 $\pm$ 5.3 \\
+Skogestad SIMC & 1.0 & 3.56 $\pm$ 0.34 & 774.2 $\pm$ 4.6 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.0 & 0.83 $\pm$ 0.00 & 48.6 $\pm$ 0.0 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.1 & 1.27 $\pm$ 0.05 & 734.1 $\pm$ 6.8 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.2 & 1.74 $\pm$ 0.12 & 765.5 $\pm$ 6.4 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.5 & 2.95 $\pm$ 0.48 & 785.7 $\pm$ 3.0 \\
+Optimal ITAE ($M_s \leq 1.6$) & 1.0 & 4.16 $\pm$ 0.63 & 794.0 $\pm$ 3.3 \\
+2-DOF Optimal ITAE & 0.0 & 1.08 $\pm$ 0.00 & 25.0 $\pm$ 0.0 \\
+2-DOF Optimal ITAE & 0.1 & 1.80 $\pm$ 0.07 & 732.5 $\pm$ 6.7 \\
+2-DOF Optimal ITAE & 0.2 & 2.25 $\pm$ 0.13 & 765.4 $\pm$ 5.5 \\
+2-DOF Optimal ITAE & 0.5 & 3.30 $\pm$ 0.38 & 785.9 $\pm$ 3.5 \\
+2-DOF Optimal ITAE & 1.0 & 4.50 $\pm$ 0.63 & 794.5 $\pm$ 2.3 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

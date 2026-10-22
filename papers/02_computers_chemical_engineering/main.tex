@@ -1,0 +1,81 @@
+\documentclass[a4paper,fleqn]{cas-dc}
+\usepackage[numbers]{natbib}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\shorttitle{When Does NMPC Outperform Robust PID?}
+\shortauthors{G.M. de Andrade and E.R. Edwards}
+
+% cas-dc places the keyword box in a zero-width hbox without \hss (spurious overfull warning)
+\ExplSyntaxOn
+\AddToHook{env/Abstract/begin}{\hbox_gset_to_wd:Nnn \g_stm_key_box {\c_zero_dim} {\box_use_drop:N \g_stm_key_box \hss}}
+\ExplSyntaxOff
+
+\begin{document}
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+\title [mode = title]{When Does Nonlinear Model Predictive Control Outperform Robust PID? A Comparative Study under Fouling and Actuator Constraints}
+
+\author[1]{Gabriel Marques de Andrade}
+\cormark[1]
+\ead{gmandrade.egm@uesc.br}
+\credit{Conceptualization, Methodology, Software, Investigation, Writing -- original draft}
+
+\author[1]{Elilton Rodrigues Edwards}
+\ead{eredwards@uesc.br}
+\credit{Supervision, Methodology, Writing -- review \& editing}
+
+\affiliation[1]{organization={Department of Exact and Technological Sciences (DCET), State University of Santa Cruz (UESC)},
+    addressline={Rodovia Jorge Amado, km 16},
+    city={Ilh\'eus},
+    postcode={45662-900},
+    state={Bahia},
+    country={Brazil}}
+
+\cortext[1]{Corresponding author}
+
+\begin{abstract}
+When does the computational overhead of nonlinear model predictive control (NMPC) pay off in an exothermic reactor? This question is answered for a three-state continuous stirred tank reactor with jacket dynamics and a cooling valve limited in amplitude and slew rate. NMPC is compared only with robustly tuned PID baselines, AMIGO and an ITAE-optimal PID constrained to a maximum sensitivity of 1.6, all acting through the same valve with a rate-aware anti-windup. The NMPC uses a CasADi/IPOPT formulation with an RK4 prediction model and is evaluated with true-state access (Oracle) and with an augmented extended Kalman filter and moving-horizon estimator that reconstructs concentration and a fouling factor from two thermocouples. Near the design point the NMPC lowers the servo IAE of the best PID by only 2.3\%. After an abrupt loss of heat transfer to 70\% it reduces the IAE of the best PID by 21.0\%, and the output-feedback variant stays within 1.7\% of the Oracle. Without an integrating disturbance model, however, both NMPC variants keep an offset of about 9~K under unmeasured feed disturbances that both PID loops reject, and at 60\% heat transfer no controller reaches the setpoint within the run. Each NMPC sample costs 31--39~ms against 0.09~ms for PID. Five criteria summarize when nonlinear prediction is worth its cost.
+\end{abstract}
+
+\input{highlights}
+
+\begin{keywords}
+Nonlinear model predictive control \sep Moving horizon estimation \sep Robust PID tuning \sep Exothermic CSTR \sep Heat-exchanger fouling \sep Actuator constraints
+\end{keywords}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+\input{sections/01_introduction}
+
+\section{Plant model, NMPC and augmented moving-horizon estimator}
+\label{sec:formulation}
+\input{sections/02_nmpc_mhe_formulation}
+
+\section{Robust PID baselines}
+\label{sec:baselines}
+\input{sections/03_baseline_controllers}
+
+\section{Results and discussion}
+\label{sec:results}
+\input{sections/04_results_discussion}
+
+\section{Conclusions}
+\label{sec:conclusion}
+\input{sections/05_conclusion}
+
+\section*{Data availability}
+The simulation code that generates every table and figure of this paper is available at \url{https://github.com/Marques-svnt/IC-PID-Neural-Agents}.
+
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\end{document}

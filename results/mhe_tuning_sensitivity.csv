@@ -1,0 +1,6 @@
+Covariance scaling,IAE,TV (L/min),RMS \(\hat C_A - C_A\) (mol/L),\(\hat\alpha_{UA}(t_f)\),\(\alpha\) settling (min)
+Nominal,5.568,571.0,6.97e-05,0.699,0.14
+\(R_e \times 0.1\),5.558,590.8,7.41e-05,0.699,0.14
+\(R_e \times 10\),5.574,508.8,6.18e-05,0.699,0.14
+\(Q_{\alpha} \times 0.1\),5.569,570.6,6.97e-05,0.699,0.14
+\(Q_{\alpha} \times 10\),5.567,571.7,6.97e-05,0.699,0.14

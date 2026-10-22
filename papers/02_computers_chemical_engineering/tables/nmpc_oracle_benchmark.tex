@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Output-feedback gap: NMPC with true-state access (Oracle) vs NMPC with augmented MHE (thermal measurements only) vs $M_s$-constrained PID. $-2$~K step at $t=0.5$~min, jacket fouling to $70\%\,UA$ at $t=4$~min, sensor noise $\sigma=0.05$~K. Both NMPCs: $N=50$ ($1.0$~min), $|\Delta q_j| \le 80\,\Delta t$. Step time is the mean wall-clock time per sample (controller + plant integration; hardware dependent).}
+\label{tab:nmpc_oracle_benchmark}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+Controller & IAE & \(\Delta\)IAE vs Oracle (\%) & ITAE & TV (L/min) & \(M_p\) (\%) & \(\hat\alpha_{UA}(t_f)\) & Step time (ms) \\
+\midrule
+AMIGO & 6.932 & +26.6 & 31.412 & 672.1 & 7.6 & -- & 0.09 \\
+Optimal ITAE ($M_s \leq 1.6$) & 7.320 & +33.7 & 34.853 & 694.4 & 3.3 & -- & 0.09 \\
+NMPC-Oracle & 5.474 & +0.0 & 23.034 & 252.4 & 5.2 & 0.700 & 31.46 \\
+NMPC-MHE & 5.568 & +1.7 & 23.495 & 571.0 & 5.8 & 0.699 & 39.28 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

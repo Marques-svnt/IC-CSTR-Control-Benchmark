@@ -1,0 +1,5 @@
+Method,Total IAE,Total ITAE,Total TV (L/min),Max Valve (L/min),Min Valve (L/min)
+AMIGO,20.50,208.02,1596.7,158.4,52.7
+Optimal ITAE ($M_s \leq 1.6$),21.43,218.85,1650.2,166.0,48.3
+NMPC-Oracle,19.98,201.91,388.7,173.2,46.3
+NMPC-MHE,19.66,198.36,1221.0,173.0,45.9

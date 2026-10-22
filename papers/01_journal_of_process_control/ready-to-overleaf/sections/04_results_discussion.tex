@@ -1,0 +1,110 @@
+% Every number in this section is copied from the generated tables (CSV mirrors in results/jpc/).
+
+\subsection{Evaluation protocol}
+\label{subsec:protocol}
+All servo experiments start at $\mathbf{x}_{ss}$, apply a $-2.0$~K setpoint step at $t = 0$ and last $10$~min with $\Delta t = 0.02$~min, so the noise-free rows of the noise campaign reproduce the nominal benchmark exactly. Error metrics are computed on the \emph{true} reactor temperature, $\mathrm{IAE} = \int_0^{t_f}|T_{sp} - T|\,dt$, so that sensor noise enters them only through its effect on the valve; $\mathrm{ITAE}$ weights the error by the time elapsed since the step; the total variation $\mathrm{TV} = |u_0 - \bar q_j| + \sum_k |u_k - u_{k-1}|$ includes the first move away from $\bar q_j = 100$~L/min. All campaigns use fixed random seeds.
+
+\subsection{Nominal setpoint tracking}
+Figure~\ref{fig:classical_benchmark} and Table~\ref{tab:classical_benchmark} summarize the nominal step.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig1_classical_benchmark.pdf}
+    \caption{Nominal $-2$~K setpoint step (noise-free): reactor temperature and coolant flow for the eight PID tunings under the valve limits $[0, 300]$~L/min and $80$~L/min$^2$.}
+    \label{fig:classical_benchmark}
+\end{figure}
+
+\input{tables/benchmark_table}
+
+With the directional rule of Eq.~\eqref{eq:clamping_antiwindup}, every tuning tracks the step. ZN and CC reach competitive errors ($\mathrm{IAE} = 0.940$ and $1.017$~K$\cdot$min) but with $M_s = 4.14$ and $4.54$, overshoots of $22.6\%$ and $31.0\%$ and $81.9$ and $104.0$~L/min of valve travel. Tyreus--Luyben gives $\mathrm{IAE} = 0.917$~K$\cdot$min without overshoot despite $M_s = 2.32$, and AMIGO ($M_s = 1.45$) gives $0.925$~K$\cdot$min with $9.7\%$ overshoot. Setpoint weighting reduces the AMIGO overshoot to $5.3\%$ and its travel from $40.4$ to $29.3$~L/min for a small increase in error ($0.962$~K$\cdot$min). SIMC ($M_s = 1.13$) is the most conservative tuning ($\mathrm{IAE} = 1.288$~K$\cdot$min, $\mathrm{TV} = 15.7$~L/min). Optimal ITAE, with its robustness constraint active ($M_s = 1.60$), is the fastest loop ($\mathrm{IAE} = 0.827$~K$\cdot$min, $\mathrm{ITAE} = 0.204$~K$\cdot$min$^2$, settling in $0.94$~min with $2.2\%$ overshoot); its 2-DOF variant removes the overshoot and roughly halves the travel ($25.0$~L/min) at $\mathrm{IAE} = 1.084$~K$\cdot$min.
+
+\subsection{Anti-windup ablation}
+\label{subsec:ablation}
+Table~\ref{tab:antiwindup_ablation} repeats the nominal step with the same gains and valve but with the textbook amplitude-only, sign-blind clamping rule.
+
+\input{tables/antiwindup_ablation}
+
+The implementation changes the verdict on the empirical rules. With naive clamping, ZN and CC wind the integrator up while the valve is rate-limited: the temperature leaves the operating window, the overshoot reaches $842.5\%$ for both rules, and the IAE rises from $0.940$ to $104.123$~K$\cdot$min (ZN) and from $1.017$ to $102.668$~K$\cdot$min (CC). The same mechanism degrades the high-gain modern tunings, less dramatically: AMIGO overshoots by $68.6\%$ instead of $9.7\%$ and Optimal ITAE by $66.0\%$ instead of $2.2\%$, with two to three times the valve travel. The effect is not monotonic in the controller gain: for the low-gain SIMC loop the extra integration during the ramp shortens the transient ($\mathrm{IAE} = 1.089$ with naive against $1.288$~K$\cdot$min with directional clamping) at the cost of a small overshoot ($2.1\%$). The directional rule is therefore not uniformly faster; it is the rule that prevents loss of control of the high-gain loops. Published failures of the empirical rules on rate-limited exothermic loops should be read with the anti-windup implementation in mind.
+
+\subsection{Design-model versus plant robustness}
+\label{subsec:margins}
+Figure~\ref{fig:sensitivity_magnitude} shows $|S(j\omega)|$ on the FOPTD, and Table~\ref{tab:loop_margins} compares $M_s$ and the phase margin on the FOPTD and on the exact linearization of the plant with the half-sample hold delay $\Delta t/2$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.92\columnwidth]{figures/fig_sensitivity_magnitude.pdf}
+    \caption{Sensitivity magnitude $|S(j\omega)|$ on the identified dead-time FOPTD model. The 2-DOF variants share the loop of their 1-DOF counterparts.}
+    \label{fig:sensitivity_magnitude}
+\end{figure}
+
+\input{tables/loop_margins_table}
+
+The sensitivity peak on the linearized plant is lower than on the FOPTD for every tuning, and strongly so for the high-gain rules (ZN: $4.14 \rightarrow 1.57$, CC: $4.54 \rightarrow 1.75$, TL: $2.32 \rightarrow 1.15$). Their peaks lie at high frequency, where the FOPTD delay keeps adding phase lag that the relative-degree-two plant of Eq.~\eqref{eq:g_true_exact} does not have; together with the rate limit, which clips the initial proportional kick into a bounded ramp, this explains why ZN and CC do not oscillate on the noise-free step. The phase margin, set near crossover, behaves differently: for the moderate-bandwidth designs the FOPTD is slightly optimistic (AMIGO: $59.3^\circ$ versus $53.9^\circ$, Optimal ITAE: $61.1^\circ$ versus $57.1^\circ$, SIMC: $81.7^\circ$ versus $78.7^\circ$), whereas for ZN and CC it is pessimistic ($36.6^\circ$ versus $38.4^\circ$ and $25.3^\circ$ versus $35.1^\circ$). The $M_s \le 1.6$ constraint imposed on the FOPTD is thus a conservative proxy for the peak sensitivity of the real loop, but the designer should allow for a loss of up to $5.4^\circ$ of phase margin at crossover. Neither linear loop contains the rate limit, which adds an amplitude-dependent phase lag during large moves; the table describes small-signal behaviour.
+
+\subsection{Unmeasured load disturbances}
+\label{subsec:load_results}
+A feed temperature step $\Delta T_f = +5$~K at $t = 2$~min and a feed concentration step $\Delta C_{Af} = +0.2$~mol/L ($+20\%$) at $t = 8$~min were applied at constant setpoint with thermocouple noise $\sigma = 0.05$~K (Fig.~\ref{fig:disturbance_rejection}, Table~\ref{tab:load_disturbance}).
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig2_disturbance_rejection.pdf}
+    \caption{Rejection of a $+5$~K feed temperature step at $t = 2$~min and a $+20\%$ feed concentration step at $t = 8$~min (sensor noise $\sigma = 0.05$~K).}
+    \label{fig:disturbance_rejection}
+\end{figure}
+
+\input{tables/disturbance_rejection_table}
+
+All loops contain the excursion to $7.22$--$7.41$~K and return to the setpoint by integral action; at $t_f = 15$~min the remaining error ranges from $-0.01$~K (ZN, CC) to $+0.74$~K for SIMC, which is still settling. In regulation the ranking broadly follows the integral gain $K_p/T_i$ and reverses the servo ranking of the conservative designs: CC ($12.88$~K$\cdot$min), ZN ($12.96$), AMIGO ($15.27$) and Optimal ITAE ($16.20$) give the lowest error at $1013.8$--$1108.8$~L/min of valve travel, whereas SIMC is the slowest regulator ($25.58$~K$\cdot$min) with the lowest travel ($732.0$~L/min). The concentration step drives every loop to within $15$~L/min of the upper stop ($285.0$--$300.0$~L/min), i.e. close to the heat-removal limit of Section~\ref{sec:model}. The 2-DOF variants reproduce their 1-DOF metrics exactly (e.g. AMIGO and 2-DOF AMIGO: $15.27$~K$\cdot$min, $1013.8$~L/min), which confirms that setpoint weighting does not alter the disturbance response.
+
+\subsection{Tracking error versus valve travel}
+\label{subsec:pareto_results}
+The trade-off between tracking accuracy and actuator wear was mapped by sweeping the SIMC closed-loop time constant over $\tau_c \in [0.015, 2.5]$~min ($45$ logarithmically spaced points) and by minimizing $\lambda\,\mathrm{IAE}/\mathrm{IAE}_0 + (1 - \lambda)\,\mathrm{TV}/\mathrm{TV}_0$ for $\lambda \in [0.05, 0.95]$ (Fig.~\ref{fig:pareto_iae_tv}, Table~\ref{tab:pareto_tradeoff}).
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figures/fig4_pareto_iae_tv.pdf}
+    \caption{(a) SIMC $\tau_c$-sweep locus (colour: $M_s$), scalarized optimal front ($\lambda$-opt) and the discrete tunings in the $(\mathrm{TV}, \mathrm{IAE})$ plane (logarithmic TV axis); (b) $M_s$ and IAE as functions of $\tau_c$.}
+    \label{fig:pareto_iae_tv}
+\end{figure*}
+
+\input{tables/pareto_tradeoff_table}
+
+Along the SIMC locus the error decreases monotonically as $\tau_c$ shrinks ($1.90$, $1.27$, $1.08$, $0.95$ and $0.83$~K$\cdot$min for $\tau_c = 0.78$, $0.39$, $0.24$, $0.10$ and $0.03$~min) while $M_s$ rises from $1.07$ to $1.79$ and the travel from $10.9$ to $54.2$~L/min: speed is bought with robustness, and with a correct anti-windup the rate limit creates no interior optimum. For $\tau_c \ge 0.78$~min the travel reaches its floor of $10.9$~L/min, the net change of steady-state coolant flow required by the new setpoint. The scalarized front lies slightly below the SIMC locus, so a free PID improves on SIMC by a small margin at equal travel. SIMC, 2-DOF AMIGO and 2-DOF Optimal ITAE lie close to the front; AMIGO, TL and Optimal ITAE sit on its high-gain branch; ZN and CC are dominated, with more error and more travel than Optimal ITAE at $2.6$ to $2.8$ times its design $M_s$.
+
+\subsection{Robustness to sensor noise}
+\label{subsec:noise_results}
+Gaussian thermocouple noise $\sigma \in \{0.0, 0.1, 0.2, 0.5, 1.0\}$~K was applied to the nominal step with $30$ independent realizations per level and tuning, i.e. $1200$ closed-loop runs (Fig.~\ref{fig:noise_sensitivity}, Table~\ref{tab:noise_sensitivity}).
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.92\columnwidth]{figures/fig_noise_sensitivity.pdf}
+    \caption{Mean true-temperature IAE versus mean valve travel as the sensor noise grows from $\sigma = 0$ to $1.0$~K ($30$ runs per point).}
+    \label{fig:noise_sensitivity}
+\end{figure}
+
+\input{tables/noise_chattering_table}
+
+Since the IAE is evaluated on the true temperature, the table measures how much sensor noise each loop converts into real thermal deviation. Valve travel saturates first: $\mathrm{TV}$ is bounded by $|u_0 - \bar q_j| + S_{\max}t_f \approx 800$~L/min, and all tunings approach this ceiling at $\sigma = 0.1$--$0.2$~K (ZN: $773.7$, Optimal ITAE: $734.1$~L/min at $0.1$~K), SIMC being the least affected ($15.7 \rightarrow 603.0$~L/min). Under heavy noise the nominal ranking reverses. At $\sigma = 1.0$~K SIMC gives the lowest true-temperature error ($3.56 \pm 0.34$~K$\cdot$min), followed by Optimal ITAE ($4.16 \pm 0.63$), AMIGO ($4.38 \pm 0.92$) and TL ($4.58 \pm 0.81$), while the empirical rules give the largest (CC: $7.03 \pm 1.60$, ZN: $7.45 \pm 1.90$~K$\cdot$min). This is where the small margins of ZN and CC become decisive: noise excites the high-frequency band where their sensitivity peaks lie (Fig.~\ref{fig:sensitivity_magnitude}). The derivative filter bounds the high-frequency controller gain at $|K_p|(1 + N)$, but with $|K_p|$ between $7.03$ and $50.86$ this still maps $0.1$~K of noise into several L/min per sample; a measurement filter or a lower $N$ is needed where valve wear matters.
+
+\subsection{Global sensitivity under simultaneous uncertainty}
+\label{subsec:sobol_results}
+Sobol' indices \cite{sobol2001global, saltelli2010variance} decompose the variance of a closed-loop metric $Y \in \{\mathrm{IAE}, \mathrm{TV}\}$ over uncertain factors $\boldsymbol{\xi}$:
+\begin{equation}
+    S_i = \frac{\mathbb{V}_{\xi_i}\!\left[\mathbb{E}(Y \mid \xi_i)\right]}{\mathbb{V}(Y)}, \qquad S_{Ti} = \frac{\mathbb{E}_{\boldsymbol{\xi}_{\sim i}}\!\left[\mathbb{V}(Y \mid \boldsymbol{\xi}_{\sim i})\right]}{\mathbb{V}(Y)},
+    \label{eq:sobol}
+\end{equation}
+where $S_i$ is the share of variance explained by $\xi_i$ alone and $S_{Ti} \ge S_i$ adds its interactions. The factors were sampled uniformly on $E_a/R \in [0.97, 1.03]$, $UA \in [0.65, 1.05]$ (both relative to nominal), $C_{Af} \in [0.85, 1.15]$~mol/L and a pure sensor dead time $\theta_{\text{sensor}} \in [0, 0.1]$~min, for a $-2$~K step. Indices were estimated with Saltelli sampling and the SALib estimators \cite{herman2017salib} ($N = 512$, $3072$ runs per tuning) for five representative tunings (Fig.~\ref{fig:sobol}, Table~\ref{tab:sobol_sensitivity}); every table satisfies $S_{Ti} \ge S_i - 0.01$.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figures/fig_sobol_indices.pdf}
+    \caption{First-order ($S_1$, solid) and total-order ($S_T$, shaded) Sobol indices of IAE (left) and TV (right) for five PID tunings.}
+    \label{fig:sobol}
+\end{figure*}
+
+\input{tables/sobol_sensitivity}
+
+The decomposition shows that robustness changes what drives the variance. For every tuning, the variance of IAE is explained by feed concentration ($S_T = 0.695$--$0.708$) and heat-transfer capacity ($S_T = 0.485$--$0.559$), i.e. by how much heat must be removed and how much can be removed; the activation energy ($S_T = 0.063$--$0.113$) and the sensor dead time ($S_T \le 0.017$) contribute little. Valve activity tells the tunings apart. For SIMC its variance follows the physical load ($C_{Af}$: $S_T = 0.813$) and is insensitive to the sensor delay ($S_T = 0.001$). For the low-margin loops kinetics and delay matter: the TV of ZN is dominated by $\theta_{\text{sensor}}$ ($S_1 = 0.331$, $S_T = 0.519$), and those of TL and 2-DOF Optimal ITAE by $E_a/R$ ($S_T = 0.705$ and $0.634$). For every tuning $S_T$ substantially exceeds $S_1$ (e.g. TL, $UA$, TV: $S_1 = 0.041$, $S_T = 0.475$): the uncertainties act jointly, largely through saturation, so one-at-a-time robustness tests underestimate the effect of combined deviations.
+
+\subsection{Limitations}
+The study uses one reactor model with constant physical properties and constant $UA$, a valve without deadband or stiction, and Gaussian white measurement noise. The margins of Table~\ref{tab:loop_margins} are small-signal results that ignore the rate limit. The tuning comparison is restricted to fixed-gain PID control; gain scheduling and model-based controllers are outside its scope.

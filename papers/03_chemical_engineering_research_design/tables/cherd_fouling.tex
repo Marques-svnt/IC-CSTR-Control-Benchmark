@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Continuous fouling $d(UA)/dt=-\kappa_{\mathrm{foul}} r_A (UA-UA_{\min})$ with $\kappa_{\mathrm{foul}}=0.1$ L/mol and $UA_{\min}=0.30\,UA_0$. $t_{\mathrm{pred}}$: quasi-steady prediction (Eq.~\eqref{eq:t_pred}); $t_{\mathrm{sat}}$: first $q_j=u_{\max}$; $t_{\mathrm{runaway}}$: first $T-T_{sp}>5$ K.}
+\label{tab:fouling}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Point & Architecture & $t_{\mathrm{pred}}$ (min) & $t_{\mathrm{sat}}$ (min) & $UA(t_{\mathrm{sat}})/UA_0$ (\%) & $t_{\mathrm{runaway}}$ (min) & $T(80$ min) (K) \\
+\midrule
+Nominal & SISO SIMC & 8.92 & 10.02 & 57.0 & 13.18 & 416.40 \\
+Nominal & Cascade & 8.92 & 9.26 & 59.0 & 13.18 & 416.40 \\
+Saddle & SISO SIMC & 46.36 & 32.32 & 44.8 & 28.06 & 387.87 \\
+Saddle & Cascade & 46.36 & 33.06 & 43.3 & 4.06 & 387.88 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
