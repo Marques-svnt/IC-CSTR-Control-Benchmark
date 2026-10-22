@@ -394,107 +394,53 @@
 
 ---
 
-### [ ] `IC-T17`: Directory Normalization (`papers/`) & `.gitignore` Sanitization
+### [x] `IC-T17`: Directory Normalization (`papers/`) & `.gitignore` Sanitization
 - **Blocked by:** Wave 4
 - **Files / Paths:**
   - `.gitignore`
   - `papers/01_journal_of_process_control/`
   - `papers/02_computers_chemical_engineering/`
   - `papers/03_chemical_engineering_research_design/`
-  - `Artigos_Rascunhos/`
-- **Requirements:**
-  1. **Migrate Paper Directories:**
-     - Move `Artigos_Rascunhos/01_Journal_of_Process_Control/` $\to$ `papers/01_journal_of_process_control/`
-     - Move `Artigos_Rascunhos/02_Computers_Chemical_Engineering/` $\to$ `papers/02_computers_chemical_engineering/`
-     - Move `Artigos_Rascunhos/03_Chemical_Engineering_Research_Design/` $\to$ `papers/03_chemical_engineering_research_design/`
-     - Remove obsolete symlinks or legacy folders (e.g. `Artigos_Rascunhos/Artigo_01_PID_Neural_Comparativo`, `Artigos_Rascunhos/Artigo_01_Classic_Methods` if redundant, or archive cleanly).
-     - Ensure each paper directory contains its `ready-to-overleaf/` and `ready_to_overleaf.zip`.
-  2. **Sanitize `.gitignore`:**
-     - Exclude virtual environments: `.venv/`, `.venv-windows/`, `.tools-venv/`, `env/`, `venv/`.
-     - Exclude test and coverage caches: `.coverage`, `.hypothesis/`, `.pytest_cache/`, `.ruff_cache/`, `.mypy_cache/`, `htmlcov/`.
-     - Exclude IDE and workspace folders: `.spyproject/`, `.vscode/`, `*.code-workspace`.
-     - Exclude LaTeX build temporaries: `*.aux`, `*.bbl`, `*.bcf`, `*.blg`, `*.fdb_latexmk`, `*.fls`, `*.lof`, `*.log`, `*.lot`, `*.out`, `*.run.xml`, `*.synctex.gz`, `*.toc`.
-     - Exclude literature PDF files in `Biblioteca/` to avoid copyright and bloat: `Biblioteca/**/*.pdf`.
-     - **Whitelist Critical Artifacts:**
-       - Track paper figures: `!papers/**/figures/*.pdf`
-       - Track paper tables: `!papers/**/tables/*.tex`
-       - Track validated CSV results: `!results/*.csv`, `!results/**/*.csv`
-       - Track Overleaf packages: `!papers/**/ready_to_overleaf.zip`
-- **Acceptance Criteria:**
-  - `papers/` structure is clean; `git status` (once initialized) shows no untracked `.venv`, `.aux`, or literature PDFs.
+  - `archive/legacy_drafts/`
+- **Accomplishments:**
+  - Migrated `Artigos_Rascunhos/` into canonical `papers/` structure with 3 target journals.
+  - Configured `.gitignore` with strict rules, ignoring `.venv`, build temporaries, literature PDFs in `Biblioteca/`, and sensitive files (`*.olauth`). Whitelisted paper figures (`*.pdf`), tables (`*.tex`), and results (`*.csv`).
 
 ---
 
-### [ ] `IC-T18`: Git Initialization, Author Identity & Semantic Initial Commit
+### [x] `IC-T18`: Git Initialization, Author Identity & Semantic Initial Commit
 - **Blocked by:** `IC-T17`
-- **Files / Paths:**
-  - `.git/`
-- **Requirements:**
-  1. Initialize local repository:
-     ```bash
-     git init
-     ```
-  2. Configure local repository identity (if global is unset):
-     ```bash
-     git config user.name "Gabriel Marques de Andrade"
-     git config user.email "marques.andrade@uesc.br"
-     ```
-  3. Stage all sanitized files:
-     ```bash
-     git add .gitignore pyproject.toml requirements.txt README.md CLAUDE.md src/ experiments/ tests/ results/ papers/ .antigravity/
-     ```
-  4. Verify staged files and total repository size ($< 15\text{ MB}$):
-     ```bash
-     git count-objects -vH
-     ```
-  5. Commit with conventional commit message:
-     ```bash
-     git commit -m "feat(repo): initial scientific monorepo architecture with 3-article elsevier pipeline"
-     ```
-- **Acceptance Criteria:**
-  - Clean initial commit on branch `main`; `git status` shows 0 untracked build artifacts.
+- **Accomplishments:**
+  - Local repository initialized on branch `main`.
+  - Author identity configured: `Gabriel Marques de Andrade <marques.andrade@uesc.br>`.
+  - Initial commit created with 6.95 MiB total size (< 15 MiB limit).
 
 ---
 
-### [ ] `IC-T19`: Entrypoint Modernization (`CLAUDE.md`, `pyproject.toml`, `README.md`)
+### [x] `IC-T19`: Entrypoint Modernization (`CLAUDE.md`, `pyproject.toml`, `README.md`)
 - **Blocked by:** `IC-T18`
-- **Files:**
-  - `CLAUDE.md`
-  - `README.md`
-  - `pyproject.toml`
-- **Requirements:**
-  1. **Update `CLAUDE.md`:**
-     - Replace legacy paths (`Artigos_Rascunhos/Artigo_01_PID_Neural_Comparativo`) with `papers/01_journal_of_process_control/`, `papers/02_computers_chemical_engineering/`, `papers/03_chemical_engineering_research_design/`.
-     - Document single reproduction commands for all 3 articles.
-     - Reiterate Anti-Mocking Rule and test commands (`.venv/bin/pytest -q`).
-  2. **Update `README.md`:**
-     - Structure formal academic README for `Marques-svnt/IC-PID-Neural-Agents`:
-       - Title and Badges (Python 3.12, Pytest 124+ passed, Ruff Clean, License MIT/Academic).
-       - Overview of the 3 articles and target Elsevier journals.
-       - Quickstart: installation of `.venv`, running full test suite.
-       - Exact 1-command reproduction recipes for each paper's tables and figures.
-       - Overleaf deployment instructions using `ready_to_overleaf.zip`.
-       - Data availability and Zenodo citation notice.
-- **Acceptance Criteria:**
-  - `CLAUDE.md` and `README.md` accurately guide researchers and AI agents through the unified monorepo.
+- **Accomplishments:**
+  - Updated `CLAUDE.md` to reference `papers/` structure, 124 passed tests, and active ticket queue.
+  - Documented reproduction recipes and build assets.
 
 ---
 
-### [ ] `IC-T20`: Semantic Release Tagging (`v1.0.0-jpc-submission`) & Test Suite Audit
+### [x] `IC-T20`: Semantic Release Tagging (`v1.0.0-jpc-submission`) & Test Suite Audit
 - **Blocked by:** `IC-T19`
-- **Requirements:**
-  1. Tag Article 1 submission snapshot:
-     ```bash
-     git tag -a v1.0.0-jpc-submission -m "Release corresponding to Journal of Process Control submission: Robust PID under saturation"
-     ```
-  2. Run full pytest verification:
-     ```bash
-     .venv/bin/pytest -q
-     ```
-     Verify that all 124 tests pass (with 1 expected xfail on TL-PID).
-  3. Verify clean compilation of all 3 manuscripts from their new paths:
-     - `cd papers/01_journal_of_process_control && pdflatex -interaction=nonstopmode main.tex`
-     - `cd papers/02_computers_chemical_engineering && pdflatex -interaction=nonstopmode main.tex`
-     - `cd papers/03_chemical_engineering_research_design && pdflatex -interaction=nonstopmode main.tex`
-- **Acceptance Criteria:**
-  - Tag `v1.0.0-jpc-submission` created; test suite 100% green; all 3 articles compile with 0 errors.
+- **Accomplishments:**
+  - Tag `v1.0.0-jpc-submission` created and pushed to GitHub.
+  - Full pytest verification: 124 passed, 1 expected xfail (TL-PID).
+  - All 3 manuscripts compile with 0 errors.
+  - Pushed to `git@github.com:Marques-svnt/IC-PID-Neural-Agents.git` with legacy branch preserved at `archive/legacy-monolith`.
+
+---
+
+## Execution Report — Wave 5 (`IC-T17` → `IC-T20`) (2026-10-22)
+- **Status:** All four tickets completed, audited, hardened and pushed to GitHub.
+- **Remote URL:** `git@github.com:Marques-svnt/IC-PID-Neural-Agents.git`
+- **Branch `main`:** Synchronized with commit `c9ac4b5`.
+- **Branch `archive/legacy-monolith`:** Preserves old history (`1c840b5`).
+- **Release Tag:** `v1.0.0-jpc-submission` points to `c9ac4b5`.
+- **Security Audit:** Overleaf session credentials (`.olauth`) and pickle caches purged from Git.
+- **LaTeX Footer Fix:** `cas-common.sty` uncommented `\clearpage` in `\AtEndDocument`, fixing the "Page 10 of 8" footer anomaly across all papers.
+
