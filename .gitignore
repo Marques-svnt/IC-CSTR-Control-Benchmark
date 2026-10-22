@@ -67,6 +67,10 @@ Biblioteca/**/*.pdf
 archive/
 results/log_*.txt
 results/**/log_*.txt
+*.olauth
+scripts/overleaf/.olauth
+*.pkl
+
 
 # ========================
 # Whitelist Exceptions (Must be tracked)
