@@ -1,93 +1,62 @@
-# Suíte de Testes Automatizados e Cobertura de Código — Artigo 1
+# Suíte de Testes Automatizados e Testes Baseados em Propriedades
 
 > **Documentação de Engenharia da Qualidade de Software e Verificação Numérica**  
-> Todos os componentes matemáticos, controladores, algoritmos de otimização e rotinas de pós-processamento são validados por uma suíte abrangente de 56 testes automatizados utilizando o framework `pytest`.
+> A integridade matemática das equações fenomenológicas, dos controladores em tempo discreto, do integrador RK45 e das métricas de desempenho é garantida por uma suíte de **125 testes automatizados** utilizando os frameworks `pytest` e `hypothesis`.
+
+[![Tests: Pytest](https://img.shields.io/badge/tests-124%20passed%20%7C%201%20xfailed-brightgreen.svg)](https://docs.pytest.org/)
 
 ---
 
-## Visão Geral da Suíte de Testes
+## 1. Visão Geral da Suíte de Testes (15 Módulos de Verificação)
 
-| Arquivo de Teste | Quantidade de Testes | Componentes Validados |
+| Arquivo de Teste | Qtd. Testes | Escopo e Componentes Validados |
 |---|---|---|
-| [`test_cstr_plant.py`](file:///C:/Users/biely/OneDrive/Área%20de%20Trabalho/2026.2/IC/tests/test_cstr_plant.py) | 10 | Conservação de massa/energia, cinética de Arrhenius, ponto de equilíbrio e Jacobiana analítica vs diferenças finitas |
-| [`test_pid_controllers.py`](file:///C:/Users/biely/OneDrive/Área%20de%20Trabalho/2026.2/IC/tests/test_pid_controllers.py) | 7 | Ações P, I, D, anti-windup (Clamping e Back-Calculation), filtro N e derivada na medição |
-| [`test_tuning_methods.py`](file:///C:/Users/biely/OneDrive/Área%20de%20Trabalho/2026.2/IC/tests/test_tuning_methods.py) | 6 | Sintonias analíticas (ZN, CC, SIMC), cálculo do pico de sensibilidade $M_s$ e otimização ITAE |
-| [`test_metrics.py`](file:///C:/Users/biely/OneDrive/Área%20de%20Trabalho/2026.2/IC/tests/test_metrics.py) | 4 | Exatidão matemática de IAE, ITAE, ISE, TV, tempo de acomodação ($t_s$) e sobressinal ($M_p$) |
-| [`test_pareto.py`](file:///C:/Users/biely/OneDrive/Área%20de%20Trabalho/2026.2/IC/tests/test_pareto.py) | 26 | Relação de dominância de Pareto, filtragem da fronteira com restrição $M_s \le 1.6$, normalização e ponto de joelho |
-| [`test_plot_styles.py`](file:///C:/Users/biely/OneDrive/Área%20de%20Trabalho/2026.2/IC/tests/test_plot_styles.py) | 3 | Dimensões IEEE (coluna simples e dupla), tipografia vetorial e paleta de alto contraste |
-| **Total Geral** | **56 Testes** | **100% de Sucesso** |
+| [`test_cstr_plant.py`](test_cstr_plant.py) | 10 | Conservação de massa/energia, cinética de Arrhenius, cálculo de estado estacionário e Jacobiana analítica vs diferenças finitas centrais ($O(h^2)$). |
+| [`test_pid_controllers.py`](test_pid_controllers.py) | 7 | Ações P, I, D, anti-windup direcional cobrindo saturação de amplitude $[u_{\min}, u_{\max}]$ e taxa de deslocamento ($S_{\max}$), filtro N e derivada na medição. |
+| [`test_classical_control.py`](test_classical_control.py) | 14 | Sintonias clássicas (ZN, CC, TL, AMIGO, SIMC), congelamento do integrador durante rampa limitada por *slew-rate* e cálculo de $M_s$. (1 xfail estrito em TL-PID $M_s \approx 2.32$). |
+| [`test_tuning_methods.py`](test_tuning_methods.py) | 6 | Sintonias analíticas para ação reversa ($K_p < 0$), cálculo de pico $H_\infty$ e otimização Nelder-Mead constrita com barreira quadrática. |
+| [`test_cascade_controller.py`](test_cascade_controller.py) | 4 | Estrutura em cascata mestre-escravo, propagação de limites físicos e desacoplamento dinâmico. |
+| [`test_cascade_and_unstable.py`](test_cascade_and_unstable.py) | 11 | Estabilização no ponto de sela instável com autovalor positivo ($\lambda_1 = +0.744\text{ min}^{-1}$), cinética contínua de incrustação e detecção de $t_{\text{runaway}}$. |
+| [`test_nmpc_closed_loop.py`](test_nmpc_closed_loop.py) | 4 | Simulação em malha fechada do controlador NMPC via CasADi/IPOPT sob horizontes finitos. |
+| [`test_nmpc_and_neural_control.py`](test_nmpc_and_neural_control.py) | 5 | Verificação de tempo de execução, ausência de falhas no solver e interfaces preditivas. |
+| [`test_sobol_and_nmpc.py`](test_sobol_and_nmpc.py) | 5 | Invariância estrita a ruído térmico do NMPC-Oracle, equivalência nominal entre NMPC-MHE e NMPC-Oracle na ausência de ruído, e decomposição de variância de Sobol. |
+| [`test_property_invariants.py`](test_property_invariants.py) | 18 | **Testes baseados em propriedades via `hypothesis`:** Não-negatividade das concentrações ($C_A \ge 0$), temperaturas físicas ($T > 0$), dissipação de energia e invariantes de Van Heerden. |
+| [`test_metrics.py`](test_metrics.py) | 6 | Exatidão matemática de $\text{IAE}$ contra o estado verdadeiro ($T_{\text{true}}$ sem ruído), $\text{ITAE}$ ajustado ao tempo do degrau ($t - t_{\text{step}}$) e variação total do atuador ($\text{TV}$). |
+| [`test_pareto.py`](test_pareto.py) | 26 | Relação de dominância multi-objetivo, filtragem de fronteira com $M_s \le 1.6$, normalização euclidiana e detecção do ponto de joelho (*knee point*). |
+| [`test_plot_styles.py`](test_plot_styles.py) | 3 | Conformidade tipográfica com periódicos da Elsevier e IEEE Transactions ($300\text{ DPI}$, famílias vetoriais e paletas acessíveis). |
+| [`test_neuro_pid.py`](test_neuro_pid.py) | 4 | Verificação da rede neural adaptativa acoplada aos ganhos PID. |
+| [`test_supervisory_graph.py`](test_supervisory_graph.py) | 2 | Grafo de supervisão de segurança e desvio de rota em condições de risco de runaway. |
+| **Total Geral** | **125 Testes** | **124 Passed \| 1 Expected XFail (100% de Conformidade)** |
 
 ---
 
-## Fixtures Compartilhadas (`conftest.py`)
+## 2. Testes Baseados em Propriedades (`test_property_invariants.py`)
 
-O arquivo [`conftest.py`](file:///C:/Users/biely/OneDrive/Área%20de%20Trabalho/2026.2/IC/tests/conftest.py) centraliza as configurações reutilizáveis e objetos fundamentais:
+Para além dos testes unitários pontuais, funções matemáticas e rotinas físicas são submetidas a testes de estresse por propriedades via biblioteca **`hypothesis`** (`@given(...)`):
 
-* **`nominal_plant`:** Instância inicializada da classe `CSTRPlant` com parâmetros nominais.
-* **`nominal_steady_state`:** Estado de equilíbrio exato calculado numericamente para $\bar{q}_j = 100.0\text{ L/min}$.
-* **`foptd_model`:** Modelo First-Order Plus Time Delay calibrado ($K_p = -0.135$, $\tau = 0.380$, $\theta = 0.095$).
-* **`actuator_limits`:** Limites físicos operacionais ($u_{\min} = 0$, $u_{\max} = 300\text{ L/min}$, $\text{slew} = 100\text{ L/min}^2$).
-
----
-
-## Detalhamento dos Módulos de Teste
-
-### 1. `test_cstr_plant.py` — Validação Física do Reator
-* **Não-negatividade da Cinética:** Garante que a taxa de reação $r_A(C_A, T) \ge 0$ para qualquer faixa de concentração e temperatura, mesmo sob perturbações térmicas extremas.
-* **Convergência do Ponto de Equilíbrio:** Verifica que `find_steady_state` retorna um vetor de estados onde os resíduos das derivadas são estritamente nulos ($\|\dot{x}\| < 10^{-6}$).
-* **Jacobiana Analítica vs Diferenças Finitas:** Compara os elementos das matrizes Jacobiana contínua $A = \partial f/\partial x$ e $B = \partial f/\partial u$ calculados analiticamente contra aproximações de diferenças finitas centrais de segunda ordem ($O(h^2)$ com $h = 10^{-6}$), garantindo erro relativo inferior a $10^{-4}$.
-* **Injeção Dinâmica de Perturbações:** Valida a resposta das derivadas quando $T_f$ ou $C_{Af}$ são perturbados em tempo real.
-
-### 2. `test_pid_controllers.py` — Algoritmo de Controle Industrial
-* **Desacoplamento Proporcional, Integral e Derivativo:** Valida a resposta individual de cada termo em relação a funções erro conhecidas.
-* **Eliminação do Choque Derivativo (*Derivative Kick*):** Confirma que quando `derivative_on_measurement=True`, um degrau puro no setpoint não provoca pulsos infinitos na ação de controle.
-* **Eficácia dos Métodos Anti-Windup:**
-  * No modo `CLAMPING`, a ação integral é imediatamente congelada durante a saturação da válvula se o erro persistir, evitando sobressinais catastróficos no retorno à faixa linear.
-  * No modo `BACK_CALCULATION`, a ação integral é corrigida dinamicamente pela diferença $(u_{\text{applied}} - u_{\text{unconstrained}})$.
-
-### 3. `test_tuning_methods.py` — Algoritmos de Sintonia e Robustez
-* **Sintonias Analíticas:** Verifica as fórmulas de Ziegler-Nichols, Cohen-Coon e Skogestad SIMC para plantas com ganho estático negativo ($K_p < 0$), certificando que os ganhos proporcionais calculados preservam o sinal correto para ação reversa.
-* **Cálculo da Sensibilidade Máxima ($M_s$):** Confirma que a função `calculate_maximum_sensitivity` calcula corretamente a norma $H_\infty$ da sensibilidade de malha fechada sobre uma malha contínua de frequências.
-* **Otimização ITAE Constrita:** Assegura que a rotina `tune_by_optimization` converge para ganhos factíveis que respeitam a restrição $M_s \le 1.6$.
-
-### 4. `test_metrics.py` — Precisão das Métricas
-* **Quadratura Numérica:** Compara o cálculo trapezoidal de IAE e ITAE com integrais analíticas exatas de funções de teste exponenciais e degrau.
-* **Variação Total (TV):** Valida a soma de degraus discretos no atuador.
-* **Tempo de Acomodação e Sobressinal:** Verifica a detecção correta da faixa de acomodação de $\pm 2\%$ e a identificação do pico percentual máximo.
-
-### 5. `test_pareto.py` — Análise de Dominância Multi-Objetivo
-* **Detecção de Dominância:** Testa casos limites onde um ponto é estritamente melhor, equivalente ou dominado em $(\text{IAE}, \text{TV})$.
-* **Filtro de Robustez:** Garante que soluções com $M_s > 1.6$ sejam descartadas antes da avaliação de não-dominância.
-* **Knee Point:** Valida que o ponto de joelho selecionado corresponde exatamente ao de menor distância geométrica ao ponto utópico normalizado.
-
-### 6. `test_plot_styles.py` — Padrão Gráfico Editorial
-* Certifica a configuração de `matplotlib.rcParams` para impressão e publicação IEEE, incluindo resolução mínima de 300 DPI, famílias tipográficas serifadas e dimensões físicas das figuras.
+* **Conservação e Não-Negatividade de Estados:** Para quaisquer perturbações aleatórias sorteadas no espaço de parâmetros válidos, o vetor de concentração física satisfaz estritamente $C_A(t) \ge 0$ e a temperatura do reator permanece dentro dos limites de consistência física ($T(t) \ge 100\text{ K}$).
+* **Monotonicidade de Atuadores:** A taxa de variação da ação de controle aplicada pelo atuador respeita $|u_k - u_{k-1}| \le S_{\max} \cdot \Delta t$ em todas as transições.
+* **Invariantes de Van Heerden:** Verificação de que para vazões de fluido refrigerante $q_j > q_{j,\text{crit}}$, a curva de remoção de calor intersecta a curva de geração de calor em equilíbrios termodinâmicos válidos.
 
 ---
 
-## Como Executar os Testes
+## 3. Como Executar a Suíte de Testes
 
-### Execução via Terminal (PowerShell)
+Certifique-se de que o ambiente virtual está ativo:
 
-```powershell
-# Ativar o ambiente virtual
-.venv\Scripts\Activate.ps1
+```bash
+# Ativação do ambiente
+source .venv/bin/activate
 
-# 1. Executar todos os 56 testes em modo detalhado
-python -m pytest tests/ -v --tb=short
+# 1. Execução rápida e silenciosa (resultado padrão)
+pytest -q
 
-# 2. Executar um arquivo de teste específico
-python -m pytest tests/test_cstr_plant.py -v
+# 2. Execução detalhada com rastreamento de cada teste
+pytest -v --tb=short
 
-# 3. Executar com relatório de cobertura de código
-python -m pytest --cov=src --cov-report=term-missing tests/
+# 3. Execução focada nos testes de propriedades matemáticos (Hypothesis)
+pytest tests/test_property_invariants.py -v
+
+# 4. Execução com relatório de cobertura de código
+pytest --cov=src --cov-report=term-missing tests/
 ```
-
-### Execução no Spyder 6
-
-1. Abra o arquivo de teste desejado no editor do Spyder 6 (ex.: `tests/test_cstr_plant.py`).
-2. No console IPython do Spyder, execute:
-   ```python
-   !pytest tests/ -v
-   ```
-3. Alternativamente, para inspecionar um teste interativamente, selecione o bloco do teste e tecle **`F9`** (executar seleção).

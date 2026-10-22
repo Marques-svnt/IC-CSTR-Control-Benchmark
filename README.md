@@ -1,42 +1,55 @@
-# IC — Controle Inteligente de Processos Químicos (PROIC/UESC)
-## Artigo 1: Benchmark Abrangente de Sintonias PID em Reator CSTR Não-Linear
+# IC — CSTR Control Benchmark: Nonlinear Modeling, Robust PID, NMPC & Cascade Control
 
 > **Projeto de Iniciação Científica (PROIC)**  
 > **Instituição:** Universidade Estadual de Santa Cruz (UESC) — Departamento de Ciências Exatas e Tecnológicas (DCET) — Colegiado de Engenharia Química  
 > **Orientador:** Prof. Dr. Elilton Rodrigues Edwards  
 > **Pesquisador Bolsista / Autor:** Gabriel Marques de Andrade  
-> **Edital:** PROIC/FAPESB/CNPq (Edital 34/2026)  
-> **Documento Base / Tese:** `archive/legacy_drafts/Tese.pdf` (local, fora do Git) — *"Contornabilidade, Saturação de Atuador e Trade-offs de Robustez no Controle PID Clássico de CSTRs Exotérmicos Altamente Não Lineares"*  
-> **Status:** ✅ **Artigo 1 Finalizado (Camera-Ready para Submissão) & Tese Concluída**
+> **Apoio e Financiamento:** FAPESB / CNPq (Edital 34/2026)  
+> **Repositório Oficial:** [https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark](https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark)  
+> **Status:** ✅ **Trilogia Elsevier Q1 (cas-dc) Finalizada & Código 100% Reprodutível**
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![Tests: Pytest](https://img.shields.io/badge/tests-56%20passed-brightgreen.svg)](https://docs.pytest.org/)
-[![Coverage: 75%](https://img.shields.io/badge/coverage-75%25-green.svg)](https://coverage.readthedocs.io/)
+[![Tests: Pytest](https://img.shields.io/badge/tests-124%20passed%20%7C%201%20xfailed-brightgreen.svg)](https://docs.pytest.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![Release: v1.0.0-jpc-submission](https://img.shields.io/badge/release-v1.0.0--jpc--submission-orange.svg)](https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark/releases/tag/v1.0.0-jpc-submission)
 
 ---
 
-## Sumário Executivo
+## 1. Sumário Executivo: A Trilogia de Artigos Elsevier
 
-Este repositório abriga o código-fonte, experimentos numéricos, testes automatizados e o artigo científico completo referente ao **Artigo 1** da trilogia do projeto PROIC/UESC:
+Este repositório abriga a infraestrutura computacional, modelos fenomenológicos, controladores e dados experimentais referentes aos **três artigos científicos independentes de alto impacto (Qualis A1 / Scopus Q1)** elaborados no padrão editorial de duas colunas da **Elsevier (`cas-dc.cls`)**:
 
-> **"A Comprehensive Benchmark on Classical PID Tuning Strategies for Highly Non-linear CSTR: Robustness, Actuator Saturation, and Multi-Objective Trade-offs"**  
-> *Artigo submetido / pronto para submissão (Journal of Process Control / CBA 2026).*
+```mermaid
+graph LR
+    CSTR["Planta Fenomenológica CSTR<br>(Arrhenius, Saturação & Slew-Rate)"] --> P1["Artigo 1: JPC<br>PID Robusto, Anti-Windup & Sobol"]
+    CSTR --> P2["Artigo 2: CACE<br>NMPC-Oracle vs MHE vs PID sob Fouling"]
+    CSTR --> P3["Artigo 3: ChERD<br>Ponto de Sela Instável & Cascata SIMC"]
 
-O projeto desenvolve uma infraestrutura científica modular e estritamente reprodutível em Python para simulação fenomenológica de um Reator Contínuo de Mistura (CSTR) não-isotérmico com reação exotérmica de primeira ordem ($A \to B$), modelado via cinético de Arrhenius altamente não-linear e dinâmica térmica de camisa de resfriamento.
+    style CSTR fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style P1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style P2 fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style P3 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+```
 
-O estudo avalia exaustivamente quatro abordagens de projeto e sintonia de controladores PID industriais:
-1. **Ziegler-Nichols em Malha Aberta (Curva de Reação)**
-2. **Cohen-Coon (Compensação para sistemas com tempo morto)**
-3. **Skogestad SIMC (Simple Internal Model Control)**
-4. **Otimização Numérica Não-Linear Constrita (Nelder-Mead minimizando ITAE com restrição de sensibilidade máxima $M_s \le 1.6$)**
+### Artigo 1: *Journal of Process Control* (JPC)
+* **Título:** *Robust PID Tuning under Actuator Saturation in Nonlinear Exothermic CSTRs: Performance, Anti-Windup and Sensitivity Trade-offs*
+* **Diretório:** [`papers/01_journal_of_process_control/`](papers/01_journal_of_process_control/) (11 páginas em duas colunas)
+* **Escopo:** Benchmark exaustivo de 8 sintonias PID (Ziegler-Nichols, Cohen-Coon, Tyreus-Luyben, AMIGO, 2-DOF AMIGO, Skogestad SIMC, Ótimo ITAE com $M_s \le 1.6$, 2-DOF Ótimo ITAE), mecanismo de anti-windup direcional sensível a *slew-rate*, 1200 simulações de Monte Carlo com ruído térmico e Análise de Sensibilidade Global de Sobol ($N=512$).
 
-As estratégias são comparadas em condições nominais de rastreamento de setpoint, rejeição de distúrbios de carga não medidos (choques de temperatura e concentração de alimentação), degradação por incerteza paramétrica/incrustação (*fouling* no trocador de calor de até 40%), presença de ruído de medição estocástico e exploração contínua da fronteira de Pareto multi-objetivo entre acurácia de rastreamento ($\text{IAE}$) e desgaste físico do atuador ($\text{TV}$).
+### Artigo 2: *Computers & Chemical Engineering* (CACE)
+* **Título:** *When Does Nonlinear Model Predictive Control Outperform Robust PID? A Comparative Study under Fouling and Actuator Constraints*
+* **Diretório:** [`papers/02_computers_chemical_engineering/`](papers/02_computers_chemical_engineering/) (10 páginas em duas colunas)
+* **Escopo:** Comparativo rigoroso entre controle linear robusto (AMIGO e Ótimo ITAE) e controle preditivo não-linear baseado no solver CasADi/IPOPT (NMPC-Oracle com estado pleno vs. NMPC-MHE com horizonte móvel de estimação de estados e incrustação de camisa $\alpha_{UA}$). Demonstra que o NMPC apresenta ganho modesto de $2.3\%$ no caso nominal, mas supera o melhor PID em $21.0\%$ sob perda abrupta de troca térmica ($40\%$ de incrustação).
+
+### Artigo 3: *Chemical Engineering Research and Design* (ChERD)
+* **Título:** *Thermal Controllability Limits and Cascade Control in Exothermic CSTRs under Cooling Capacity Degradation*
+* **Diretório:** [`papers/03_chemical_engineering_research_design/`](papers/03_chemical_engineering_research_design/) (10 páginas em duas colunas)
+* **Escopo:** Operabilidade na janela intermediária metaestável de ponto de sela ($T = 345\text{ K}$, autovalor instável $\lambda_1 = +0.744\text{ min}^{-1}$), cinética contínua de incrustação $d(UA)/dt = -\kappa_{\text{foul}} r_A (UA - UA_{\min})$ e derivação analítica do tempo crítico até o descontrole térmico ($t_{\text{runaway}}$). Demonstra a estabilização por controle em cascata $T \to T_j \to q_j$ via Skogestad SIMC sequencial com compensação *feedforward* de utilidade.
 
 ---
 
-## Modelagem Fenomenológica do CSTR
+## 2. Modelagem Fenomenológica do CSTR
 
 ```
            Alimentação de Carga
@@ -57,41 +70,27 @@ As estratégias são comparadas em condições nominais de rastreamento de setpo
               (q, C_A, T)
 ```
 
-### 1. Balanço Material da Espécie Reagente ($C_A$)
+O sistema não-linear de três estados governa os balanços dinâmicos de massa e energia acoplados:
 
-Assumindo volume de reação líquido constante $V$ e mistura perfeita:
-
+### 1. Balanço Material de Reagente ($C_A$)
 $$\frac{d C_A(t)}{dt} = \frac{q}{V}\left(C_{Af} - C_A(t)\right) - r_A(C_A, T)$$
+com cinética de Arrhenius de primeira ordem:
+$$r_A(C_A, T) = k_0 \exp\left(-\frac{E}{R \cdot T(t)}\right) \cdot C_A(t)$$
 
-onde a taxa de consumo da espécie $A$ é dada por cinética de primeira ordem:
+### 2. Balanço de Energia no Reator ($T$)
+$$\frac{d T(t)}{dt} = \frac{q}{V}(T_f - T(t)) + \frac{(-\Delta H)}{\rho c_p} r_A(C_A, T) - \frac{UA}{V \rho c_p}(T(t) - T_j(t))$$
 
-$$r_A(C_A, T) = k(T) \cdot C_A(t)$$
-
-### 2. Cinética Não-Linear de Arrhenius
-
-A dependência térmica da velocidade de reação introduz forte não-linearidade exponencial:
-
-$$k(T) = k_0 \exp\left(-\frac{E}{R \cdot T(t)}\right)$$
-
-onde $k_0$ é o fator pré-exponencial e $E/R$ é a energia de ativação normalizada pela constante universal dos gases.
-
-### 3. Balanço de Energia Térmica no Reator ($T$)
-
-Considerando entalpia de reação exotérmica $\Delta H < 0$ e transferência térmica através da parede metálica com coeficiente global $UA$:
-
-$$\frac{d T(t)}{dt} = \frac{q}{V}(T_f - T(t)) + \frac{(-\Delta H)}{\rho c_p} k(T) C_A(t) - \frac{UA}{V \rho c_p}(T(t) - T_j(t))$$
-
-### 4. Balanço de Energia Térmica na Camisa de Resfriamento ($T_j$)
-
-Considerando a camisa perfeitamente agitada de volume $V_j$, alimentada com vazão manipulada $q_j(t)$ e temperatura de suprimento $T_{jf}$:
-
+### 3. Balanço de Energia na Camisa de Resfriamento ($T_j$)
 $$\frac{d T_j(t)}{dt} = \frac{q_j(t)}{V_j}(T_{jf} - T_j(t)) + \frac{UA}{V_j \rho_j c_{pj}}(T(t) - T_j(t))$$
+
+### 4. Dinâmica do Atuador de Válvula (Saturação & Taxa de Deslocamento)
+A vazão manipulada $q_j(t)$ é restrita pelo envelope físico da válvula de resfriamento:
+$$u_{\min} \le u(t) \le u_{\max}, \quad \left|\frac{du}{dt}\right| \le S_{\max}$$
+onde $u_{\min} = 0.0\text{ L/min}$, $u_{\max} = 300.0\text{ L/min}$ e $S_{\max} = 80.0\text{ L/min}^2$.
 
 ---
 
-## Parâmetros Físico-Químicos Nominais
-
-Os parâmetros nominais foram selecionados com base no benchmark acadêmico consagrado da literatura de controle de processos químicos (Seborg et al., Ogunnaike & Ray):
+## 3. Parâmetros Físicos e Ponto de Operação Nominal
 
 | Parâmetro | Descrição | Valor | Unidade |
 |---|---|---|---|
@@ -108,253 +107,147 @@ Os parâmetros nominais foram selecionados com base no benchmark acadêmico cons
 | $T_f$ | Temperatura da corrente de alimentação | $350.0$ | $\text{K}$ |
 | $T_{jf}$ | Temperatura do refrigerante de alimentação | $300.0$ | $\text{K}$ |
 
-### Ponto de Operação Nominal em Regime Permanente ($\bar{x}_{ss}$)
-
-Resolvendo o sistema não-linear residual $f(\bar{x}_{ss}, \bar{q}_{j,ss}) = 0$ via solver de Powell híbrido (`scipy.optimize.root`) para a vazão nominal $\bar{q}_j = 100.0\text{ L/min}$:
-* Concentração de reagente: $\bar{C}_A = 0.1345\text{ mol/L}$
-* Temperatura do reator: $\bar{T} = 344.16\text{ K}$
-* Temperatura da camisa: $\bar{T}_j = 330.43\text{ K}$
-
----
-
-## Identificação FOPTD e Sintonias PID
-
-A identificação paramétrica é conduzida através de um ensaio em malha aberta aplicando um degrau positivo de vazão de resfriamento $\Delta q_j = +10.0\text{ L/min}$ a partir do ponto nominal. A dinâmica térmica do reator é ajustada ao modelo de Primeira Ordem com Tempo Morto (FOPTD):
-
-$$G(s) = \frac{\Delta T(s)}{\Delta q_j(s)} = \frac{K_p \, e^{-\theta s}}{\tau s + 1}$$
-
-Parâmetros identificados por mínimos quadrados não-lineares:
-* Ganho estático: $K_p \approx -0.135\text{ K / (L/min)}$ (processo de ação reversa: aumentar resfriamento diminui temperatura)
-* Constante de tempo: $\tau \approx 0.380\text{ min}$
-* Tempo morto aparente: $\theta \approx 0.095\text{ min}$
-* Razão de controlabilidade: $\theta / \tau \approx 0.25$ (atraso moderado)
-
-### 1. Ziegler-Nichols (Curva de Reação em Malha Aberta)
-Fórmula empírica clássica baseada na inclinação máxima e atraso aparente:
-$$K_p = \text{sgn}(K) \frac{1.2 \, \tau}{|K| \, \theta}, \quad T_i = 2.0 \, \theta, \quad T_d = 0.5 \, \theta$$
-
-### 2. Cohen-Coon (Compensação para Razões $\theta / \tau$)
-Desenvolvido para compensar atrasos de transporte significativos:
-$$K_p = \text{sgn}(K) \frac{\tau}{|K| \, \theta} \left(\frac{4}{3} + \frac{\theta}{4 \tau}\right)$$
-$$T_i = \theta \frac{32 + 6(\theta/\tau)}{13 + 8(\theta/\tau)}, \quad T_d = \theta \frac{4}{11 + 2(\theta/\tau)}$$
-
-### 3. Skogestad SIMC (Simple Internal Model Control)
-Baseado no cancelamento analítico do polo dominante e controle por modelo interno com parâmetro de projeto de malha fechada $\tau_c$:
-$$K_p = \text{sgn}(K) \frac{1}{|K|} \frac{\tau}{\tau_c + \theta}, \quad T_i = \min\left(\tau, \, 4(\tau_c + \theta)\right), \quad T_d = 0.33 \, \theta$$
-*Neste benchmark, adotou-se $\tau_c = 0.40\text{ min}$, priorizando resposta suave e excelente robustez.*
-
-### 4. Otimização Numérica Não-Linear Constrita (Nelder-Mead com $M_s \le 1.6$)
-Minimização direta do critério de desempenho integral avaliado sobre a planta não-linear sujeita a restrições de robustez em frequência:
-
-$$\min_{K_p, T_i, T_d} \quad J = \int_0^{t_{\text{sim}}} t \cdot |e(t)| \, dt + \gamma_{\text{penalty}} \max(0, M_s - 1.6)^2$$
-
-onde a sensibilidade máxima $M_s = \|S(j\omega)\|_\infty$ é obtida a partir da função de transferência de sensibilidade de malha fechada $S(s) = [1 + G(s)C(s)]^{-1}$:
-
-$$M_s = \max_{\omega \in [10^{-3}, 10^2]} \left| \frac{1}{1 + G(j\omega) C_{\text{PID}}(j\omega)} \right|$$
+**Equilíbrio Nominal Estável ($\bar{q}_j = 100.0\text{ L/min}$):**
+* $\bar{C}_A = 0.0502\text{ mol/L}$ (conversão $X_A = 94.98\%$)
+* $\bar{T} = 396.65\text{ K}$
+* $\bar{T}_j = 348.33\text{ K}$
+* Autovalores contínuos: $\lambda = \{-1.571, -11.801, -13.269\}\text{ min}^{-1}$ (Localmente assintoticamente estável em malha aberta).
 
 ---
 
-## Métricas de Avaliação Acadêmica e Industrial
-
-Para garantir rigor editorial compatível com periódicos de alto impacto (IEEE Transactions / Journal of Process Control), são computadas 7 métricas quantitativas:
-
-1. **Integral do Erro Absoluto (IAE):**  
-   $$\text{IAE} = \int_0^{t_f} |r(t) - y(t)| \, dt$$
-2. **Integral do Erro Absoluto Ponderado no Tempo (ITAE):**  
-   $$\text{ITAE} = \int_0^{t_f} t \cdot |r(t) - y(t)| \, dt$$
-3. **Integral do Erro Quadrático (ISE):**  
-   $$\text{ISE} = \int_0^{t_f} (r(t) - y(t))^2 \, dt$$
-4. **Variação Total da Ação de Controle (TV):** Métrica fundamental de desgaste de válvulas e atuadores:  
-   $$\text{TV} = \sum_{k=1}^N |u_k - u_{k-1}|$$
-5. **Pico Máximo de Sobressinal ($M_p$):**  
-   $$M_p = \frac{\max_t y(t) - r_f}{|r_f - y_0|} \times 100\%$$
-6. **Tempo de Acomodação ($t_s$):** Tempo a partir do qual $|y(t) - r_f| \le 0.02 |r_f - y_0|$ de forma contínua.
-7. **Sensibilidade Máxima de Robustez ($M_s$):** Margem de estabilidade no plano complexo inverso (distância mínima ao ponto crítico $-1 + j0$). Recomenda-se industrialmente $1.2 \le M_s \le 1.6$ para processos químicos não-lineares.
-
----
-
-## Resultados Quantitativos do Artigo 1
-
-### Tabela I: Benchmark de Rastreamento Nominal (Degrau de Setpoint $\Delta T = -2.0\text{ K}$)
-
-| Estratégia de Sintonia | $K_p$ | $T_i$ (min) | $T_d$ (min) | IAE | ITAE | TV (L/min) | $M_p$ (%) | $t_s$ (min) | $M_s$ |
-|---|---|---|---|---|---|---|---|---|---|
-| **Ziegler-Nichols** | $-44.56$ | $0.19$ | $0.047$ | $104.12$ | $666.91$ | $490.3$ | $842.5$ | *Não acomoda* | $1.37$ |
-| **Cohen-Coon** | $-50.86$ | $0.22$ | $0.033$ | $102.67$ | $666.90$ | $476.8$ | $842.5$ | *Não acomoda* | $1.50$ |
-| **Skogestad SIMC** | $-7.03$ | $0.64$ | $0.031$ | $1.09$ | $0.48$ | **20.9** | **2.1** | $1.98$ | **1.09** |
-| **ITAE Ótimo ($M_s \le 1.6$)** | $-14.21$ | $1.00$ | $0.001$ | **0.89** | **0.31** | $44.0$ | $4.8$ | **1.28** | $1.24$ |
-
-### Tabela II: Rejeição a Distúrbios de Carga Combinados ($\Delta T_f = +5\text{ K}$ em $t=2\text{ min}$, $\Delta C_{Af} = +20\%$ em $t=8\text{ min}$)
-
-| Estratégia de Sintonia | IAE | ITAE | TV (L/min) | Desvio de Pico (K) | Abertura Máx. Válvula (L/min) |
-|---|---|---|---|---|---|
-| **Ziegler-Nichols** | $172.32$ | $1665.63$ | $971.0$ | $56.47$ | $300.0$ (Saturado) |
-| **Cohen-Coon** | $120.19$ | $1084.35$ | $932.8$ | $43.31$ | $300.0$ (Saturado) |
-| **Skogestad SIMC** | $17.71$ | $158.26$ | **739.2** | **7.35** | $294.5$ |
-| **ITAE Ótimo ($M_s \le 1.6$)** | **14.01** | **119.40** | $758.0$ | **7.33** | $300.0$ |
-
-### Tabela III: Sensibilidade ao Fouling Térmico (Degradação de $UA$ de $100\%$ a $60\%$)
-
-| Estratégia | $UA / UA_{\text{nom}}$ | IAE | ITAE | TV (L/min) | Sobressinal $M_p$ (%) |
-|---|---|---|---|---|---|
-| **Skogestad SIMC** | $100\%$ | $1.42$ | $2.86$ | $450.5$ | $6.9$ |
-| **Skogestad SIMC** | $80\%$ | $5.06$ | $7.39$ | $455.0$ | $5.9$ |
-| **Skogestad SIMC** | $60\%$ | $30.12$ | $115.20$ | $226.9$ | $0.0$ |
-| **ITAE Ótimo ($M_s \le 1.6$)** | $100\%$ | **1.25** | **2.68** | $490.3$ | $8.8$ |
-| **ITAE Ótimo ($M_s \le 1.6$)** | $80\%$ | **3.87** | **6.05** | $496.8$ | $5.5$ |
-| **ITAE Ótimo ($M_s \le 1.6$)** | $60\%$ | **29.74** | **113.93** | **199.7** | $0.0$ |
-| **Ziegler-Nichols** | $100\%$ | $96.29$ | $631.76$ | $542.0$ | $841.6$ (*Ciclo Limite*) |
-| **Cohen-Coon** | $100\%$ | $94.60$ | $630.33$ | $524.4$ | $841.6$ (*Ciclo Limite*) |
-
-### Conclusões Científicas Centrais do Artigo 1
-1. **Falha Crítica dos Métodos Clássicos Empíricos (ZN e CC):** Embora ZN e CC produzam ganhos formalmente válidos para o modelo FOPTD linearizado, na planta física real seus ganhos agressivos ($K_p \approx -45$ a $-51$) empurram a válvula repetidamente contra as saturações físicas ($0$ a $300\text{ L/min}$). A interação entre o windup residual e a cinética exponencial gera ciclos-limite violentos com oscilações térmicas inaceitáveis de até $\pm 56\text{ K}$.
-2. **Superioridade e Elegância do Skogestad SIMC:** Com um único parâmetro de sintonia ($\tau_c$), o SIMC produziu um erro IAE $99\%$ menor que ZN/CC, com uma redução de **$95.7\%$ na Variação Total do Atuador (TV = 20.9 vs 490.3 L/min)**, eliminando o estresse mecânico da válvula de controle.
-3. **Desempenho Ótimo com Robustez Garantida:** O controlador ITAE Ótimo com restrição $M_s \le 1.6$ superou todas as alternativas em velocidade de convergência ($t_s = 1.28\text{ min}$) mantendo excelente margem de robustez em malha fechada ($M_s = 1.24$).
-
----
-
-## Estrutura Limpa e Modular do Repositório
-
-O repositório é rigorosamente estruturado, sem arquivos temporários ou pastas de exercícios:
+## 4. Arquitetura do Repositório (Monorepo Científico)
 
 ```
-IC/
-├── .gitignore                        # Regras limpas para Python, Spyder, LaTeX e temporários
-├── pyproject.toml                    # Metadados do pacote cstr_control_research e configs ruff/pytest
-├── requirements.txt                  # Dependências com versões estritas
-├── README.md                         # Este documento: documentação técnica mestre do projeto
+IC-CSTR-Control-Benchmark/
+├── papers/                                   # Os 3 manuscritos completos no padrão Elsevier cas-dc
+│   ├── 01_journal_of_process_control/         # Artigo 1 (JPC) — PID Robusto, Anti-Windup & Sobol
+│   │   ├── main.tex, highlights.tex, references.bib
+│   │   ├── sections/, figures/, tables/
+│   │   ├── ready-to-overleaf/                 # Pasta autossuficiente para Overleaf
+│   │   └── ready_to_overleaf.zip              # Pacote de 1 clique para upload
+│   ├── 02_computers_chemical_engineering/     # Artigo 2 (CACE) — NMPC-Oracle vs MHE vs PID
+│   │   └── (mesma estrutura modular + ready_to_overleaf.zip)
+│   └── 03_chemical_engineering_research_design/ # Artigo 3 (ChERD) — Ponto de Sela & Cascata
+│       └── (mesma estrutura modular + ready_to_overleaf.zip)
 │
-├── src/                              # Pacote Python 'src' (Código de Produção Científica)
-│   ├── README.md                     # Documentação da arquitetura e APIs internas do pacote
-│   ├── sim_core/                     # EDOs do reator CSTR, dinâmica de atuadores e integrador ODE
-│   │   ├── cstr_plant.py             # Parâmetros físicos, derivadas não-lineares, Jacobiana e ponto SS
-│   │   ├── actuators.py              # Modelo de válvula com saturação física e slew rate limit
-│   │   └── integrator.py             # Integrador numérico RK45 desacoplado (solve_ivp)
-│   ├── classical_control/            # Algoritmos de controle clássico e sintonias
-│   │   ├── foptd.py                  # Identificação de Primeira Ordem com Tempo Morto
-│   │   ├── pid_controller.py         # PID paralelo industrial com anti-windup e filtro N
-│   │   ├── tuning_analytical.py      # Fórmulas analíticas ZN, CC e Skogestad SIMC
-│   │   ├── tuning_optimization.py    # Otimização Nelder-Mead com restrição de sensibilidade Ms <= 1.6
-│   │   └── closed_loop.py            # Motor de simulação em malha fechada
-│   └── evaluation/                   # Métricas de desempenho e pós-processamento gráfico
-│       ├── metrics.py                # IAE, ITAE, ISE, TV, Mp, ts e tr
-│       ├── pareto.py                 # Filtragem e sumarização de fronteira de Pareto (IAE vs TV)
-│       └── plot_styles.py            # Configuração de estilo de publicação IEEE Transactions
+├── src/                                      # Single Source of Truth do código de engenharia
+│   ├── sim_core/                              # Equações diferenciais, integrador RK45 e atuador
+│   ├── classical_control/                     # Sintonias analíticas, PID industrial, cascata, Nelder-Mead
+│   ├── controllers/optimal/                   # NMPC via CasADi/IPOPT e estimador MHE
+│   ├── controllers/neural/                    # PINN surrogate, Neuro-PID e Neural ODE
+│   └── evaluation/                            # Métricas IAE/ITAE/TV, Pareto e Sensibilidade de Sobol
 │
-├── experiments/                      # Scripts de experimentos reprodutíveis
-│   ├── README.md                     # Guia passo a passo dos experimentos e reprodutibilidade
-│   ├── exp_01_classical_benchmark.py # Experimento 1: Benchmark nominal e Tabela I
-│   ├── exp_02_robustness_campaign.py # Experimento 2: Distúrbios, Fouling, Ruído e Tabelas II, III
-│   └── exp_03_pareto_tuning_sweep.py # Experimento 3: Varredura de Pareto e fronteira ótima
+├── experiments/                               # Scripts determinísticos de reprodução
+│   ├── exp_01_classical_benchmark.py          # Benchmark nominal (Tabela 2 do Artigo 1)
+│   ├── exp_01b_nmpc_oracle_comparison.py      # Benchmark NMPC vs PID (Tabela 7 do Artigo 2)
+│   ├── exp_02_robustness_campaign.py          # Distúrbios de carga, fouling e ruído Monte Carlo
+│   ├── exp_03_pareto_tuning_sweep.py          # Varredura contínua de Pareto (IAE vs TV)
+│   ├── exp_04_neural_control_benchmark.py     # Comparativo avançado de controladores
+│   ├── exp_05_cascade_benchmark.py            # Validação da estrutura em cascata
+│   ├── exp_06_unstable_saddle_and_fouling.py  # Simulação de ponto de sela instável (Artigo 3)
+│   └── build_paper_assets.py                  # Script unificado para regerar todos os assets
 │
-├── tests/                            # Suíte de testes unitários (56 testes automatizados)
-│   ├── README.md                     # Guia de testes, fixtures e análise de cobertura
-│   ├── conftest.py                   # Fixtures compartilhadas pytest
-│   ├── test_cstr_plant.py            # Testes do modelo de planta e EDOs
-│   ├── test_pid_controllers.py       # Testes da classe PIDController e anti-windup
-│   ├── test_tuning_methods.py        # Testes de ZN, CC, SIMC e cálculo de Ms
-│   ├── test_metrics.py               # Testes de validação das métricas IAE/ITAE/TV
-│   ├── test_pareto.py                # Testes de dominância e fronteira de Pareto
-│   └── test_plot_styles.py           # Testes de conformidade gráfica IEEE
+├── results/                                   # CSVs gerados numericamente e espelhos por periódico
+│   ├── jpc/                                   # Espelhos de tabelas para o Artigo 1
+│   ├── cace/                                  # Espelhos de tabelas para o Artigo 2
+│   └── cherd/                                 # Espelhos de tabelas para o Artigo 3
 │
-├── papers/                           # 3 manuscritos Elsevier (cas-dc.cls) — fonte canônica
-│   ├── 01_journal_of_process_control/          # Artigo 1 (JPC) — tag v1.0.0-jpc-submission
-│   ├── 02_computers_chemical_engineering/      # Artigo 2 (CACE)
-│   └── 03_chemical_engineering_research_design/ # Artigo 3 (ChERD)
-│       # cada pasta: main.tex, sections/, figures/, tables/, ready-to-overleaf/, ready_to_overleaf.zip
-│
-├── Biblioteca/                       # Acervo bibliográfico de referência e literatura clássica
-├── Projeto/                          # Cronograma e documentação de planejamento das fases PROIC
-└── scripts/                          # Utilitários de automação e sincronização
-    ├── README.md                     # Guia de uso dos scripts
-    ├── github/
-    │   └── sync_to_github.ps1        # Script PowerShell para sincronização com GitHub API
-    └── overleaf/
-        ├── overleaf_push.ps1         # Upload automatizado para o Overleaf
-        └── overleaf_pull.ps1         # Download de atualizações do Overleaf
+├── tests/                                     # 125 testes automatizados (unitários, integração e property)
+├── pyproject.toml                             # Metadados do projeto, dependências estritas e linters
+└── README.md                                  # Este guia técnico
 ```
 
 ---
 
-## Guia de Instalação e Execução
+## 5. Guia de Instalação e Execução Rápida
 
-### 1. Pré-Requisitos de Ambiente
-* Python 3.12 ou superior (testado e validado em Python 3.14).
-* Gerenciador de pacotes `pip`.
-* Git ou PowerShell com acesso à internet para sincronização.
+### 1. Clonar o Repositório e Configurar Ambiente Virtual
+```bash
+# Clone via SSH (recomendado)
+git clone git@github.com:Marques-svnt/IC-CSTR-Control-Benchmark.git
+cd IC-CSTR-Control-Benchmark
 
-### 2. Configuração do Ambiente Virtual (`.venv`)
+# Criação do ambiente virtual com Python 3.12+
+python3 -m venv .venv
+source .venv/bin/activate
 
-No terminal PowerShell na raiz do repositório:
-
-```powershell
-# Criação do ambiente virtual
-python -m venv .venv
-
-# Ativação do ambiente virtual
-.venv\Scripts\Activate.ps1
-
-# Instalação das dependências em modo de desenvolvimento
+# Instalação das dependências em modo editável
+pip install --upgrade pip
 pip install -e ".[dev]"
 ```
 
-### 3. Execução dos Testes Automatizados
-
-Para certificar a integridade de todas as equações e rotinas numéricas:
-
-```powershell
-# Execução simples com resumo detalhado
-python -m pytest tests/ -v --tb=short
-
-# Execução com relatório de cobertura de código
-python -m pytest --cov=src --cov-report=term-missing tests/
+### 2. Executar a Suíte de Testes Automatizados
+```bash
+pytest -q
 ```
-*Resultado esperado: 56 testes passando com 100% de sucesso.*
+*Critério de Sucesso Esperado:* **124 passed, 1 xfailed** (referente ao teste estrito de estabilidade do TL-PID com $M_s \approx 2.32$).
 
 ---
 
-## Guia de Uso no Spyder 6
+## 6. Receitas de Reprodução em 1 Comando (Reprodutibilidade Estrita)
 
-O projeto foi inteiramente adaptado com blocos de células compatíveis com a IDE **Spyder 6**, permitindo inspeção interativa, depuração passo a passo e visualização direta no painel de gráficos.
-
-### Passo 1: Abrir o Projeto no Spyder 6
-1. Abra o **Spyder 6**.
-2. No menu superior, clique em **Projects** $\to$ **Open Project...** e selecione o diretório raiz do repositório:
-   `C:\Users\biely\OneDrive\Área de Trabalho\2026.2\IC`
-3. Certifique-se de que o interpretador Python ativo no Spyder aponte para o ambiente virtual `.venv` do projeto:
-   * **Tools** $\to$ **Preferences** $\to$ **Python Interpreter** $\to$ **Use the following Python interpreter**:
-   * Selecione: `C:\Users\biely\OneDrive\Área de Trabalho\2026.2\IC\.venv\Scripts\python.exe`.
-
-### Passo 2: Execução Interativa por Blocos de Células (`# %%`)
-Todos os scripts em `experiments/` utilizam demarcadores de célula padrão `# %%`.
-1. Abra qualquer script, por exemplo, `experiments/exp_01_classical_benchmark.py`.
-2. Posicione o cursor dentro do bloco desejado.
-3. Pressione **`Shift + Enter`** para executar a célula atual no console interativo IPython e avançar para a próxima.
-4. Para reexecutar apenas a célula atual sem avançar, utilize **`Ctrl + Enter`**.
-
-### Passo 3: Inspeção no Variable Explorer e Plots
-* **Variable Explorer (Explorador de Variáveis):** Permite inspecionar diretamente os objetos `CSTRPlant`, os arrays de trajetórias temporais (`t`, `states`, `u_applied`), e as estruturas `ControlPerformanceMetrics`. Dando duplo clique em uma variável, é possível analisar numericamente as trajetórias.
-* **Plots (Painel de Gráficos):** As figuras geradas em alta resolução (300 DPI) com estilização IEEE Transactions aparecem automaticamente na aba **Plots** do Spyder, permitindo *zoom*, comparação e exportação interativa.
-
----
-
-## Sincronização com o GitHub
-
-Para sincronizar o código-fonte, tabelas, gráficos e documentações com o repositório remoto oficial no GitHub ([https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark](https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark)), utilize o script automatizado via REST API:
-
-```powershell
-# Execução da sincronização com mensagem de commit explicativa
-.\scripts\github\sync_to_github.ps1 -Message "docs: atualizacao completa da documentacao tecnica do Artigo 1"
+### Reproduzir Artigo 1 (*Journal of Process Control*)
+```bash
+# Executa benchmark nominal e campanha de robustez
+python experiments/exp_01_classical_benchmark.py
+python experiments/exp_02_robustness_campaign.py
+python experiments/exp_03_pareto_tuning_sweep.py
 ```
 
-O script detecta automaticamente todos os arquivos modificados ou criados em `src/`, `experiments/`, `tests/`, `papers/` e na raiz, aplicando hash SHA para evitar uploads desnecessários.
+### Reproduzir Artigo 2 (*Computers & Chemical Engineering*)
+```bash
+# Executa NMPC-Oracle, estimador MHE e varredura de fouling
+python experiments/exp_01b_nmpc_oracle_comparison.py
+python experiments/exp_04_neural_control_benchmark.py
+```
+
+### Reproduzir Artigo 3 (*Chemical Engineering Research and Design*)
+```bash
+# Executa a dinâmica de ponto de sela instável e tempo de runaway sob fouling
+python experiments/exp_06_unstable_saddle_and_fouling.py
+```
+
+### Regerar Todos os Assets e Tabelas dos 3 Artigos de Uma Só Vez:
+```bash
+python experiments/build_paper_assets.py
+```
 
 ---
 
-## Licença e Agradecimentos
+## 7. Como Fazer o Upload para o Overleaf
 
-Este software e os manuscritos associados são disponibilizados sob a licença [MIT](LICENSE).
+Cada subpasta em `papers/` contém um arquivo compactado autossuficiente (`ready_to_overleaf.zip`), pronto para compilação imediata sem dependências externas:
 
-O projeto é desenvolvido na **Universidade Estadual de Santa Cruz (UESC)**, no âmbito do Colegiado de Engenharia Química e do Departamento de Ciências Exatas e Tecnológicas (DCET), financiado pelo Programa de Iniciação Científica (PROIC) com apoio da **FAPESB** e do **CNPq** (Edital 34/2026).
+1. Acesse sua conta no [Overleaf](https://www.overleaf.com/).
+2. Clique em **New Project** $\to$ **Upload Project**.
+3. Selecione o arquivo zip desejado:
+   * **Artigo 1 (JPC):** [`papers/01_journal_of_process_control/ready_to_overleaf.zip`](papers/01_journal_of_process_control/ready_to_overleaf.zip)
+   * **Artigo 2 (CACE):** [`papers/02_computers_chemical_engineering/ready_to_overleaf.zip`](papers/02_computers_chemical_engineering/ready_to_overleaf.zip)
+   * **Artigo 3 (ChERD):** [`papers/03_chemical_engineering_research_design/ready_to_overleaf.zip`](papers/03_chemical_engineering_research_design/ready_to_overleaf.zip)
+4. O Overleaf compilará com motor `pdfLaTeX` nativo com **0 erros e numeração de páginas correta**.
 
-Agradecimentos especiais ao orientador **Prof. Dr. Elilton Rodrigues Edwards** pela orientação técnica, revisão científica e direcionamento acadêmico ao longo de todas as fases do projeto.
+---
+
+## 8. Citação e Disponibilidade de Dados (Open Science)
+
+Se você utilizar este código, modelo ou sintonias em sua pesquisa, por favor cite o release oficial do repositório:
+
+```bibtex
+@software{marques2026_cstr_benchmark,
+  author       = {Gabriel Marques de Andrade and Elilton Rodrigues Edwards},
+  title        = {{IC-CSTR-Control-Benchmark: Phenomenological CSTR Modeling, Robust PID, NMPC and Cascade Control Trilogy}},
+  month        = oct,
+  year         = 2026,
+  publisher    = {GitHub},
+  version      = {v1.0.0-jpc-submission},
+  url          = {https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark}
+}
+```
+
+---
+
+## 9. Licença e Agradecimentos
+
+Este software é distribuído sob a licença [MIT](LICENSE).
+
+A pesquisa é desenvolvida na **Universidade Estadual de Santa Cruz (UESC)**, Colegiado de Engenharia Química e Departamento de Ciências Exatas e Tecnológicas (DCET), financiada pelo Programa de Iniciação Científica (PROIC) com apoio da **FAPESB** e do **CNPq** (Edital 34/2026).
