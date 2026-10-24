@@ -2,7 +2,7 @@
 
 \subsection{Evaluation protocol}
 \label{subsec:protocol}
-All servo experiments start at $\mathbf{x}_{ss}$, apply a $-2.0$~K setpoint step at $t = 0$ and last $10$~min with $\Delta t = 0.02$~min, so the noise-free rows of the noise campaign reproduce the nominal benchmark exactly. Error metrics are computed on the \emph{true} reactor temperature, $\mathrm{IAE} = \int_0^{t_f}|T_{sp} - T|\,dt$, so that sensor noise enters them only through its effect on the valve; $\mathrm{ITAE}$ weights the error by the time elapsed since the step; the total variation $\mathrm{TV} = |u_0 - \bar q_j| + \sum_k |u_k - u_{k-1}|$ includes the first move away from $\bar q_j = 100$~L/min. All campaigns use fixed random seeds.
+All servo experiments start at $\mathbf{x}_{ss}$, apply a $-2.0$~K setpoint step at $t = 0$ and last $10$~min with $\Delta t = 0.02$~min, so the noise-free rows of the noise campaign reproduce the nominal benchmark exactly. Error metrics are computed on the \emph{true} reactor temperature, $\mathrm{IAE} = \int_0^{t_f}|T_{sp} - T|\,dt$, so that sensor noise enters them only through its effect on the valve; $\mathrm{ITAE}$ weights the error by the time elapsed since the step. Overshoot $M_p$ (\%) is the peak excursion beyond the setpoint relative to the step size, and the settling time $t_s$ is the last instant at which the error leaves the $\pm 2\%$ band of the step. IAE is reported in K$\cdot$min and ITAE in K$\cdot$min$^2$. The total variation $\mathrm{TV} = |u_0 - \bar q_j| + \sum_k |u_k - u_{k-1}|$ includes the first move away from $\bar q_j = 100$~L/min. All campaigns use fixed random seeds.
 
 \subsection{Nominal setpoint tracking}
 Figure~\ref{fig:classical_benchmark} and Table~\ref{tab:classical_benchmark} summarize the nominal step.

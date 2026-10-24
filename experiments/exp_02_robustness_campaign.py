@@ -329,7 +329,7 @@ def run_load_disturbance_campaign(
         table_rows.append({
             "Method": name,
             "IAE": f"{res.metrics.iae:.2f}",
-            "ITAE": f"{res.metrics.itae:.2f}",
+            r"ITAE (K$\cdot$min$^2$)": f"{res.metrics.itae:.2f}",
             "TV (L/min)": f"{res.metrics.tv:.1f}",
             "Peak Dev (K)": f"{peak_dev:.2f}",
             "Max Valve (L/min)": f"{np.max(res.u_applied):.1f}",
@@ -500,7 +500,7 @@ def run_fouling_campaign(
                 "Method": name,
                 "$UA / UA_{\\text{nom}}$": f"{int(f_ratio * 100)}\\%",
                 "IAE": f"{res.metrics.iae:.2f}",
-                "ITAE": f"{res.metrics.itae:.2f}",
+                r"ITAE (K$\cdot$min$^2$)": f"{res.metrics.itae:.2f}",
                 "TV (L/min)": f"{res.metrics.tv:.1f}",
                 "$M_p$ (\\%)": f"{res.metrics.overshoot_pct:.1f}",
             })

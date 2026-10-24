@@ -40,14 +40,18 @@ Two feedback variants are compared:
 \label{subsec:offset_free}
 Following \cite{muske2002disturbance, pannocchia2003disturbance}, the prediction model of Eq.~\eqref{eq:nmpc} is augmented with two integrating disturbances that enter the balances of Eqs.~\eqref{eq:cstr_ca}--\eqref{eq:cstr_t} as constants over the horizon,
 \begin{equation}
-    \dot C_A = \tfrac{q}{V}(C_{Af} - C_A) - r_A + d_C, \qquad
-    \dot T = \tfrac{q}{V}(T_f - T) + \tfrac{(-\Delta H)}{\rho C_p} r_A - \tfrac{\hat\alpha_{UA} UA}{V \rho C_p}(T - T_j) + d_T .
+    \begin{split}
+    \dot C_A &= \tfrac{q}{V}(C_{Af} - C_A) - r_A + d_C, \\
+    \dot T &= \tfrac{q}{V}(T_f - T) + \tfrac{(-\Delta H)}{\rho C_p} r_A - \tfrac{\hat\alpha_{UA} UA}{V \rho C_p}(T - T_j) + d_T .
+    \end{split}
     \label{eq:disturbance_model}
 \end{equation}
 At every sample the one-step prediction of the same RK4 model, started from the state that was fed to the optimizer at the previous sample, is compared with the new measurement and the disturbances are integrated,
 \begin{equation}
-    d_{T,k} = d_{T,k-1} + \frac{L}{\Delta t}\left(T_k - \hat T_{k|k-1}\right), \qquad
-    d_{C,k} = d_{C,k-1} + \frac{L}{\Delta t}\left(C_{A,k} - \hat C_{A,k|k-1}\right),
+    \begin{split}
+    d_{T,k} &= d_{T,k-1} + \frac{L}{\Delta t}\left(T_k - \hat T_{k|k-1}\right), \\
+    d_{C,k} &= d_{C,k-1} + \frac{L}{\Delta t}\left(C_{A,k} - \hat C_{A,k|k-1}\right),
+    \end{split}
     \label{eq:disturbance_update}
 \end{equation}
 with $L = 0.1$ and clipping at $|d_T| \le 50$~K/min and $|d_C| \le 2$~mol/(L$\cdot$min). Starting from the state fed to the optimizer, not from the estimator state, keeps $d$ from absorbing estimator bias. $d_C$ is identifiable only when $C_A$ is known, so it is active in NMPC-Oracle only; NMPC-MHE carries $d_T$ and the fouling factor $\hat\alpha_{UA}$, i.e.\ two slots for two thermal measurements. Offset-free tracking then follows from the standard argument: at rest the innovations vanish, the model reproduces the plant at the current input, and the optimizer has no reason to hold $T \ne T_{sp}$. This is an argument for the tested case, not a proof for arbitrary disturbance combinations: the two disturbances $d_T$ and $\hat\alpha_{UA}$ are not separable from $T$ alone during a transient (Section~\ref{subsec:deconf}).
@@ -68,8 +72,8 @@ where $H$ selects $(T, T_j)$ and
 \end{align}
 The EKF estimates at the start of a window of the last $N_m = 8$ samples serve as arrival-cost priors $(\hat C_A^{\text{prior}}, \hat\alpha_{UA}^{\text{prior}})$ for a moving-horizon refinement of the unmeasured pair \cite{rao2003constrained}:
 \begin{multline}
-    \min_{C_{A,0},\,\alpha_{UA}} \; 4\left\|\begin{bmatrix} C_{A,0} - \hat C_{A}^{\text{prior}} \\ \alpha_{UA} - \hat\alpha_{UA}^{\text{prior}}\end{bmatrix}\right\|^2 \\
-    + \sum_{i=1}^{N_m - 1} \left[\left(T_i - \tilde T_i\right)^2 + \tfrac14\left(T_{j,i} - \tilde T_{j,i}\right)^2\right],
+    \min_{C_{A,0},\,\alpha_{UA}} \; 4\Bigl[\bigl(C_{A,0} - \hat C_{A}^{\text{prior}}\bigr)^2 + \bigl(\alpha_{UA} - \hat\alpha_{UA}^{\text{prior}}\bigr)^2\Bigr] \\
+    \quad + \sum_{i=1}^{N_m - 1} \left[\left(T_i - \tilde T_i\right)^2 + \tfrac14\left(T_{j,i} - \tilde T_{j,i}\right)^2\right],
     \label{eq:mhe}
 \end{multline}
 subject to $0 \le C_{A,0} \le 1$ and $0.4 \le \alpha_{UA} \le 1.2$, where $(\tilde T_i, \tilde T_{j,i})$ result from chaining $\mathbf{F}$ forward from the window-start state $(C_{A,0}, T_0, T_{j,0}, \alpha_{UA})$ with the inputs actually applied. The moving-horizon non-linear program of Eq.~\eqref{eq:mhe} is solved at each sampling instant using a bounded trust-region reflective algorithm with convergence tolerance $10^{-6}$ and a cap of $50$ function evaluations. The optimal pair is propagated to the end of the window to give $\hat C_{A,k}$ and $\hat\alpha_{UA,k}$, which initialize Eq.~\eqref{eq:nmpc}. Because estimator and controller share the same RK4 model, the window residuals vanish on noise-free data, and NMPC-MHE then reproduces the Oracle trajectory exactly.

@@ -119,7 +119,7 @@ def run_nmpc_oracle_benchmark(
             "Controller": r.controller,
             "IAE": f"{r.iae:.3f}",
             r"\(\Delta\)IAE vs Oracle (\%)": f"{r.iae_gap_vs_oracle_pct:+.1f}",
-            "ITAE": f"{r.itae:.3f}",
+            r"ITAE (K$\cdot$min$^2$)": f"{r.itae:.3f}",
             "TV (L/min)": f"{r.tv:.1f}",
             r"\(M_p\) (\%)": f"{r.overshoot_pct:.1f}",
             r"\(\hat\alpha_{UA}(t_f)\)": (

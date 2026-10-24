@@ -99,7 +99,7 @@ def run_benchmark(
             r"\(T_d\text{ (min)}\)": f"{g.td:.3f}" if g else "--",
             r"\(\beta\)": f"{g.beta:.1f}" if g else "--",
             "IAE": f"{m.iae:.3f}",
-            "ITAE": f"{m.itae:.3f}",
+            r"ITAE (K$\cdot$min$^2$)": f"{m.itae:.3f}",
             "TV (L/min)": f"{m.tv:.1f}",
             r"\(M_p\text{ (\%)}\)": f"{m.overshoot_pct:.1f}",
             r"\(t_s\text{ (min)}\)": (
