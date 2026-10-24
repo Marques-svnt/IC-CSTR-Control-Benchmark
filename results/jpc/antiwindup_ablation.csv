@@ -1,4 +1,4 @@
-Method,None,Back-calc.,Sign-blind amp.,Amp. uncond.,Amp.+rate uncond.,Amp. direct.,Amp.+rate direct. (Eq.~13)
+Method,None,Back-calc.,Sign-blind amp.,Amp. uncond.,Amp.+rate uncond.,Amp. direct.,Amp.+rate direct. (Eq.~\ref{eq:clamping_antiwindup})
 Ziegler-Nichols,91.11 / 631.2,0.97 / 25.5,104.12 / 842.5,22.10 / 189.2,0.93 / 22.6,22.10 / 189.2,0.94 / 22.6
 Cohen-Coon,87.37 / 593.5,0.87 / 15.6,102.67 / 842.5,20.60 / 181.2,1.10 / 31.0,20.60 / 181.2,1.02 / 31.0
 Tyreus-Luyben,1.26 / 38.6,1.26 / 0.0,1.26 / 38.6,1.26 / 38.6,1.07 / 0.0,1.26 / 38.6,0.92 / 0.0

@@ -1,4 +1,4 @@
-Scenario,Method,None,Back-calc.,Sign-blind amp.,Amp. uncond.,Amp.+rate uncond.,Amp. direct.,Amp.+rate direct. (Eq.~13)
+Scenario,Method,None,Back-calc.,Sign-blind amp.,Amp. uncond.,Amp.+rate uncond.,Amp. direct.,Amp.+rate direct. (Eq.~\ref{eq:clamping_antiwindup})
 $-5$ K step,Ziegler-Nichols,81.26,3.63,205.97,22.50,3.56,22.50,3.33
 ,Cohen-Coon,78.56,3.39,224.77,20.91,3.72,20.91,3.44
 ,Tyreus-Luyben,5.51,4.42,5.51,5.51,4.01,5.51,3.55

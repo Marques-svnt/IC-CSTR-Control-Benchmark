@@ -1,9 +1,11 @@
 \documentclass[a4paper,fleqn]{cas-dc}
 \usepackage[numbers]{natbib}
 \usepackage{siunitx}
+\usepackage{amsthm}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
+\newtheorem{proposition}{Proposition}
 \shorttitle{Anti-windup for reverse-acting PID loops with rate-limited valves}
 \shortauthors{G.M. de Andrade and E.R. Edwards}
 
@@ -33,7 +35,7 @@
 \cortext[1]{Corresponding author}
 
 \begin{abstract}
-Verdicts on PID tuning rules for exothermic reactors depend on implementation details that are rarely reported, among them the anti-windup logic of a valve limited in amplitude and slew rate. This implementation study fixes a three-state nonlinear CSTR with such a valve and eight PID tunings (Ziegler--Nichols, Cohen--Coon, Tyreus--Luyben, AMIGO, SIMC and an ITAE-optimal PID, with two-degree-of-freedom variants of the last two), and ablates seven integrator policies on three setpoint steps and a load profile. Sign-blind amplitude clamping, whose conditions are written for direct-acting loops, never freezes a reverse-acting integrator while it winds up: it latches the valve at full cooling, the reactor settles $16.7$~K below the setpoint and the integral absolute error of a $-2$~K step rises from $0.940$ to $104.123$~K$\cdot$min for Ziegler--Nichols. A slew-rate trigger, not sign awareness, restores the loop and needs no tuning parameter, whereas back-calculation degrades up to $38$-fold when its time constant is scaled by $0.1$ or $10$. Imposing $M_s \le 1.6$ on the exact linearization instead of the identified dead-time model lowers the optimal ITAE by $11\%$ but raises the high-frequency gain by $76\%$; optimizing the setpoint weights jointly returns the one-degree-of-freedom controller. Noise-to-valve gain is set by $|K_p|(1+N)$, not by the sensitivity peak of the exact loop ($1.57$ and $1.75$ for Ziegler--Nichols and Cohen--Coon), and a first-order measurement filter cuts valve travel by $44$ to $69\%$ at $\sigma = 0.01$~K. Sobol indices with bootstrap intervals attribute the IAE variance to feed concentration and heat-transfer capacity, and the heat-removal demand correlates with IAE (Spearman $0.43$--$0.81$).
+Verdicts on PID tuning rules for exothermic reactors depend on implementation details that are rarely reported, chiefly the anti-windup logic of a valve limited in amplitude and slew rate. This implementation study uses a three-state nonlinear CSTR, eight PID tunings and a seven-policy ablation of the integrator logic. A frequent implementation error, sign-blind amplitude clamping (direct-acting conditions reused in a reverse-acting loop), latches the valve at full cooling: a proposition gives the offset equilibrium, and for Ziegler--Nichols the integral absolute error of a $-2$~K step rises from $0.940$ to $104.123$~K$\cdot$min. A slew-rate trigger restores the loop; a map over slew limits of $20$ to $320$~L/min$^2$ shows that it matters for the empirical rules at every limit and for AMIGO and the optimal tuning when the valve is slow. Back-calculation with its tracking constant inside $[T_d, T_i]$ performs as well as the directional rule, up to $34\%$ better, while the directional rule needs no per-loop constant but depends on the slew limit. Bounding $M_s \le 1.6$ on the exact linearization instead of the identified dead-time model lowers the optimal ITAE by $11\%$ in sample, with no gain out of sample, $76\%$ higher high-frequency gain and a margin that collapses under $\pm 20\%$ error of the identified model. Noise-to-valve gain follows $|K_p|(1+N)$, not the sensitivity peak. Sobol indices with bootstrap intervals, restricted to the feasible region, show that heat-removal demand explains only part of the error variance. A pseudocode and a five-item checklist support reporting.
 \end{abstract}
 
 \input{highlights}

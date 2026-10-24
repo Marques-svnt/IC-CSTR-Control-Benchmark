@@ -1,20 +1,20 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Spearman rank correlation, over the Sobol samples, between the closed-loop metrics and the steady coolant flow $u_{\mathrm{req}}$ that the perturbed plant needs at the new setpoint (heat-removal demand); last column: share of samples with $u_{\mathrm{req}}$ above the valve stop.}
+\caption{Spearman rank correlation, over the Sobol samples, between the closed-loop metrics and the steady coolant flow $u_{\mathrm{req}}$ that the perturbed plant needs at the new setpoint (heat-removal demand); $\rho_s^2$ is the rank-variance share; ``feasible'' restricts the IAE correlation to samples with $u_{\mathrm{req}} \le u_{\max}$; last column: share of samples above the valve stop.}
 \label{tab:sobol_margin}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
-\begin{tabular}{lccc}
+\begin{tabular}{lccccc}
 \toprule
-Method & \(\rho_s\)(IAE, \(u_{\mathrm{req}}\)) & \(\rho_s\)(TV, \(u_{\mathrm{req}}\)) & \(u_{\mathrm{req}} > u_{\max}\) (\%) \\
+Method & \(\rho_s\)(IAE, \(u_{\mathrm{req}}\)) & \(\rho_s^2\) & \(\rho_s\) feasible & \(\rho_s\)(TV, \(u_{\mathrm{req}}\)) & \(u_{\mathrm{req}} > u_{\max}\) (\%) \\
 \midrule
-Ziegler-Nichols & +0.57 & -0.35 & 11.4 \\
-Cohen-Coon & +0.43 & -0.50 & 11.4 \\
-Tyreus-Luyben & +0.73 & +0.29 & 11.4 \\
-AMIGO & +0.79 & +0.61 & 11.4 \\
-Skogestad SIMC & +0.81 & +0.70 & 11.4 \\
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & +0.74 & +0.36 & 11.4 \\
-2-DOF Optimal ITAE & +0.73 & +0.34 & 11.4 \\
+Ziegler-Nichols & +0.57 & 0.33 & +0.40 & -0.18 & 11.4 \\
+Cohen-Coon & +0.43 & 0.18 & +0.20 & -0.37 & 11.4 \\
+Tyreus-Luyben & +0.74 & 0.55 & +0.64 & +0.37 & 11.4 \\
+AMIGO & +0.80 & 0.64 & +0.72 & +0.64 & 11.4 \\
+Skogestad SIMC & +0.81 & 0.66 & +0.74 & +0.69 & 11.4 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & +0.75 & 0.56 & +0.65 & +0.43 & 11.4 \\
+2-DOF Optimal ITAE & +0.75 & 0.56 & +0.65 & +0.40 & 11.4 \\
 \bottomrule
 \end{tabular}%
 }

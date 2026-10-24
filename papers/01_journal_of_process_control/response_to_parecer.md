@@ -30,3 +30,31 @@ As DOIs de \[23\] (Padula e Visioli) e \[25\] (Reynoso-Jardón et al.) apontavam
 | ORCID dos coautores | **Pendente (autor):** o ORCID do coautor não está no repositório |
 | DOI de arquivo (Zenodo) | **Pendente (autor):** `CITATION.cff` e `.zenodo.json` foram adicionados; o DOI só existe depois de criar o release no GitHub/Zenodo |
 | Segundo estudo de caso | **Não feito:** declarado como limitação e trabalho futuro |
+
+
+---
+
+# 3ª rodada — exigências consolidadas
+
+| # | Exigência | O que foi feito | Onde |
+|---|---|---|---|
+| 1 | Varrer S_max (20–320) e mapa de regime; proposição do travamento | `run_smax_map`: 6 laços × 5 políticas × 9 valores de S_max (Fig. 4, Tab. 8); Proposição 1 (offset de equilíbrio T_∞ com I ≥ I*) com prova curta, e contraprova para a regra direcional; T_∞ introduzido na Sec. 2.3 | Sec. 2.3, 3.2, 4.3 |
+| 2 | Fontes [6, 16] do "cego ao sinal" | Não atribuí a regra a nenhuma fonte: reformulada como erro frequente de implementação (Sec. 1.1, resumo, destaque 1, Tab. 1 sem citação na linha); a regra direcional cita Peng et al. e Hippe como forma "sinal do incremento" | Sec. 1.1, Tab. 1 |
+| 3 | Retrocálculo: IAE × T_t, melhor T_t, ZN = CC, "38×" | `run_tt_curve`: curva em [0,525 Δt, 10 T_i] com faixa [T_d, T_i] sombreada (Fig. 3) e tabela do melhor T_t por laço e degrau. ZN = CC (18,56) é efeito de Δt/T_t > 1 (2,14 e 2,36): a válvula fica a menos de 1,6 L/min do viés nos dois. **"38×" retirado** do resumo, destaque e conclusão: dentro de [T_d, T_i] o retrocálculo iguala a regra direcional (≤ 3 % pior, até 34 % melhor) | Sec. 4.3, Fig. 3, Tab. 7 |
+| 4 | Sobol: região factível, Δt e horizonte, lógica de AW, "explica grande parte" | Sobol refeito com Δt = 0,02 e 10 min após o degrau (como o benchmark), AW direcional declarado; S₁ por RBD-FAST na região factível (u_req ≤ 300) com IC; ρ² reportado (0,18–0,66); frase "explica grande parte" substituída por "explica parte" | Sec. 4.10, Tab. `sobol_feasible`, `sobol_margin_test` |
+| 5 | Erros | "76 % less" → 43 % (Sec. 4.5); "1,8 a 3,1" → 1,8 a 3,3; destaque 5 reescrito (≤ 85 caracteres, verificado pelo desk-check); "Eq. 13" → `\ref` (Eq. 14); sementes da Tab. 17 = as da campanha de ruído; Pareto: título do painel, legenda e tabela passam a falar do "locus SIMC" e da "frente escalarizada", sem "fronteira de Pareto contínua" | Sec. 4.5, 4.9, Tabs. 4–6, 16, Fig. 5 |
+| 6 | Resumo e destaques | Resumo com 233 palavras (contagem sem comandos LaTeX) e cinco destaques ≤ 85 caracteres; ganho de 11 % apresentado como "em amostra, sem ganho fora dela" | `main.tex`, `highlights.tex` |
+| 7 | Referências, DOI, ORCID, carta | Referências novas: todas com DOI conferido no Crossref (`scripts/verify_bib_crossref.py`); carta explicita a relação com os artigos irmãos. **Pendentes (autor):** DOI de arquivo (release no Zenodo) e ORCID do segundo autor, que não constam no repositório | `cover_letter.md` |
+
+## Recomendadas
+
+| Recomendação | Situação |
+|---|---|
+| Segundo ponto de operação | Feito: q_j = 150 L/min, FOPTD re-identificado, cinco regras re-sintonizadas (Tab. `antiwindup_second_op`) |
+| Comparador de condicionamento; LMI | T_t = T_i (valor associado ao condicionamento) incluído na Tab. 7; ausência do compensador LMI justificada por escrito (Sec. 1.1 e 4.3) |
+| Figura do mecanismo | Feita: Fig. 2 (u_raw, u_act, e, I do ZN em três políticas) |
+| Erro de modelo ±20 % | Feito para K, τ, θ (27 cantos) e para a malha exata; o ótimo com M_s exato tem M_s^FOPTD até 151,8. **Banda morta e atrito: não simulados** (declarado) |
+| Encurtar o Sobol e mover tabelas ao suplementar | **Não feito**: o artigo cresceu para 23 páginas; decidir se vale um arquivo suplementar |
+| "Sem parâmetro" qualificado; regime da regulação | Feito (Tab. 1, Sec. 4.3, Sec. 4.7) |
+| Separar curvas das Figs. 1 e 3 | Feito: dois painéis (regras empíricas e projetos robustos) |
+| Segunda planta de ação reversa | **Não feito** (declarado como trabalho futuro) |

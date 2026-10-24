@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Sensitivity peak under model error: on the FOPTD, the largest $M_s$ over the $27$ corners of $K$, $\tau$, $\theta$ scaled by $0.8$, $1$, $1.2$; on the exact loop, the largest $M_s$ with the loop gain scaled by $0.8$ or $1.2$ and an extra delay of $0.2\,\theta_{\mathrm{FOPTD}}$. Deadband and stiction are not modelled.}
+\label{tab:model_error}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Tuning & \(M_s^{\mathrm{FOPTD}}\) nominal & worst of $27$ corners & \(M_s^{\mathrm{lin}}\) nominal & worst ($K\pm20\%$, $+0.2\theta$) \\
+\midrule
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.60 & 2.74 & 1.31 & 1.56 \\
+Optimal ITAE ($M_s^{\mathrm{lin}} \leq 1.6$) & 13.86 & 151.77 & 1.20 & 1.60 \\
+AMIGO & 1.45 & 2.02 & 1.26 & 1.44 \\
+Skogestad SIMC & 1.13 & 1.25 & 1.11 & 1.18 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

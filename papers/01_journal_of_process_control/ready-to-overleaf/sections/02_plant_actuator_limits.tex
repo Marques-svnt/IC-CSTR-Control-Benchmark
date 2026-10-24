@@ -74,7 +74,7 @@ so the heat that the reactor can reject is bounded by $Q_{r,\max}(T) = q \rho C_
     u_{\mathrm{req}}(T) = \frac{UA\,(T - T_j^\star)}{\rho_j C_{pj}\,(T_j^\star - T_{jf})},
     \label{eq:u_req}
 \end{equation}
-with $k(T) = k_0\exp(-E/(R\,T))$. The setpoint is attainable at steady state only if $u_{\mathrm{req}} \le u_{\max}$; Section~\ref{subsec:sobol_results} uses $u_{\mathrm{req}}$ as the heat-removal demand of a perturbed plant.
+with $k(T) = k_0\exp(-E/(R\,T))$. The setpoint is attainable at steady state only if $u_{\mathrm{req}} \le u_{\max}$; Section~\ref{subsec:sobol_results} uses $u_{\mathrm{req}}$ as the heat-removal demand of a perturbed plant. Conversely, a valve held at the upper stop settles the reactor at $T_\infty = T_{eq}(u_{\max})$, the steady temperature at full cooling ($377.94$~K for the nominal plant); $T_\infty$ is the offset equilibrium used in Section~\ref{subsec:clamping_rule}.
 
 \subsection{Valve amplitude and slew-rate limits}
 \label{subsec:actuator_limits}

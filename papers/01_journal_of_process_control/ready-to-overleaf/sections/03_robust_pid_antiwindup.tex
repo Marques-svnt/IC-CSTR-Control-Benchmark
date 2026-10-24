@@ -8,6 +8,7 @@ The controller is a parallel PID sampled at $\Delta t = 0.02$~min, with $u_{\tex
 with derivative on the measurement and filter time $\tau_f = T_d/N$ \cite{astrom1995pid, visioli2006practical}. The coefficient $N$ is a design variable: the benchmark uses the common value $N = 10$ for every rule, and Section~\ref{subsec:noise_results} shows how much of the noise-to-valve gain of the empirical rules is due to that choice \cite{segovia2013noise}. The loop is reverse-acting: more coolant lowers the temperature, so all tunings have $K_p < 0$.
 
 \subsection{Directional amplitude- and rate-aware clamping}
+\label{subsec:clamping_rule}
 Let $u_{\text{act},k-1}$ be the valve position actually reached at the previous sample after amplitude \emph{and} slew-rate limitation. With the trapezoidal increment $\delta I_k = (K_p/T_i)\,\tfrac{1}{2}(e_k + e_{k-1})\,\Delta t$ of Eq.~\eqref{eq:integral_trapezoidal}, the integrator is frozen when the previous command was cut by either limit and the increment pushes further in the same direction:
 \begin{equation}
     I_k = \begin{cases}
@@ -18,6 +19,19 @@ Let $u_{\text{act},k-1}$ be the valve position actually reached at the previous 
 \end{equation}
 Evaluating the saturation residual at the previous sample avoids an algebraic loop between $I_k$, $u_{\text{raw},k}$ and the nonlinear valve map. The product form contains the sign of the loop: with $K_p < 0$ a negative error drives the command towards $u_{\max}$, so the sign-blind condition ``$u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$'' is false while the integrator winds up and becomes true only when the error has reversed, i.e. when the integrator must unwind (Section~\ref{subsec:ablation}). It also covers rate saturation: a $2$~K setpoint step demands more than $S_{\max}\Delta t = 1.6$~L/min per sample from most tunings, so the valve spends the first part of the transient rate-limited but far from its amplitude stops, and an amplitude-only rule keeps integrating during the whole ramp \cite{bohn1995analysis, peng1996nonlinear}. Section~\ref{subsec:ablation} quantifies the difference against sign-blind clamping and the other variants defined next. The rule is the sign-of-increment form of conditional integration, evaluated on the slew-limited valve position; it is adopted, not proposed as new (Section~\ref{subsec:positioning}).
 
+
+\begin{proposition}[latch of sign-blind clamping]\label{prop:latch}
+Let the loop be reverse-acting ($K_p < 0$) and the open-loop-stable plant have steady temperature $T_\infty = T_{eq}(u_{\max})$ at full cooling, with $T_{sp} > T_\infty$. Under sign-blind amplitude clamping (freeze iff $u_{\text{raw}} \ge u_{\max} \wedge e > 0$ or $u_{\text{raw}} \le u_{\min} \wedge e < 0$), $e = T_{sp} - T$, let $I^\star = u_{\max} - u_{\text{bias}} + |K_p|\,(T_{sp} - T_\infty)$ and $\delta > 0$. Suppose that at some instant the valve is at $u_{\max}$, $I \ge I^\star + |K_p|\delta + \bar D$, where $\bar D$ bounds $|D|$, and that the response to the constant input $u_{\max}$ stays in $[T_\infty - \delta, T_{sp})$. Then $I$ is frozen at all later instants, $u_{\text{act}} \equiv u_{\max}$ and $T(t) \to T_\infty$: the loop never leaves the offset equilibrium $e_\infty = T_{sp} - T_\infty > 0$.
+\end{proposition}
+\begin{proof}
+Consider an instant at which the valve is at $u_{\max}$ and $I \ge I^\star + |K_p|\delta + \bar D$. Since $e \le T_{sp} - T_\infty + \delta$ and $|D| \le \bar D$,
+\[
+u_{\text{raw}} = u_{\text{bias}} - |K_p|\,e + I + D \;\ge\; u_{\text{bias}} - |K_p|\,(T_{sp} - T_\infty + \delta) + I^\star + |K_p|\delta \;=\; u_{\max},
+\]
+and $e > 0$ by hypothesis, so the rule freezes $I$; $u_{\text{act}}$ stays at $u_{\max}$ and the plant, being stable, converges to $T_\infty$ under the constant input. The inequality is thus reproduced at the next sample, and the claim follows by induction on the sample index.
+\end{proof}
+The condition is met by the trajectories of Table~\ref{tab:antiwindup_mechanism} (ZN and CC: $I$ of the order of $10^{3}$~L/min against $I^\star \approx 300$~L/min), so the latch is a property of the rule, not of the tuning. The directional rule of Eq.~\eqref{eq:clamping_antiwindup} cannot latch: at $u_{\text{act}} = u_{\max}$, $u_{\text{raw}} > u_{\max}$ and $e > 0$ the increment is $\delta I = (K_p/T_i)\tfrac12(e_k + e_{k-1})\Delta t < 0$, so $(u_{\text{raw}} - u_{\text{act}})\,\delta I < 0$, the integrator is \emph{not} frozen and unwinds by $|\delta I|$ per sample until $u_{\text{raw}} \le u_{\max}$. A fixed point with the valve at a stop requires $(u_{\text{raw}} - u_{\text{act}})\,\delta I > 0$, i.e.\ at the upper stop $e < 0$ (temperature above the setpoint, more cooling genuinely needed); every other fixed point has $e = 0$.
+
 \subsection{Anti-windup variants of the ablation}
 \label{subsec:aw_variants}
 Seven integrator policies are compared (Table~\ref{tab:antiwindup_ablation}). \emph{None}: $I_k = I_{k-1} + \delta I_k$ at all times. \emph{Back-calculation} \cite{astrom1989windup, galeani2009tutorial} adds a tracking term,
@@ -25,7 +39,7 @@ Seven integrator policies are compared (Table~\ref{tab:antiwindup_ablation}). \e
     I_k = I_{k-1} + \delta I_k + \frac{\Delta t}{T_t}\left(u_{\text{act},k-1} - u_{\text{raw},k-1}\right), \qquad T_t = \sqrt{T_i T_d}\ (T_t = T_i \text{ if } T_d = 0),
     \label{eq:back_calculation}
 \end{equation}
-with the default $T_t$ above; because the scheme is sensitive to $T_t$, Table~\ref{tab:antiwindup_tt_sweep} repeats it with $0.1T_t$ and $10T_t$. \emph{Sign-blind amplitude clamping} freezes the integrator when $u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$, or $u_{\text{raw}} \le u_{\min}$ and $e_k < 0$, which is the sign convention of a direct-acting loop. The remaining four variants form the $2\times 2$ factorial of the clamping family. The \emph{trigger} is either amplitude only ($u_{\text{raw},k-1}$ outside $[u_{\min}, u_{\max}]$) or amplitude plus slew rate ($u_{\text{raw},k-1} \ne u_{\text{act},k-1}$). The \emph{sign awareness} is either unconditional (the integrator is frozen whenever the trigger holds, whatever the sign of $\delta I_k$) or directional (frozen only if $(u_{\text{raw},k-1} - u_{\text{act},k-1})\,\delta I_k > 0$, Eq.~\eqref{eq:clamping_antiwindup}). The rule adopted in the benchmark is the amplitude-plus-rate, directional cell; Algorithm~\ref{alg:integrator} gives its implementation.
+with the default $T_t$ above; because the scheme depends on $T_t$, Table~\ref{tab:antiwindup_tt_sweep} and Fig.~\ref{fig:tt_curve} scan it over the physical range $[T_d, T_i]$ and beyond. \emph{Sign-blind amplitude clamping} freezes the integrator when $u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$, or $u_{\text{raw}} \le u_{\min}$ and $e_k < 0$, which is the sign convention of a direct-acting loop. The remaining four variants form the $2\times 2$ factorial of the clamping family. The \emph{trigger} is either amplitude only ($u_{\text{raw},k-1}$ outside $[u_{\min}, u_{\max}]$) or amplitude plus slew rate ($u_{\text{raw},k-1} \ne u_{\text{act},k-1}$). The \emph{sign awareness} is either unconditional (the integrator is frozen whenever the trigger holds, whatever the sign of $\delta I_k$) or directional (frozen only if $(u_{\text{raw},k-1} - u_{\text{act},k-1})\,\delta I_k > 0$, Eq.~\eqref{eq:clamping_antiwindup}). The rule adopted in the benchmark is the amplitude-plus-rate, directional cell; Algorithm~\ref{alg:integrator} gives its implementation.
 
 \begin{algorithm}[t]
 \caption{Integrator update with directional amplitude- and rate-aware clamping (one sampling instant, reverse- or direct-acting).}\label{alg:integrator}
@@ -48,7 +62,7 @@ A comparison of PID tunings on a valve-limited loop is only interpretable if it 
     \item \textbf{Loop sign.} Is the loop reverse-acting ($K_p<0$ in the convention used), and was the clamping condition written for that sign?
     \item \textbf{Trigger.} Does the logic react to the amplitude limit only, or also to the slew-rate limit (i.e.\ does it use the post-rate-limit valve position)?
     \item \textbf{Sign awareness.} Is the integrator frozen unconditionally, or only if the increment pushes further into the limit?
-    \item \textbf{Tracking constant.} If back-calculation is used, what is $T_t$ and how sensitive is the result to $0.1T_t$ and $10T_t$?
+    \item \textbf{Tracking constant.} If back-calculation is used, what is $T_t$, is it inside $[T_d, T_i]$ and larger than $\Delta t$, and how sensitive is the result to it?
     \item \textbf{Measurement path.} Which derivative-filter coefficient $N$ and which measurement filter $\tau_m$ were used, and are the errors evaluated on the true or on the measured signal?
 \end{enumerate}
 
