@@ -72,6 +72,7 @@ class ClosedLoopSimulator:
         noise_std: float = 0.0,
         seed: Optional[int] = None,
         t_step: float = 0.0,
+        meas_filter_tau: float = 0.0,
     ) -> ClosedLoopResult:
         """Executa a simulação em malha fechada ao longo de um horizonte temporal.
 
@@ -94,6 +95,8 @@ class ClosedLoopSimulator:
             noise_std: Desvio padrão do ruído gaussiano adicionado ao sensor de temperatura [K].
             seed: Semente pseudoaleatória para reprodutibilidade.
             t_step: Instante do degrau de setpoint [min], usado no ITAE ponderado.
+            meas_filter_tau: Constante de tempo tau_f [min] do filtro passa-baixa de medição
+                dT_meas/dt = (T + ruído - T_meas)/tau_f (discretização exata, ZOH). 0 = sem filtro.
 
         Returns:
             ClosedLoopResult: Resultados completos das trajetórias temporais e métricas.
@@ -110,6 +113,8 @@ class ClosedLoopSimulator:
 
         current_state = initial_state
         u_init = float(controller.u_bias)
+        alpha_f = 1.0 - np.exp(-dt / meas_filter_tau) if meas_filter_tau > 0.0 else 1.0
+        t_meas = current_state.T
         controller.reset(initial_measurement=current_state.T, initial_u=controller.u_bias)
 
         logger.info(
@@ -126,7 +131,8 @@ class ClosedLoopSimulator:
             states[i] = current_state.to_array()
 
             noise = rng.normal(0.0, noise_std) if noise_std > 0.0 else 0.0
-            pv_measured = current_state.T + noise
+            t_meas += alpha_f * (current_state.T + noise - t_meas)
+            pv_measured = t_meas if meas_filter_tau > 0.0 else current_state.T + noise
             t_pv_arr[i] = pv_measured
 
             # 1. Execução do algoritmo de controle (PID clássico ou multivariável/ótimo)

@@ -274,3 +274,115 @@ class TestNaiveClampingAblation:
         i1 = pid.compute(setpoint=360.0, measurement=350.0, dt=0.1)[1]["i"]
         i2 = pid.compute(setpoint=360.0, measurement=350.0, dt=0.1)[1]["i"]
         assert i2 == pytest.approx(i1)
+
+
+class TestAntiWindupFactorial:
+    """IC-T21: NONE, BACK_CALCULATION and the 2x2 (trigger x sign awareness) clamping matrix."""
+
+    LIMITS = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=50.0)
+    GAINS = PIDGains(kp=-5.0, ti=1.0, td=0.0)
+
+    def _integral_after(
+        self, method: AntiWindupMethod, sp: float = 340.0, pv: float = 350.0
+    ) -> float:
+        pid = PIDController(self.GAINS, self.LIMITS, method, u_bias=100.0)
+        i = 0.0
+        for _ in range(10):  # Kp < 0, e < 0: command pushed up, slew-limited, far from u_max
+            i = pid.compute(setpoint=sp, measurement=pv, dt=0.1)[1]["i"]
+        return i
+
+    def test_rate_aware_rules_freeze_during_slew_ramp_and_position_only_rules_do_not(self) -> None:
+        free = self._integral_after(AntiWindupMethod.NONE)
+        for method in (
+            AntiWindupMethod.CLAMPING_POS_AGNOSTIC,
+            AntiWindupMethod.CLAMPING_POS_DIRECTIONAL,
+        ):
+            assert self._integral_after(method) == pytest.approx(free)
+        assert self._integral_after(AntiWindupMethod.CLAMPING_RATE_AGNOSTIC) < 0.2 * free
+        assert self._integral_after(AntiWindupMethod.CLAMPING) < 0.2 * free
+
+    def test_agnostic_rule_freezes_even_when_error_unwinds_the_integrator(self) -> None:
+        for method, expect_frozen in (
+            (AntiWindupMethod.CLAMPING_RATE_AGNOSTIC, True),
+            (AntiWindupMethod.CLAMPING, False),
+        ):
+            pid = PIDController(self.GAINS, self.LIMITS, method, u_bias=100.0)
+            for _ in range(5):
+                pid.compute(setpoint=340.0, measurement=350.0, dt=0.1)  # winds the valve up
+            i_before = pid.compute(setpoint=340.0, measurement=350.0, dt=0.1)[1]["i"]
+            # error flips sign while still saturated: directional rule must release the integrator
+            i_after = pid.compute(setpoint=380.0, measurement=350.0, dt=0.1)[1]["i"]
+            assert (i_after == pytest.approx(i_before)) is expect_frozen
+
+    def test_none_never_clamps_and_back_calculation_bleeds_windup(self) -> None:
+        none = self._integral_after(AntiWindupMethod.NONE)
+        back = self._integral_after(AntiWindupMethod.BACK_CALCULATION)
+        assert none > 0.0
+        assert back < none  # tracking term (u_act - u_raw)/T_t opposes the accumulated excess
+
+    def test_back_calculation_tracking_time_defaults(self) -> None:
+        assert PIDGains(kp=-1.0, ti=2.0, td=0.5).tt == pytest.approx(1.0)  # sqrt(Ti Td)
+        assert PIDGains(kp=-1.0, ti=2.0).tt == pytest.approx(2.0)  # Ti when Td = 0
+
+
+class TestMeasurementFilterAndExactRobustness:
+    """IC-T22: low-pass measurement filter and plant-exact ||CS||, K_hf."""
+
+    def test_filter_reduces_valve_travel_under_noise(
+        self, plant: CSTRPlant, nominal_steady_state: tuple[CSTRState, float]
+    ) -> None:
+        ss, q_j = nominal_steady_state
+        gains = tune_analytical(NOMINAL_FOPTD, rule=TuningRule.ZIEGLER_NICHOLS_PID)
+        limits = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0)
+
+        def tv(tau: float) -> float:
+            pid = PIDController(gains, limits, AntiWindupMethod.CLAMPING, u_bias=q_j, y_ss=ss.T)
+            return ClosedLoopSimulator().run(
+                plant, pid, ss, (0.0, 3.0), 0.02, lambda t: ss.T, noise_std=0.05, seed=1,
+                meas_filter_tau=tau,
+            ).metrics.tv
+
+        assert tv(0.05) < tv(0.0)
+
+    def test_k_hf_matches_filtered_pid_plateau_and_bounds_cs(
+        self, plant: CSTRPlant, nominal_steady_state: tuple[CSTRState, float]
+    ) -> None:
+        from src.classical_control.tuning_optimization import (
+            high_frequency_gain,
+            linearized_robustness,
+        )
+
+        ss, q_j = nominal_steady_state
+        gains = tune_amigo(NOMINAL_FOPTD)
+        rob = linearized_robustness(plant, ss, q_j, gains, theta=0.01)
+        w = np.array([1e7])
+        c_hf = abs(gains.kp + gains.kp / (1j * w * gains.ti)
+                   + gains.kp * gains.td * 1j * w / (1.0 + gains.td / gains.n_filter * 1j * w))[0]
+        assert high_frequency_gain(gains) == pytest.approx(c_hf, rel=1e-3)
+        assert rob["k_hf"] == pytest.approx(abs(gains.kp) * (1.0 + gains.n_filter))
+        assert rob["cs_inf"] <= rob["k_hf"] * rob["ms"] * (1 + 1e-6)  # CS = C S, |C| <= K_hf-ish
+        assert rob["ms"] == pytest.approx(
+            __import__("src.classical_control.tuning_optimization", fromlist=["x"])
+            .calculate_maximum_sensitivity(plant, ss, q_j, gains, theta=0.01), rel=1e-2
+        )
+
+
+def test_textbook_clamping_latches_valve_at_upper_stop_for_zn(
+    plant: CSTRPlant, nominal_steady_state: tuple[CSTRState, float]
+) -> None:
+    """IC-T21: with Kp < 0 the textbook freeze (u_raw >= u_max and e > 0) blocks unwinding, so
+    the valve stays at u_max and T settles at the open-loop steady state of q_j = u_max."""
+    ss, q_j = nominal_steady_state
+    limits = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0)
+    paper_foptd = FOPTDModel(k_p=-0.1852, tau=0.6427, theta=0.0935)  # identified in Artigo 1
+    gains = tune_analytical(paper_foptd, rule=TuningRule.ZIEGLER_NICHOLS_PID)
+    sim = ClosedLoopSimulator()
+
+    def run(method: AntiWindupMethod):
+        pid = PIDController(gains, limits, method, u_bias=q_j, y_ss=ss.T)
+        return sim.run(plant, pid, ss, (0.0, 10.0), 0.02, lambda t: ss.T - 2.0)
+
+    naive, directional = run(AntiWindupMethod.CLAMPING_NAIVE), run(AntiWindupMethod.CLAMPING)
+    assert naive.u_applied[-1] == limits.u_max
+    assert naive.states[-1, 1] == pytest.approx(plant.find_steady_state(q_j=300.0).T, abs=0.1)
+    assert directional.metrics.iae < 0.1 * naive.metrics.iae

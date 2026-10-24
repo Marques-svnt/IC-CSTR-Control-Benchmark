@@ -1,6 +1,7 @@
 \begin{highlights}
-\item Rate-aware directional clamping keeps all eight PID tunings stable on the CSTR
-\item Amplitude-only anti-windup makes the empirical rules lose temperature control
-\item High-gain tunings inject the most sensor noise into the reactor temperature
-\item Sobol: feed and heat transfer govern error; kinetics and delay drive valve wear
+\item Implementation study of PID loops with amplitude- and slew-rate-limited valves
+\item Textbook clamping latches a reverse-acting loop at full cooling (377.9 K)
+\item Rate-aware directional clamping keeps all eight tunings stable
+\item Noise-to-valve gain follows |Kp|(1+N), not the linearized sensitivity peak
+\item Optimal-ITAE PID stays best on out-of-sample setpoint steps up to -5 K
 \end{highlights}

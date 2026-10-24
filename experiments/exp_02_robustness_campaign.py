@@ -621,6 +621,8 @@ def run_noise_and_pareto_campaign(
     limits: ActuatorLimits,
     figures_dir: Path,
     tables_dir: Path,
+    noise_levels: tuple[float, ...] = (0.0, 0.1, 0.2, 0.5, 1.0),
+    filter_taus: tuple[float, ...] = (0.0,),
 ) -> None:
     """Quantifica a sensibilidade ao ruído estocástico de medição via Monte Carlo.
 
@@ -638,6 +640,9 @@ def run_noise_and_pareto_campaign(
         limits: Restrições físicas da válvula.
         figures_dir: Diretório de destino para figuras.
         tables_dir: Diretório de destino para tabelas.
+        noise_levels: Desvios padrão sigma do ruído gaussiano [K].
+        filter_taus: Constantes tau_f [min] do filtro passa-baixa de medição (0 = sem filtro);
+            a figura usa a última, a tabela ganha a coluna tau_f se houver mais de uma.
     """
     logger.info("=== Executando Campanha de Ruído nos Sensores e Chattering da Válvula ===")
     sim = ClosedLoopSimulator()
@@ -645,15 +650,18 @@ def run_noise_and_pareto_campaign(
     dt = 0.02
     target_T = ss.T - 2.0
 
-    noise_levels = [0.0, 0.1, 0.2, 0.5, 1.0]  # Desvio padrão do ruído gaussiano [K]
     n_monte_carlo = 30
+    plot_tau = filter_taus[-1]
 
-    results: dict[str, dict[float, dict[str, list[float]]]] = {
-        name: {sigma: {"iae": [], "tv": []} for sigma in noise_levels}
+    results: dict[tuple[str, float], dict[float, dict[str, list[float]]]] = {
+        (name, tau): {sigma: {"iae": [], "tv": []} for sigma in noise_levels}
         for name in controllers
+        for tau in filter_taus
     }
 
-    def one_run(name: str, sigma: float, seed: int) -> tuple[str, float, float, float]:
+    def one_run(
+        name: str, sigma: float, seed: int, tau: float
+    ) -> tuple[str, float, float, float, float]:
         ctrl = controllers[name](sensor_noise_std=sigma, seed=10_000 + seed)
         res = sim.run(
             plant=plant,
@@ -664,39 +672,46 @@ def run_noise_and_pareto_campaign(
             setpoint_func=lambda t: target_T,  # same servo protocol as exp_01 (step at t = 0)
             noise_std=sigma,
             seed=100 + seed,
+            meas_filter_tau=tau,
         )
-        return name, sigma, res.metrics.iae, res.metrics.tv
+        return name, sigma, tau, res.metrics.iae, res.metrics.tv
 
     tasks = [
-        (name, sigma, seed)
+        (name, sigma, seed, tau)
         for name in controllers
+        for tau in filter_taus
         for sigma in noise_levels
         for seed in range(n_monte_carlo)
     ]
-    for name, sigma, iae, tv in Parallel(n_jobs=-1)(delayed(one_run)(*t) for t in tasks):
-        results[name][sigma]["iae"].append(iae)
-        results[name][sigma]["tv"].append(tv)
+    for name, sigma, tau, iae, tv in Parallel(n_jobs=-1)(delayed(one_run)(*t) for t in tasks):
+        results[(name, tau)][sigma]["iae"].append(iae)
+        results[(name, tau)][sigma]["tv"].append(tv)
 
     table_rows = []
     for name in controllers:
-        for sigma in noise_levels:
-            mean_iae = float(np.mean(results[name][sigma]["iae"]))
-            std_iae = float(np.std(results[name][sigma]["iae"]))
-            mean_tv = float(np.mean(results[name][sigma]["tv"]))
-            std_tv = float(np.std(results[name][sigma]["tv"]))
-
-            table_rows.append({
-                "Method": name,
-                "Noise $\\sigma$ (K)": f"{sigma:.1f}",
-                "IAE (mean $\\pm$ std)": f"{mean_iae:.2f} $\\pm$ {std_iae:.2f}",
-                "TV (L/min)": f"{mean_tv:.1f} $\\pm$ {std_tv:.1f}",
-            })
+        for tau in filter_taus:
+            for sigma in noise_levels:
+                r = results[(name, tau)][sigma]
+                row = {"Method": name}
+                if len(filter_taus) > 1:
+                    row["$\\tau_m$ (min)"] = f"{tau:.2f}"
+                row |= {
+                    "Noise $\\sigma$ (K)": f"{sigma:.1f}" if round(sigma, 1) == sigma else f"{sigma:.2f}",
+                    "IAE (mean $\\pm$ std)": f"{np.mean(r['iae']):.2f} $\\pm$ {np.std(r['iae']):.2f}",
+                    "TV (L/min)": f"{np.mean(r['tv']):.1f} $\\pm$ {np.std(r['tv']):.1f}",
+                }
+                table_rows.append(row)
 
     export_latex_table(
         data=table_rows,
         output_path=tables_dir / "noise_chattering_table.tex",
         caption="Sensitivity of tracking error (IAE) and actuator effort (TV) "
-        "to measurement noise levels across $30$ Monte Carlo runs.",
+        "to measurement noise levels across $30$ Monte Carlo runs"
+        + (
+            "; $\\tau_m$ is the time constant of the first-order measurement filter ($0$ = unfiltered)."
+            if len(filter_taus) > 1
+            else "."
+        ),
         label="tab:noise_sensitivity",
     )
 
@@ -707,8 +722,8 @@ def run_noise_and_pareto_campaign(
 
     for name in controllers:
         marker = IEEE_MARKERS[name]
-        iaes = [np.mean(results[name][sig]["iae"]) for sig in noise_levels]
-        tvs = [np.mean(results[name][sig]["tv"]) for sig in noise_levels]
+        iaes = [np.mean(results[(name, plot_tau)][sig]["iae"]) for sig in noise_levels]
+        tvs = [np.mean(results[(name, plot_tau)][sig]["tv"]) for sig in noise_levels]
         color = CONTROLLER_COLORS[name]
         ax.plot(
             tvs,
@@ -723,10 +738,10 @@ def run_noise_and_pareto_campaign(
 
     # Anotações limpas com setas indicando os extremos de ruído sem sobreposição de texto
     ref = "Skogestad SIMC" if "Skogestad SIMC" in controllers else next(iter(controllers))
-    sample_iaes = [np.mean(results[ref][sig]["iae"]) for sig in noise_levels]
-    sample_tvs = [np.mean(results[ref][sig]["tv"]) for sig in noise_levels]
+    sample_iaes = [np.mean(results[(ref, plot_tau)][sig]["iae"]) for sig in noise_levels]
+    sample_tvs = [np.mean(results[(ref, plot_tau)][sig]["tv"]) for sig in noise_levels]
     ax.annotate(
-        r"$\sigma = 0.0$ K",
+        rf"$\sigma = {noise_levels[0]:g}$ K",
         xy=(sample_tvs[0], sample_iaes[0]),
         xytext=(35, 12),
         textcoords="offset points",
@@ -735,7 +750,7 @@ def run_noise_and_pareto_campaign(
         arrowprops=dict(arrowstyle="->", lw=0.7, color="#555555"),
     )
     ax.annotate(
-        r"$\sigma = 1.0$ K (high noise)",
+        rf"$\sigma = {noise_levels[-1]:g}$ K (high noise)",
         xy=(sample_tvs[-1], sample_iaes[-1]),
         xytext=(-85, 20),
         textcoords="offset points",

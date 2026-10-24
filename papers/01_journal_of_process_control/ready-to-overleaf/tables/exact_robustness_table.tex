@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Plant-exact robustness of the six feedback loops on the Jacobian linearization at $\mathbf{x}_{ss}$ with the half-sample zero-order-hold delay, and the high-frequency controller gain that maps measurement noise into valve movement.}
+\label{tab:exact_robustness}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Method & \(M_s\) (FOPTD) & \(\|S\|_\infty\) (lin.) & \(\|T\|_\infty\) (lin.) & \(\|CS\|_\infty\) (L/min/K) & \(K_{\mathrm{hf}}=|K_p|(1+N)\) (L/min/K) \\
+\midrule
+Ziegler-Nichols & 4.14 & 1.57 & 1.66 & 490.1 & 490.2 \\
+Cohen-Coon & 4.54 & 1.75 & 1.72 & 559.2 & 559.5 \\
+Tyreus-Luyben & 2.32 & 1.15 & 1.00 & 309.0 & 309.1 \\
+AMIGO & 1.45 & 1.26 & 1.22 & 195.6 & 195.7 \\
+Skogestad SIMC & 1.13 & 1.11 & 1.00 & 77.3 & 77.4 \\
+Optimal ITAE ($M_s \leq 1.6$) & 1.60 & 1.31 & 1.11 & 258.9 & 259.0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

@@ -16,7 +16,20 @@ Let $u_{\text{act},k-1}$ be the valve position actually reached at the previous 
     \end{cases}
     \label{eq:clamping_antiwindup}
 \end{equation}
-Evaluating the saturation residual at the previous sample avoids an algebraic loop between $I_k$, $u_{\text{raw},k}$ and the nonlinear valve map. The product form contains the sign of the loop: with $K_p < 0$ a negative error drives the command towards $u_{\max}$, so the textbook condition ``$u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$'' never triggers. It also covers rate saturation: a $2$~K setpoint step demands more than $S_{\max}\Delta t = 1.6$~L/min per sample from most tunings, so the valve spends the first part of the transient rate-limited but far from its amplitude stops, and an amplitude-only rule keeps integrating during the whole ramp \cite{bohn1995analysis, peng1996nonlinear}. Section~\ref{subsec:ablation} quantifies the difference against this textbook rule (``naive'' clamping).
+Evaluating the saturation residual at the previous sample avoids an algebraic loop between $I_k$, $u_{\text{raw},k}$ and the nonlinear valve map. The product form contains the sign of the loop: with $K_p < 0$ a negative error drives the command towards $u_{\max}$, so the textbook condition ``$u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$'' never triggers. It also covers rate saturation: a $2$~K setpoint step demands more than $S_{\max}\Delta t = 1.6$~L/min per sample from most tunings, so the valve spends the first part of the transient rate-limited but far from its amplitude stops, and an amplitude-only rule keeps integrating during the whole ramp \cite{bohn1995analysis, peng1996nonlinear}. Section~\ref{subsec:ablation} quantifies the difference against the textbook rule and the other variants defined next.
+
+\subsection{Anti-windup variants of the ablation}
+\label{subsec:aw_variants}
+Seven integrator policies are compared (Table~\ref{tab:antiwindup_ablation}). \emph{None}: $I_k = I_{k-1} + \delta I_k$ at all times. \emph{Back-calculation} \cite{astrom1989windup, galeani2009tutorial} adds a tracking term,
+\begin{equation}
+    I_k = I_{k-1} + \delta I_k + \frac{\Delta t}{T_t}\left(u_{\text{act},k-1} - u_{\text{raw},k-1}\right), \qquad T_t = \sqrt{T_i T_d}\ (T_t = T_i \text{ if } T_d = 0),
+    \label{eq:back_calculation}
+\end{equation}
+with $T_t$ fixed by this rule and not tuned. The \emph{textbook} rule freezes the integrator when $u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$, or $u_{\text{raw}} \le u_{\min}$ and $e_k < 0$, which is correct for a direct-acting loop. The remaining four variants form the $2\times 2$ factorial of the clamping family. The \emph{trigger} is either amplitude only ($u_{\text{raw},k-1}$ outside $[u_{\min}, u_{\max}]$) or amplitude plus slew rate ($u_{\text{raw},k-1} \ne u_{\text{act},k-1}$). The \emph{sign awareness} is either unconditional (the integrator is frozen whenever the trigger holds, whatever the sign of $\delta I_k$) or directional (frozen only if $(u_{\text{raw},k-1} - u_{\text{act},k-1})\,\delta I_k > 0$, Eq.~\eqref{eq:clamping_antiwindup}). The proposed rule is the amplitude-plus-rate, directional cell.
+
+\subsection{Measurement filter}
+\label{subsec:meas_filter}
+Where indicated, the controller sees the reactor temperature through a first-order low-pass filter, $\tau_m\,\dot T_{\text{meas}} = T + \eta - T_{\text{meas}}$ with $\tau_m = 0.05$~min and sensor noise $\eta$ (the symbol $\tau_f$ is reserved for the derivative filter). Under the zero-order hold at the sampling instants it is integrated exactly, $T_{\text{meas},k} = T_{\text{meas},k-1} + (1 - e^{-\Delta t/\tau_m})\,(T_k + \eta_k - T_{\text{meas},k-1})$. Error metrics keep using the true temperature $T$. The filter adds lag inside the loop; the benchmark tables use $\tau_m = 0$ unless stated.
 
 \subsection{FOPTD identification}
 \label{subsec:foptd_identification}
