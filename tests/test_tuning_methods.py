@@ -185,6 +185,59 @@ class TestOptimizationTuning:
         assert calculate_maximum_sensitivity_foptd(foptd, opt_gains) <= 1.60 + 1e-3
 
 
+    def test_exact_ms_constraint_acts_on_linearized_plant(
+        self, plant: CSTRPlant, nominal_steady_state: tuple[CSTRState, float]
+    ) -> None:
+        """ms_model='exact' enforces Ms <= 1.6 on the Jacobian loop with the half-sample ZOH."""
+        from src.classical_control.tuning_optimization import linearized_robustness
+
+        ss, q_j_ss = nominal_steady_state
+        dt = 0.04
+        opt_gains = tune_by_optimization(
+            plant=plant,
+            nominal_state=ss,
+            q_j_ss=q_j_ss,
+            target_dT=-2.0,
+            max_ms=1.6,
+            t_sim=4.0,
+            dt=dt,
+            ms_model="exact",
+            limits=ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0),
+        )
+        ms = linearized_robustness(plant, ss, q_j_ss, opt_gains, theta=dt / 2.0)["ms"]
+        assert ms <= 1.60 + 1e-3
+
+    def test_optimize_weights_keeps_ms_and_stays_in_box(
+        self, plant: CSTRPlant, nominal_steady_state: tuple[CSTRState, float]
+    ) -> None:
+        """Setpoint weights are free in [0, 1]^2 and, acting on the reference only, keep Ms."""
+        from dataclasses import replace
+
+        from src.classical_control.tuning_optimization import linearized_robustness
+
+        ss, q_j_ss = nominal_steady_state
+        dt = 0.04
+        g = tune_by_optimization(
+            plant=plant,
+            nominal_state=ss,
+            q_j_ss=q_j_ss,
+            target_dT=-2.0,
+            max_ms=1.6,
+            t_sim=4.0,
+            dt=dt,
+            ms_model="exact",
+            optimize_weights=True,
+            limits=ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0),
+        )
+        assert 0.0 <= g.beta <= 1.0 and 0.0 <= g.gamma <= 1.0
+        ms_2dof = linearized_robustness(plant, ss, q_j_ss, g, theta=dt / 2.0)["ms"]
+        ms_1dof = linearized_robustness(
+            plant, ss, q_j_ss, replace(g, beta=1.0, gamma=0.0), theta=dt / 2.0
+        )["ms"]
+        assert ms_2dof == pytest.approx(ms_1dof, rel=1e-12)
+        assert ms_2dof <= 1.60 + 1e-3
+
+
 class TestClosedLoopTotalVariation:
     """ClosedLoopSimulator must account for the first actuator move from q_j_ss."""
 

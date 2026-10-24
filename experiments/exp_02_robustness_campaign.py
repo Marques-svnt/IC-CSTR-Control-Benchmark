@@ -70,7 +70,7 @@ RESULTS_DIR = PROJECT_ROOT / "results"
 # Per-paper builds override these two globals (CSV mirror folder, LaTeX float of the target class)
 TABLE_FLOAT_ENV = "tableorg"
 NMPC_HORIZON = 50  # 1.0 min at dt = 0.02 min; N = 75 gives identical nominal IAE
-OPT_ITAE = "Optimal ITAE ($M_s \\leq 1.6$)"
+OPT_ITAE = "Optimal ITAE ($M_s^{\\mathrm{FOPTD}} \\leq 1.6$)"
 OPT_ITAE_2DOF = "2-DOF Optimal ITAE"
 BENCHMARK_LIMITS = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0)
 
@@ -261,6 +261,23 @@ def export_latex_table(
 
 
 # %% [4. Ensaio 1: Rejeição de Perturbações de Carga Não-Mensuradas]
+def load_disturbance_profile(
+    plant: CSTRPlant, dT_f: float, dC_frac: float
+) -> Callable[[float], dict[str, float]]:
+    """Feed schedule: Delta T_f from t = 2 min, plus a relative Delta C_Af from t = 8 min."""
+
+    def profile(t: float) -> dict[str, float]:
+        dist = {}
+        if 2.0 <= t < 8.0:
+            dist["T_f"] = plant.params.T_f + dT_f
+        elif t >= 8.0:
+            dist["T_f"] = plant.params.T_f + dT_f
+            dist["C_Af"] = plant.params.C_Af * (1.0 + dC_frac)
+        return dist
+
+    return profile
+
+
 def run_load_disturbance_campaign(
     plant: CSTRPlant,
     ss: CSTRState,
@@ -271,6 +288,7 @@ def run_load_disturbance_campaign(
     tables_dir: Path,
     dT_f: float = 5.0,
     dC_frac: float = 0.2,
+    noise_std: float = 0.05,
 ) -> None:
     """Avalia o controle regulatório contra perturbações não-mensuradas na alimentação.
 
@@ -289,27 +307,21 @@ def run_load_disturbance_campaign(
         tables_dir: Diretório de destino para tabelas.
         dT_f: Degrau de temperatura de alimentação [K] (padrão +5 K).
         dC_frac: Degrau relativo de C_Af (padrão +20 %).
+        noise_std: Ruído gaussiano do termopar [K]; 0 dá a resposta determinística.
     """
     logger.info("=== Executando Campanha de Rejeição de Perturbações de Carga ===")
     sim = ClosedLoopSimulator()
     t_span = (0.0, 15.0)
     dt = 0.02
 
-    def disturbance_profile(t: float) -> dict[str, float]:
-        dist = {}
-        if 2.0 <= t < 8.0:
-            dist["T_f"] = plant.params.T_f + dT_f
-        elif t >= 8.0:
-            dist["T_f"] = plant.params.T_f + dT_f
-            dist["C_Af"] = plant.params.C_Af * (1.0 + dC_frac)
-        return dist
+    disturbance_profile = load_disturbance_profile(plant, dT_f, dC_frac)
 
     has_nmpc = any(name.startswith("NMPC") for name in controllers)
     sim_results = {}
     table_rows = []
 
     for name, make in controllers.items():
-        pid = make(sensor_noise_std=0.05, seed=42)
+        pid = make(sensor_noise_std=noise_std, seed=42)
         res = sim.run(
             plant=plant,
             controller=pid,
@@ -318,12 +330,12 @@ def run_load_disturbance_campaign(
             dt=dt,
             setpoint_func=lambda t: ss.T,  # Controle puramente regulatório em T nominal
             disturbance_func=disturbance_profile,
-            noise_std=0.05,
+            noise_std=noise_std,
             seed=42,
         )
         sim_results[name] = res
 
-        dev = np.abs(res.t_pv - ss.T)
+        dev = np.abs(res.states[:, 1] - ss.T)  # true temperature, not the noisy measurement
         peak_dev = np.max(dev[res.t >= 2.0])
 
         table_rows.append({
@@ -331,6 +343,7 @@ def run_load_disturbance_campaign(
             "IAE": f"{res.metrics.iae:.2f}",
             r"ITAE (K$\cdot$min$^2$)": f"{res.metrics.itae:.2f}",
             "TV (L/min)": f"{res.metrics.tv:.1f}",
+            "TV/ceiling (\\%)": f"{100.0 * res.metrics.tv / (limits.max_slew_rate * t_span[1]):.0f}",
             "Peak Dev (K)": f"{peak_dev:.2f}",
             "Max Valve (L/min)": f"{np.max(res.u_applied):.1f}",
             r"\(T(t_f) - T_{sp}\) (K)": f"{res.states[-1, 1] - ss.T:+.2f}",
@@ -344,6 +357,13 @@ def run_load_disturbance_campaign(
         output_path=tables_dir / "disturbance_rejection_table.tex",
         caption=f"Regulatory performance under combined feed temperature ($+{dT_f:g}$~K) "
         f"and concentration ($+{100 * dC_frac:g}\\%$) load disturbances. "
+        + (
+            f"Thermocouple noise $\\sigma = {noise_std:g}$~K, one realization (seed 42), no "
+            "measurement filter. "
+            if noise_std > 0.0
+            else "Noise-free (deterministic) response. "
+        )
+        + "TV/ceiling is TV relative to the kinematic ceiling $S_{\\max}t_f$. "
         "$T(t_f) - T_{sp}$ is the true "
         "temperature error at $t_f = 15$~min"
         + (
@@ -814,15 +834,16 @@ def _export_filter_paired_tests(
             a, b = results[(name, t0)][sigma], results[(name, t1)][sigma]
             d_tv = np.array(b["tv"]) - np.array(a["tv"])
             d_iae = np.array(b["iae"]) - np.array(a["iae"])
-            keys.append((name, sigma, d_tv.mean(), d_iae.mean()))
+            keys.append((name, sigma, d_tv.mean(), d_iae.mean(), 100.0 * d_tv.mean() / np.mean(a["tv"])))
             raw += [scipy_stats.wilcoxon(d_tv).pvalue, scipy_stats.wilcoxon(d_iae).pvalue]
     adj = scipy_stats.false_discovery_control(np.array(raw))
     fmt = lambda p: "$<10^{-3}$" if p < 1e-3 else f"{p:.3f}"  # noqa: E731
-    for i, (name, sigma, m_tv, m_iae) in enumerate(keys):
+    for i, (name, sigma, m_tv, m_iae, rel_tv) in enumerate(keys):
         rows.append({
             "Method": name,
             "Noise $\\sigma$ (K)": f"{sigma:.2f}",
             "\\(\\Delta\\)TV (L/min)": f"{m_tv:+.1f}",
+            "\\(\\Delta\\)TV (\\%)": f"{rel_tv:+.0f}",
             "\\(p_{\\mathrm{adj}}\\) (TV)": fmt(adj[2 * i]),
             "\\(\\Delta\\)IAE (K$\\cdot$min)": f"{m_iae:+.3f}",
             "\\(p_{\\mathrm{adj}}\\) (IAE)": fmt(adj[2 * i + 1]),
@@ -991,7 +1012,15 @@ def run_multistep_campaign(
 
 
 # %% [8. Ensaio 5: Sensibilidade Global de Sobol (SALib) sob Incerteza Conjunta]
-SOBOL_CONTROLLERS = ("Ziegler-Nichols", "Tyreus-Luyben", "AMIGO", "Skogestad SIMC", OPT_ITAE_2DOF)
+SOBOL_CONTROLLERS = (
+    "Ziegler-Nichols",
+    "Cohen-Coon",
+    "Tyreus-Luyben",
+    "AMIGO",
+    "Skogestad SIMC",
+    OPT_ITAE,
+    OPT_ITAE_2DOF,
+)
 SOBOL_LABELS = {
     "E_over_R_scale": r"$E_a/R$",
     "UA_scale": r"$UA$",
@@ -1007,6 +1036,7 @@ def run_sobol_uncertainty_campaign(
     figures_dir: Path,
     tables_dir: Path,
     n_base: int = 512,
+    raw: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """First/total-order Sobol indices of IAE and TV under (E_a/R, UA, C_Af, theta_sensor).
 
@@ -1015,11 +1045,20 @@ def run_sobol_uncertainty_campaign(
     """
     logger.info("=== Executando Análise de Sensibilidade Global de Sobol (SALib, N=%d) ===", n_base)
     factories = {name: pid_factory(gains[name], limits, q_j_ss) for name in SOBOL_CONTROLLERS}
-    df = closed_loop_sobol(factories, n_base=n_base, seed=2026, q_j_ss=q_j_ss)
+    df = closed_loop_sobol(factories, n_base=n_base, seed=2026, q_j_ss=q_j_ss, raw=raw)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(RESULTS_DIR / "sobol_sensitivity_summary.csv", index=False)
 
-    wide = df.pivot_table(index=["controller", "parameter"], columns="metric", values=["S1", "ST"])
+    wide = df.pivot_table(
+        index=["controller", "parameter"],
+        columns="metric",
+        values=["S1", "S1_conf", "ST", "ST_conf"],
+    )
+
+    def idx(r: Any, key: str, metric: str) -> str:
+        """Index with the half-width of its 95 % bootstrap interval."""
+        return f"{r[(key, metric)]:.3f} $\\pm$ {r[(key + '_conf', metric)]:.3f}"
+
     rows = []
     for name in SOBOL_CONTROLLERS:
         for param in CSTR_UNCERTAINTY_PROBLEM["names"]:
@@ -1028,10 +1067,10 @@ def run_sobol_uncertainty_campaign(
                 {
                     "Controller": name,
                     "Parameter": SOBOL_LABELS[param],
-                    "$S_1$ (IAE)": f"{r[('S1', 'IAE')]:.3f}",
-                    "$S_T$ (IAE)": f"{r[('ST', 'IAE')]:.3f}",
-                    "$S_1$ (TV)": f"{r[('S1', 'TV')]:.3f}",
-                    "$S_T$ (TV)": f"{r[('ST', 'TV')]:.3f}",
+                    "$S_1$ (IAE)": idx(r, "S1", "IAE"),
+                    "$S_T$ (IAE)": idx(r, "ST", "IAE"),
+                    "$S_1$ (TV)": idx(r, "S1", "TV"),
+                    "$S_T$ (TV)": idx(r, "ST", "TV"),
                 }
             )
     export_latex_table(
@@ -1040,9 +1079,12 @@ def run_sobol_uncertainty_campaign(
         caption=(
             f"Global Sobol indices (Saltelli sampling, $N={n_base}$, "
             f"${n_base * 6}$ closed-loop runs per controller) of IAE and TV for a $-2$~K "
-            "setpoint step under simultaneous uncertainty $E_a/R \\in [0.97, 1.03]$, "
+            "setpoint step at $t = 0.5$~min under simultaneous uncertainty "
+            "$E_a/R \\in [0.97, 1.03]$, "
             "$UA \\in [0.65, 1.05]\\,UA_{\\mathrm{nom}}$, $C_{Af} \\in [0.85, 1.15]$~mol/L "
-            "and sensor dead time $\\theta_{\\mathrm{sensor}} \\in [0, 0.1]$~min."
+            "and sensor dead time $\\theta_{\\mathrm{sensor}} \\in [0, 0.1]$~min. Every run "
+            "starts from the nominal equilibrium. Entries are index $\\pm$ half-width of the "
+            "$95\\%$ bootstrap interval (SALib, 100 resamples)."
         ),
         label="tab:sobol_sensitivity",
     )

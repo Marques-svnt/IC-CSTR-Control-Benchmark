@@ -63,7 +63,8 @@ def sobol_indices(
     problem: Mapping[str, Any],
     n_base: int,
     seed: int,
-) -> pd.DataFrame:
+    return_raw: bool = False,
+) -> pd.DataFrame | tuple[pd.DataFrame, np.ndarray, list[Mapping[str, float]]]:
     """Saltelli-sample `problem`, evaluate every sample and return S1/ST per output.
 
     Args:
@@ -71,9 +72,12 @@ def sobol_indices(
         problem: SALib problem dict (num_vars, names, bounds).
         n_base: Base sample size N (power of 2); the model is run N * (D + 2) times.
         seed: Seed of the scrambled Sobol sequence.
+        return_raw: Also return the Saltelli samples and the per-sample outputs.
 
     Returns:
-        Long DataFrame with columns metric, parameter, S1, S1_conf, ST, ST_conf.
+        Long DataFrame with columns metric, parameter, S1, S1_conf, ST, ST_conf (S*_conf is
+        the half-width of the 95 % bootstrap interval); with `return_raw`, the tuple
+        (DataFrame, samples, outputs).
     """
     samples = sobol_sample.sample(dict(problem), N=n_base, calc_second_order=False, seed=seed)
     outputs = [evaluate(x) for x in samples]
@@ -96,7 +100,8 @@ def sobol_indices(
                     "ST_conf": float(si["ST_conf"][i]),
                 }
             )
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    return (df, samples, outputs) if return_raw else df
 
 
 class DelayedMeasurementController:
@@ -161,6 +166,7 @@ def closed_loop_sobol(
     t_final: float = 8.0,
     dt: float = 0.05,
     problem: Mapping[str, Any] = CSTR_UNCERTAINTY_PROBLEM,
+    raw: Optional[dict[str, tuple[np.ndarray, list[Mapping[str, float]]]]] = None,
 ) -> pd.DataFrame:
     """Sobol indices of IAE and TV for each controller under the CSTR uncertainty box.
 
@@ -176,6 +182,8 @@ def closed_loop_sobol(
         t_final: Simulation horizon [min].
         dt: Sampling interval [min].
         problem: SALib problem with names (E_over_R_scale, UA_scale, C_Af, theta_sensor).
+        raw: Optional dict filled with name -> (samples, per-sample outputs), for post-hoc
+            analyses such as rank correlations.
 
     Returns:
         DataFrame validated by SobolIndicesSchema.
@@ -207,7 +215,11 @@ def closed_loop_sobol(
             return {"IAE": res.metrics.iae, "TV": res.metrics.tv}
 
         logger.info("Sobol campaign for %s (N=%d)", name, n_base)
-        df = sobol_indices(evaluate, problem, n_base=n_base, seed=seed)
+        df, samples, outputs = sobol_indices(
+            evaluate, problem, n_base=n_base, seed=seed, return_raw=True
+        )
+        if raw is not None:
+            raw[name] = (samples, outputs)
         df.insert(0, "controller", name)
         frames.append(df)
     return SobolIndicesSchema.validate(pd.concat(frames, ignore_index=True))

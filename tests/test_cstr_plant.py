@@ -178,3 +178,16 @@ class TestValveActuator:
         u_out, is_sat = valve.apply(u_desired=150.0, dt=0.1)
         assert u_out == pytest.approx(105.0)
         assert is_sat is True
+
+
+class TestRequiredCoolantFlow:
+    """required_coolant_flow(T) is the closed-form inverse of the steady-state map q_j -> T."""
+
+    @pytest.mark.parametrize("q_j", [60.0, 100.0, 150.0, 220.0])
+    def test_recovers_steady_state_flow(self, plant: CSTRPlant, q_j: float) -> None:
+        ss = plant.find_steady_state(q_j=q_j)
+        assert plant.required_coolant_flow(ss.T) == pytest.approx(q_j, rel=1e-6)
+
+    def test_colder_setpoint_needs_more_cooling(self, plant: CSTRPlant) -> None:
+        ss = plant.find_steady_state(q_j=100.0)
+        assert plant.required_coolant_flow(ss.T - 2.0) > plant.required_coolant_flow(ss.T)

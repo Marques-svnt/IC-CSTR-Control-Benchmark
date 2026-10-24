@@ -33,7 +33,7 @@ OKABE_ITO: Dict[str, str] = {
     "reddish_purple": "#CC79A7",
 }
 
-OPT_ITAE = "Optimal ITAE ($M_s \\leq 1.6$)"
+OPT_ITAE = "Optimal ITAE ($M_s^{\\mathrm{FOPTD}} \\leq 1.6$)"
 OPT_ITAE_2DOF = "2-DOF Optimal ITAE"
 
 # Canonical controller names of the IC-T04 benchmark campaign
@@ -66,7 +66,12 @@ _STYLE: Dict[str, Tuple[str, str, str]] = {
     "NMPC-MHE (OF)": (OKABE_ITO["vermilion"], "--", "h"),
 }
 # Legacy aliases still used by older figure scripts
-for _alias in ("Optimal ITAE (Ms<=1.6)", "Optimal ITAE ($M_s \\le 1.6$)", "Optimal ITAE"):
+for _alias in (
+    "Optimal ITAE (Ms<=1.6)",
+    "Optimal ITAE ($M_s \\le 1.6$)",
+    "Optimal ITAE ($M_s \\leq 1.6$)",
+    "Optimal ITAE",
+):
     _STYLE[_alias] = _STYLE[OPT_ITAE]
 
 IEEE_PALETTE: Dict[str, str] = {k: v[0] for k, v in _STYLE.items()}

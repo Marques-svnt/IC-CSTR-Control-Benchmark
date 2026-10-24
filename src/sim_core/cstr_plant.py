@@ -217,6 +217,26 @@ class CSTRPlant:
 
         return np.array([dC_A_dt, dT_dt, dT_j_dt], dtype=np.float64)
 
+    def required_coolant_flow(self, T: float) -> float:
+        """Steady coolant flow q_j that holds the reactor at temperature T (closed form).
+
+        Solves the three balances at equilibrium backwards: C_A from the molar balance at T,
+        then T_j from the reactor energy balance, then q_j from the jacket balance. It is the
+        heat-removal demand of the operating point expressed in valve units; it may exceed u_max.
+
+        Args:
+            T: Target reactor temperature [K].
+
+        Returns:
+            float: Required coolant flow [L/min] (inf or negative if T is unattainable).
+        """
+        p = self.params
+        k = p.k_0 * np.exp(-p.E_over_R / T)
+        C_A = (p.q / p.V) * p.C_Af / (p.q / p.V + k)
+        removal = (p.q / p.V) * (p.T_f - T) + (-p.delta_H / p.rho_cp) * k * C_A
+        T_j = T - removal * p.V * p.rho_cp / p.UA
+        return float(p.UA * (T - T_j) / (p.rho_j_cp_j * (T_j - p.T_jf)))
+
     def find_steady_state(
         self, q_j: float, initial_guess: Optional[CSTRState] = None
     ) -> CSTRState:

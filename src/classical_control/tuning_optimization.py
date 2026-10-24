@@ -16,7 +16,7 @@ instabilidade sob variações paramétricas ou não-linearidades operacionais.
 
 import logging
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
 
 import numpy as np
 from scipy.optimize import minimize
@@ -294,6 +294,8 @@ def tune_by_optimization(
     dt: float = 0.02,
     foptd: Optional[FOPTDModel] = None,
     limits: Optional[ActuatorLimits] = None,
+    ms_model: Literal["foptd", "exact"] = "foptd",
+    optimize_weights: bool = False,
 ) -> PIDGains:
     """Sintoniza ganhos ótimos de PID minimizando critério integral com restrição de Ms.
 
@@ -318,6 +320,11 @@ def tune_by_optimization(
         limits: Valve limits used in the evaluation simulations. Pass the benchmark valve so
             the optimum is computed for the actuator it will run on. Default: [0, 300] L/min,
             100 L/min^2 (legacy).
+        ms_model: Loop on which Ms <= max_ms is enforced. "foptd" uses the identified dead-time
+            model when `foptd` is given (delay-free Jacobian otherwise); "exact" uses the Jacobian
+            linearization of the plant with the half-sample zero-order-hold delay dt/2.
+        optimize_weights: If True, the setpoint weights (beta, gamma) in [0, 1]^2 are optimised
+            jointly with (Kp, Ti, Td). They act on the reference path only, so Ms is unchanged.
 
     Returns:
         PIDGains: Instância contendo os ganhos ótimos convergidos.
@@ -327,6 +334,10 @@ def tune_by_optimization(
         p0 = np.array([-5.0, 1.5, 0.2], dtype=np.float64)
     else:
         p0 = np.array([initial_gains.kp, initial_gains.ti, initial_gains.td], dtype=np.float64)
+    if optimize_weights:
+        w0 = (initial_gains.beta, initial_gains.gamma) if initial_gains else (0.5, 0.0)
+        p0 = np.concatenate([p0, w0])
+    exact_omegas = np.logspace(-3, 3, 800)  # shortcut: 800-point grid in the search, 6000 on report
 
     target_T = nominal_state.T + target_dT
     sim = ClosedLoopSimulator()
@@ -339,12 +350,26 @@ def tune_by_optimization(
         if kp >= 0.0 or ti <= 0.05 or td < 0.0:
             return 1e6
 
-        candidate_gains = PIDGains(kp=kp, ti=ti, td=td)
+        weights = {}
+        box_penalty = 0.0
+        if optimize_weights:
+            beta, gamma = float(params[3]), float(params[4])
+            box_penalty = 1e4 * (
+                max(0.0, -beta) ** 2 + max(0.0, beta - 1.0) ** 2
+                + max(0.0, -gamma) ** 2 + max(0.0, gamma - 1.0) ** 2
+            )
+            weights = {"beta": min(max(beta, 0.0), 1.0), "gamma": min(max(gamma, 0.0), 1.0)}
+        candidate_gains = PIDGains(kp=kp, ti=ti, td=td, **weights)
 
         # 1. Verificação de robustez em frequência via sensibilidade máxima Ms
-        ms = calculate_maximum_sensitivity(
-            plant, nominal_state, q_j_ss, candidate_gains, foptd=foptd
-        )
+        if ms_model == "exact":
+            ms = linearized_robustness(
+                plant, nominal_state, q_j_ss, candidate_gains, theta=dt / 2.0, omegas=exact_omegas
+            )["ms"]
+        else:
+            ms = calculate_maximum_sensitivity(
+                plant, nominal_state, q_j_ss, candidate_gains, foptd=foptd
+            )
         ms_penalty = 1e4 * max(0.0, ms - max_ms) ** 2 if ms > max_ms else 0.0
 
         # 2. Simulação transitória em malha fechada sobre a planta não-linear
@@ -378,7 +403,7 @@ def tune_by_optimization(
         final_err = abs(res.t_pv[-1] - target_T)
         offset_penalty = 1e3 * final_err if final_err > 0.5 else 0.0
 
-        total_cost = perf + ms_penalty + offset_penalty
+        total_cost = perf + ms_penalty + offset_penalty + box_penalty
         return float(total_cost)
 
     logger.info(
@@ -391,12 +416,25 @@ def tune_by_optimization(
         fun=objective,
         x0=p0,
         method="Nelder-Mead",
-        options={"maxiter": 120, "xatol": 1e-2, "fatol": 1e-2, "disp": False},
+        options={"maxiter": 40 * len(p0), "xatol": 1e-2, "fatol": 1e-2, "disp": False},
     )
 
     opt_kp, opt_ti, opt_td = float(res.x[0]), float(res.x[1]), float(res.x[2])
-    opt_gains = PIDGains(kp=opt_kp, ti=max(opt_ti, 0.05), td=max(opt_td, 0.0))
-    final_ms = calculate_maximum_sensitivity(plant, nominal_state, q_j_ss, opt_gains, foptd=foptd)
+    weights = {}
+    if optimize_weights:
+        weights = {
+            "beta": float(np.clip(res.x[3], 0.0, 1.0)),
+            "gamma": float(np.clip(res.x[4], 0.0, 1.0)),
+        }
+    opt_gains = PIDGains(kp=opt_kp, ti=max(opt_ti, 0.05), td=max(opt_td, 0.0), **weights)
+    if ms_model == "exact":
+        final_ms = linearized_robustness(
+            plant, nominal_state, q_j_ss, opt_gains, theta=dt / 2.0
+        )["ms"]
+    else:
+        final_ms = calculate_maximum_sensitivity(
+            plant, nominal_state, q_j_ss, opt_gains, foptd=foptd
+        )
 
     logger.info(
         "PID Ótimo encontrado: Kp=%.3f, Ti=%.3f min, Td=%.3f min (Ms=%.2f, Custo=%.2f)",
