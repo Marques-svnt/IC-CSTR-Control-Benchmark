@@ -1,0 +1,4 @@
+Controller,Nominal IAE,IAE mean,IAE P95,IAE max,\(|e_{ss}|\) mean (K),\(|e_{ss}|\) max (K),Converged
+NMPC-MHE (original),5.568,31.248,94.340,101.020,3.589,12.044,26/28
+NMPC-MHE (offset-free),5.746,6.414,8.399,8.503,0.002,0.003,26/28
+"AMIGO + filter (nominal, no model)",6.439,--,--,--,0.006,--,--

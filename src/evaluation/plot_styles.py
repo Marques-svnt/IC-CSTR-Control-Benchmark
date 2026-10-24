@@ -62,6 +62,8 @@ _STYLE: Dict[str, Tuple[str, str, str]] = {
     OPT_ITAE_2DOF: (OKABE_ITO["blue"], "--", "P"),
     "NMPC-Oracle": (OKABE_ITO["black"], "-", "*"),
     "NMPC-MHE": (OKABE_ITO["black"], "--", "h"),
+    "NMPC-Oracle (OF)": (OKABE_ITO["orange"], "-", "*"),
+    "NMPC-MHE (OF)": (OKABE_ITO["vermilion"], "--", "h"),
 }
 # Legacy aliases still used by older figure scripts
 for _alias in ("Optimal ITAE (Ms<=1.6)", "Optimal ITAE ($M_s \\le 1.6$)", "Optimal ITAE"):

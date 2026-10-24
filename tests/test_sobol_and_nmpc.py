@@ -184,3 +184,30 @@ def test_augmented_estimator_is_locally_observable_from_thermocouples(plant_and_
     assert observability_rank(ss.to_array(), alpha_ua=1.0, q_j=100.0, dt=DT) == 4
     # With T only, the fouling factor and C_A must still be reconstructible
     assert observability_rank(ss.to_array(), alpha_ua=1.0, q_j=100.0, dt=DT, outputs=(1,)) == 4
+
+
+class TestIC23OffsetFreeNmpc:
+    """IC-T23: integrating disturbance model removes the offset under an unmeasured T_f step."""
+
+    @staticmethod
+    def _steady_state_error(plant_and_ss, mode: str, gain: float) -> float:
+        plant, ss = plant_and_ss
+        nmpc = CstrNmpcController(
+            horizon_steps=30, t_step_min=0.02, feedback_mode=mode, tj_noise_std=0.05, seed=7,
+            disturbance_gain=gain,
+        )
+        res = ClosedLoopSimulator().run(
+            plant=plant, controller=nmpc, initial_state=ss, t_span=(0.0, 5.0), dt=0.02,
+            setpoint_func=lambda t: ss.T,
+            disturbance_func=lambda t: {"T_f": plant.params.T_f + 5.0} if t >= 0.2 else {},
+            noise_std=0.05 if mode == "mhe" else 0.0, seed=3,
+        )
+        return float(np.mean(res.states[-25:, 1]) - ss.T)  # true T, mean of the last 0.5 min
+
+    @pytest.mark.parametrize("mode", ["oracle", "mhe"])
+    def test_offset_free_under_unmeasured_feed_temperature_step(self, plant_and_ss, mode) -> None:
+        assert abs(self._steady_state_error(plant_and_ss, mode, gain=0.1)) < 0.05
+
+    def test_without_disturbance_model_the_offset_persists(self, plant_and_ss) -> None:
+        # Power check: the original NMPC (gain 0) keeps ~0.95 K, 19x the 0.05 K tolerance
+        assert abs(self._steady_state_error(plant_and_ss, "oracle", gain=0.0)) > 0.5

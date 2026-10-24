@@ -1,0 +1,22 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Prediction-horizon sweep of NMPC-Oracle on the feed-disturbance scenario of Table~\ref{tab:load_disturbance}. Steady-state energy balance at $T_{sp}$: $q_j^\star = 100.0$~L/min for the nominal feed and $297.2$~L/min with $\Delta T_f=+5$~K and $\Delta C_{Af}=+20\%$; $T(t_f)-T_{sp}$ is the mean over the last minute.}
+\label{tab:horizon_sweep}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Variant & \(N\) & Horizon (min) & \(T(t_f)-T_{sp}\) (K) & Valve at \(t_f\) (L/min) & IAE (K$\cdot$min) & Peak dev. (K) \\
+\midrule
+Original (no disturbance model) & 30 & 0.6 & +7.187 & 182.0 & 55.05 & 8.04 \\
+Original (no disturbance model) & 50 & 1.0 & +8.693 & 166.6 & 63.91 & 8.69 \\
+Original (no disturbance model) & 75 & 1.5 & +8.783 & 165.7 & 64.42 & 8.78 \\
+Original (no disturbance model) & 100 & 2.0 & +8.783 & 165.7 & 64.42 & 8.78 \\
+Offset-free & 30 & 0.6 & +0.000 & 297.2 & 12.60 & 7.28 \\
+Offset-free & 50 & 1.0 & +0.000 & 297.2 & 12.60 & 7.28 \\
+Offset-free & 75 & 1.5 & +0.000 & 297.2 & 12.60 & 7.28 \\
+Offset-free & 100 & 2.0 & +0.000 & 297.2 & 12.60 & 7.28 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

@@ -1,0 +1,15 @@
+Controller,IAE,TV (L/min),\(M_p\) (\%),TV vs filtered AMIGO (\%)
+Ziegler-Nichols + filter,6.100,645.5,37.5,--
+Cohen-Coon + filter,6.815,659.4,47.0,--
+Tyreus-Luyben + filter,7.336,550.8,5.3,--
+AMIGO + filter,6.439,410.8,13.8,--
+Skogestad SIMC + filter,10.429,182.9,0.2,--
+Opt.\ ITAE + filter,6.330,438.4,8.0,--
+AMIGO (raw),6.932,672.1,7.6,--
+Opt.\ ITAE (raw),7.320,694.4,3.3,--
+AMIGO + gain scheduling,6.225,457.6,13.9,--
+NMPC-MHE (\(\alpha\) frozen = 1),24.578,350.4,5.6,+14.7
+NMPC-MHE (slew-unaware planner),6.237,668.3,40.5,-62.7
+NMPC-MHE,5.568,571.0,5.8,-39.0
+NMPC-MHE (offset-free),5.746,686.2,9.2,-67.0
+NMPC-Oracle,5.474,252.4,5.2,--

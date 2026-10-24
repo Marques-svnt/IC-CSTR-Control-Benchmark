@@ -509,7 +509,7 @@ def run_fouling_campaign(
         data=table_rows,
         output_path=tables_dir / "fouling_sensitivity_table.tex",
         caption="Impact of heat exchanger fouling ($UA$ reduction from $100\\%$ to $60\\%$) "
-        "on closed-loop tracking metrics.",
+        "on closed-loop tracking metrics. The $60\\%$ rows are below $UA_{\\mathrm{crit}}=63.75\\%$ (Table~\\ref{tab:ua_critical}): reported for reference, excluded from rankings.",
         label="tab:fouling_sensitivity",
     )
 

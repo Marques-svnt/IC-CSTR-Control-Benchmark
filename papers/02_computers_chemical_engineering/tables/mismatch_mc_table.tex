@@ -1,0 +1,17 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Parametric plant-model mismatch: Latin-hypercube Monte Carlo ($N=28$) of $\pm10\%$ errors of the NMPC internal model in $E_a/R$, $k_0$, $\Delta H$, $C_{Af}$ and $T_f$ (the latter as $\pm10\%$ of $T_f-273.15$~K) against the nominal plant, fouling scenario of Table~\ref{tab:deconfounding}.}
+\label{tab:mismatch_mc}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+Controller & Nominal IAE & IAE mean & IAE P95 & IAE max & \(|e_{ss}|\) mean (K) & \(|e_{ss}|\) max (K) & Converged \\
+\midrule
+NMPC-MHE (original) & 5.568 & 31.248 & 94.340 & 101.020 & 3.589 & 12.044 & 26/28 \\
+NMPC-MHE (offset-free) & 5.746 & 6.414 & 8.399 & 8.503 & 0.002 & 0.003 & 26/28 \\
+AMIGO + filter (nominal, no model) & 6.439 & -- & -- & -- & 0.006 & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
