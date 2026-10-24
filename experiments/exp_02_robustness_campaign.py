@@ -75,6 +75,63 @@ OPT_ITAE_2DOF = "2-DOF Optimal ITAE"
 BENCHMARK_LIMITS = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0)
 
 
+PID_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Empirical rules", ("Ziegler-Nichols", "Cohen-Coon", "Tyreus-Luyben")),
+    ("Robust designs", ("AMIGO", "2-DOF AMIGO", "Skogestad SIMC", OPT_ITAE, OPT_ITAE_2DOF)),
+)
+
+
+def plot_grouped_responses(
+    sim_results: dict[str, Any],
+    limits: ActuatorLimits,
+    t_ylim: tuple[float, float],
+    t_title: str,
+    out_stem: Path,
+) -> tuple[Any, np.ndarray] | None:
+    """Two-column response figure, one column per tuning family so that curves do not overlap.
+
+    Rows are reactor temperature and coolant flow. Returns (fig, axes) so the caller can add
+    annotations before it saves with `save_grouped(fig, out_stem)`; None if `sim_results`
+    holds controllers outside PID_GROUPS (the legacy single-axes figure is used then).
+    """
+    if not set(sim_results) <= {n for _, names in PID_GROUPS for n in names}:
+        return None
+    setup_ieee_style(single_column=False)
+    fig_w, _ = get_figure_dimensions(columns=2)
+    fig, axes = plt.subplots(2, 2, figsize=(fig_w, 3.9), sharex=True, sharey="row", dpi=300)
+    sample = next(iter(sim_results.values()))
+    for col, (title, names) in enumerate(PID_GROUPS):
+        ax_t, ax_u = axes[0, col], axes[1, col]
+        ax_t.plot(sample.t, sample.setpoint, color=IEEE_PALETTE["Setpoint"],
+                  linestyle=IEEE_LINESTYLES["Setpoint"], label="Setpoint", linewidth=1.1)
+        for name in (n for n in names if n in sim_results):
+            res = sim_results[name]
+            style = {"color": IEEE_PALETTE[name], "linestyle": IEEE_LINESTYLES[name], "linewidth": 1.1}
+            ax_t.plot(res.t, res.t_pv, label=name.split(" (")[0], **style)
+            ax_u.plot(res.t, res.u_applied, **style)
+        for lim in (limits.u_min, limits.u_max):
+            ax_u.axhline(lim, color=IEEE_PALETTE["Constraint"], linestyle=IEEE_LINESTYLES["Constraint"],
+                         linewidth=0.9)
+        ax_t.set_title(f"{title} ({t_title})" if t_title else title, fontsize=8.0)
+        ax_t.set_ylim(*t_ylim)
+        ax_u.set_ylim(-15, 335)
+        ax_u.set_xlabel("Time $t$ (min)")
+        ax_t.legend(fontsize=5.6, loc="best", ncol=2, handlelength=1.8, columnspacing=0.6)
+        for ax in (ax_t, ax_u):
+            ax.grid(True, linestyle=":", alpha=0.6)
+    axes[0, 0].set_ylabel("Reactor Temp. $T$ (K)")
+    axes[1, 0].set_ylabel(r"Coolant Flow $q_j$ (L/min)")
+    fig.tight_layout()
+    return fig, axes
+
+
+def save_grouped(fig: Any, out_stem: Path) -> None:
+    """Saves a figure as <stem>.pdf and <stem>.png (300 dpi) and closes it."""
+    fig.savefig(out_stem.with_suffix(".pdf"))
+    fig.savefig(out_stem.with_suffix(".png"), dpi=300)
+    plt.close(fig)
+
+
 def identify_nominal_foptd(plant: CSTRPlant, ss: CSTRState, q_j_ss: float) -> FOPTDModel:
     """Open-loop +10 L/min step test and FOPTD fit (Sundaresan-Krishnaswamy + LM)."""
     logger.info("Executando degrau de identificação em malha aberta (+10 L/min)...")
@@ -374,6 +431,18 @@ def run_load_disturbance_campaign(
         ),
         label="tab:load_disturbance",
     )
+
+    grouped = plot_grouped_responses(
+        sim_results, limits, (394.0, 406.0), "", figures_dir / "fig2_disturbance_rejection"
+    )
+    if grouped is not None:
+        fig, axes = grouped
+        for ax in axes[0]:
+            for t_d, text in ((2.0, rf"$\Delta T_f = +{dT_f:g}$ K"), (8.0, rf"$\Delta C_{{Af}} = +{100 * dC_frac:g}\%$")):
+                ax.axvline(t_d, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
+                ax.text(t_d + 0.1, 405.0, text, fontsize=6.5, color="#444444")
+        save_grouped(fig, figures_dir / "fig2_disturbance_rejection")
+        return
 
     # Geração dos gráficos IEEE em coluna única (3.5 in) com Legenda Unificada Superior
     setup_ieee_style(single_column=True)
@@ -1037,6 +1106,8 @@ def run_sobol_uncertainty_campaign(
     tables_dir: Path,
     n_base: int = 512,
     raw: dict[str, Any] | None = None,
+    dt: float = 0.05,
+    t_final: float = 8.0,
 ) -> pd.DataFrame:
     """First/total-order Sobol indices of IAE and TV under (E_a/R, UA, C_Af, theta_sensor).
 
@@ -1045,7 +1116,9 @@ def run_sobol_uncertainty_campaign(
     """
     logger.info("=== Executando Análise de Sensibilidade Global de Sobol (SALib, N=%d) ===", n_base)
     factories = {name: pid_factory(gains[name], limits, q_j_ss) for name in SOBOL_CONTROLLERS}
-    df = closed_loop_sobol(factories, n_base=n_base, seed=2026, q_j_ss=q_j_ss, raw=raw)
+    df = closed_loop_sobol(
+        factories, n_base=n_base, seed=2026, q_j_ss=q_j_ss, raw=raw, dt=dt, t_final=t_final, n_jobs=-1
+    )
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(RESULTS_DIR / "sobol_sensitivity_summary.csv", index=False)
 
@@ -1083,7 +1156,9 @@ def run_sobol_uncertainty_campaign(
             "$E_a/R \\in [0.97, 1.03]$, "
             "$UA \\in [0.65, 1.05]\\,UA_{\\mathrm{nom}}$, $C_{Af} \\in [0.85, 1.15]$~mol/L "
             "and sensor dead time $\\theta_{\\mathrm{sensor}} \\in [0, 0.1]$~min. Every run "
-            "starts from the nominal equilibrium. Entries are index $\\pm$ half-width of the "
+            f"starts from the nominal equilibrium, uses the directional amplitude-plus-rate clamping "
+            f"of Eq.~\\eqref{{eq:clamping_antiwindup}} with $\\Delta t = {dt:g}$~min and lasts "
+            f"${t_final - 0.5:g}$~min after the step. Entries are index $\\pm$ half-width of the "
             "$95\\%$ bootstrap interval (SALib, 100 resamples)."
         ),
         label="tab:sobol_sensitivity",

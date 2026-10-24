@@ -79,6 +79,20 @@ class TestSobolSensitivity:
         np.testing.assert_allclose(df["S1"].to_numpy(), [0.3139, 0.4424, 0.0], atol=0.03)
         np.testing.assert_allclose(df["ST"].to_numpy(), [0.5576, 0.4424, 0.2437], atol=0.03)
 
+    def test_parallel_evaluation_matches_serial_and_returns_raw(self) -> None:
+        """n_jobs only distributes the model runs; samples, outputs and indices are unchanged."""
+        from src.evaluation.sobol_sensitivity import sobol_indices
+
+        problem = {"num_vars": 2, "names": ["a", "b"], "bounds": [[0.0, 1.0]] * 2}
+
+        def model(x: np.ndarray) -> dict[str, float]:
+            return {"f": float(x[0] + 2.0 * x[1] ** 2)}
+
+        serial, xs, outs = sobol_indices(model, problem, n_base=64, seed=3, return_raw=True)
+        parallel = sobol_indices(model, problem, n_base=64, seed=3, n_jobs=2)
+        np.testing.assert_allclose(serial["ST"].to_numpy(), parallel["ST"].to_numpy())
+        assert xs.shape == (64 * 4, 2) and len(outs) == len(xs)
+
     def test_schema_rejects_total_below_first_order(self) -> None:
         import pandas as pd
         import pandera as pa

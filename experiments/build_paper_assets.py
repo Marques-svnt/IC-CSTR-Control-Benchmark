@@ -25,9 +25,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
+from matplotlib.ticker import NullFormatter
 from scipy import stats as scipy_stats
 
 import experiments.exp_01_classical_benchmark as exp01
@@ -37,6 +39,7 @@ from experiments.exp_01b_nmpc_oracle_comparison import (
     run_mhe_tuning_sensitivity,
     run_nmpc_oracle_benchmark,
 )
+from src.classical_control.foptd import FOPTDModel
 from src.classical_control.tuning_optimization import (
     OptimizationCriterion,
     calculate_maximum_sensitivity_foptd,
@@ -45,6 +48,7 @@ from src.classical_control.tuning_optimization import (
     phase_margin_deg,
     tune_by_optimization,
 )
+from src.evaluation.plot_styles import setup_ieee_style
 from src.sim_core.cstr_plant import CSTRParameters
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -71,7 +75,7 @@ ABLATION_VARIANTS = (
     ("Amp. uncond.", AW.CLAMPING_POS_AGNOSTIC),
     ("Amp.+rate uncond.", AW.CLAMPING_RATE_AGNOSTIC),
     ("Amp. direct.", AW.CLAMPING_POS_DIRECTIONAL),
-    ("Amp.+rate direct. (Eq.~13)", AW.CLAMPING),
+    ("Amp.+rate direct. (Eq.~\\ref{eq:clamping_antiwindup})", AW.CLAMPING),
 )
 MEASUREMENT_TAU_F = 0.05  # min
 NOISE_LEVELS = (0.0, 0.01, 0.05, 0.10)  # K
@@ -204,6 +208,8 @@ def run_out_of_sample(
 SIM_DT = 0.02  # min
 LOAD_DT_F, LOAD_DC_FRAC = 2.0, 0.1  # K, relative
 LOAD_SIGMA = 0.05  # K
+SECOND_OP_Q_J = 150.0  # L/min
+SOBOL_T_FINAL = 10.5  # min: 0.5 min before the step (delay line fill) + the 10 min of the benchmark
 N_SEEDS = 30
 NAME_EXACT = "Optimal ITAE ($M_s^{\\mathrm{lin}} \\leq 1.6$)"
 NAME_JOINT_FOPTD = "Joint 2-DOF ITAE ($M_s^{\\mathrm{FOPTD}} \\leq 1.6$)"
@@ -215,9 +221,11 @@ def _one_dof(gains: dict) -> dict:
     return {n: g for n, g in gains.items() if not n.startswith("2-DOF")}
 
 
-def _step_run(plant, ss, g, aw=AW.CLAMPING, step=-2.0, t_end=10.0, **kw):
-    """Closed-loop setpoint step on the benchmark valve."""
-    pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, aw, u_bias=100.0, y_ss=ss.T)
+def _step_run(plant, ss, g, aw=AW.CLAMPING, step=-2.0, t_end=10.0, limits=None, q_j=100.0, **kw):
+    """Closed-loop setpoint step on the benchmark valve (or on `limits`)."""
+    pid = exp02.PIDController(
+        g, limits or exp02.BENCHMARK_LIMITS, aw, u_bias=q_j, y_ss=ss.T
+    )
     return exp02.ClosedLoopSimulator().run(
         plant, pid, ss, (0.0, t_end), SIM_DT, setpoint_func=lambda t: ss.T + step, **kw
     )
@@ -267,26 +275,270 @@ def run_aw_scenarios(plant, ss, gains: dict, tables_dir: Path) -> None:
     )
 
 
-def run_aw_tt_sweep(plant, ss, gains: dict, tables_dir: Path) -> None:
-    """Back-calculation IAE for T_t x {0.1, 1, 10} against the directional rule, three steps."""
+SMAX_GRID = (20.0, 30.0, 45.0, 60.0, 80.0, 120.0, 160.0, 240.0, 320.0)  # L/min^2
+TT_STEPS = (-2.0, -5.0, 5.0)
+
+
+def run_smax_map(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) -> None:
+    """Regime map: IAE of the -2 K step against the slew-rate limit S_max, five integrator policies.
+
+    The gains stay those designed at S_max = 80 L/min^2. The map shows where the slew-rate
+    trigger matters (IAE of amplitude-only clamping over IAE of the rate-aware rule) and where
+    sign-blind clamping latches (final error near -16.7 K).
+    """
+    policies = (
+        ("None", AW.NONE),
+        ("Back-calc.", AW.BACK_CALCULATION),
+        ("Sign-blind amp.", AW.CLAMPING_NAIVE),
+        ("Amp. direct.", AW.CLAMPING_POS_DIRECTIONAL),
+        ("Amp.+rate direct.", AW.CLAMPING),
+    )
+    base = _one_dof(gains)
+    out: dict = {}
+    for name, g in base.items():
+        for label, method in policies:
+            for smax in SMAX_GRID:
+                lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
+                res = _step_run(plant, ss, g, method, limits=lim)
+                out[(name, label, smax)] = (res.metrics.iae, res.states[-1, 1] - (ss.T - 2.0))
+    cols = {s_: f"$S_{{\\max}}={s_:g}$" for s_ in SMAX_GRID}
     rows = []
-    for name, g in _one_dof(gains).items():
-        row = {"Method": name, "\\(T_t\\) (min)": f"{g.tt:.3f}"}
-        for step in (-2.0, -5.0, 5.0):
-            for scale in (0.1, 1.0, 10.0):
-                res = _step_run(plant, ss, replace(g, tt=g.tt * scale), AW.BACK_CALCULATION, step)
-                row[f"{step:+g} K, $\\times {scale:g}$"] = f"{res.metrics.iae:.2f}"
-            row[f"{step:+g} K, dir."] = f"{_step_run(plant, ss, g, AW.CLAMPING, step).metrics.iae:.2f}"
-        rows.append(row)
+    for name in base:
+        iae = lambda lab, s_: out[(name, lab, s_)][0]  # noqa: E731
+        rows.append({"Method": name, "Quantity": "$\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}$"}
+                    | {cols[s_]: f"{iae('Amp. direct.', s_) / iae('Amp.+rate direct.', s_):.1f}" for s_ in SMAX_GRID})
+        rows.append({"Method": "", "Quantity": "IAE rate-aware (K$\\cdot$min)"}
+                    | {cols[s_]: f"{iae('Amp.+rate direct.', s_):.2f}" for s_ in SMAX_GRID})
+        rows.append({"Method": "", "Quantity": "Sign-blind $T(t_f)-T_{sp}$ (K)"}
+                    | {cols[s_]: f"{out[(name, 'Sign-blind amp.', s_)][1]:+.1f}" for s_ in SMAX_GRID})
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "smax_regime_map.tex",
+        caption=(
+            "Regime map over the valve slew-rate limit ($-2$~K step, gains designed at "
+            "$S_{\\max} = 80$~L/min$^2$). First row of each tuning: IAE of amplitude-only "
+            "directional clamping over IAE of the rate-aware rule (values near $1$: the rate "
+            "trigger is irrelevant); second: IAE of the rate-aware rule; third: final error of "
+            "sign-blind clamping ($\\approx -16.7$~K: valve latched at full cooling)."
+        ),
+        label="tab:smax_map",
+    )
+    setup_ieee_style(single_column=False)
+    fig_w, _ = exp02.get_figure_dimensions(columns=2)
+    fig, axes = plt.subplots(2, 3, figsize=(fig_w, 4.2), sharex=True, dpi=300)
+    for ax, name in zip(axes.flat, base):
+        for label, _ in policies:
+            ax.plot(SMAX_GRID, [out[(name, label, s_)][0] for s_ in SMAX_GRID], marker="o",
+                    markersize=2.5, linewidth=1.0, label=label)
+        ax.axvline(80.0, color="gray", linestyle=":", linewidth=0.8)
+        ax.set_xscale("log")
+        ax.set_xticks([20, 40, 80, 160, 320], ["20", "40", "80", "160", "320"])
+        ax.xaxis.set_minor_formatter(NullFormatter())
+        ax.set_yscale("log")
+        ax.set_title(name.split(" (")[0], fontsize=8.0)
+        ax.grid(True, which="both", linestyle=":", alpha=0.5)
+    for ax in axes[1]:
+        ax.set_xlabel(r"$S_{\max}$ (L/min$^2$)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel(r"IAE (K$\cdot$min)")
+    h, lab = axes[0, 0].get_legend_handles_labels()
+    fig.legend(h, lab, loc="upper center", ncol=5, fontsize=6.5, columnspacing=0.8)
+    fig.tight_layout(rect=[0.0, 0.0, 1.0, 0.93])
+    exp02.save_grouped(fig, figures_dir / "fig_smax_map")
+
+
+def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) -> None:
+    """IAE of back-calculation against T_t over [0.1 T_d, 10 T_i]; physical range [T_d, T_i].
+
+    The discrete update multiplies I by (1 - dt/T_t): it over-corrects for T_t < dt and diverges
+    below dt/2, so the grid starts at 0.525 dt (plus the 0.1 T_t point of the earlier scan). The directional rule is the horizontal reference.
+    """
+    base = _one_dof(gains)
+    rows, curves = [], {}
+    for step in TT_STEPS:
+        for k, (name, g) in enumerate(base.items()):
+            grid = np.unique(np.concatenate([
+                # lower end: below ~dt/2 the discrete update (1 - dt/T_t) I diverges (no IAE)
+                np.geomspace(max(0.1 * g.td, 0.525 * SIM_DT), 10.0 * g.ti, 21),
+                [g.td, g.tt, g.ti, SIM_DT, 0.1 * g.tt],
+            ]))
+            iae = np.array([
+                _step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION, step).metrics.iae
+                for t in grid
+            ])
+            curves[(name, step)] = (grid, iae)
+            inside = (grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)
+            j = int(np.argmin(np.where(inside, iae, np.inf)))
+            at = lambda t: iae[int(np.argmin(np.abs(grid - t)))]  # noqa: E731
+            rows.append({
+                "Step": f"${step:+g}$ K" if k == 0 else "",
+                "Method": name,
+                "\\([T_d, T_i]\\) (min)": f"[{g.td:.3f}, {g.ti:.3f}]",
+                "best $T_t$ (min)": f"{grid[j]:.3f}",
+                "IAE best": f"{iae[j]:.2f}",
+                "IAE $\\sqrt{T_iT_d}$": f"{at(g.tt):.2f}",
+                "IAE $T_t=T_i$": f"{at(g.ti):.2f}",
+                "IAE dir.": f"{_step_run(plant, ss, g, AW.CLAMPING, step).metrics.iae:.2f}",
+            })
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "antiwindup_tt_sweep.tex",
         caption=(
-            "IAE (K$\\cdot$min) of back-calculation with the tracking time constant scaled by $0.1$, "
-            "$1$ (Eq.~\\eqref{eq:back_calculation}) and $10$, against the directional rule "
-            "(``dir.'', Eq.~\\eqref{eq:clamping_antiwindup}), on three setpoint steps."
+            "Back-calculation against the tracking constant. For each step: the best $T_t$ in the "
+            "physical range $[T_d, T_i]$, the IAE (K$\\cdot$min) there, at the default "
+            "$T_t = \\sqrt{T_iT_d}$, at $T_t = T_i$ (the value associated with conditioning "
+            "techniques \\cite{peng1996nonlinear}) and with the directional rule (``dir.'', "
+            "Eq.~\\eqref{eq:clamping_antiwindup}). The full curves are in Fig.~\\ref{fig:tt_curve}."
         ),
         label="tab:antiwindup_tt_sweep",
+    )
+    setup_ieee_style(single_column=False)
+    fig_w, _ = exp02.get_figure_dimensions(columns=2)
+    fig, axes = plt.subplots(2, 3, figsize=(fig_w, 4.2), dpi=300)
+    colors = {-2.0: "#0072B2", -5.0: "#D55E00", 5.0: "#009E73"}
+    for ax, (name, g) in zip(axes.flat, base.items()):
+        ax.axvspan(g.td, g.ti, color="#dddddd", alpha=0.6, linewidth=0)
+        ax.axvline(SIM_DT, color="gray", linestyle=":", linewidth=0.8)
+        for step in TT_STEPS:
+            grid, iae = curves[(name, step)]
+            ax.plot(grid, iae, color=colors[step], marker="o", markersize=2.2, linewidth=1.0,
+                    label=f"back-calc., {step:+g} K")
+            ax.axhline(_step_run(plant, ss, g, AW.CLAMPING, step).metrics.iae, color=colors[step],
+                       linestyle="--", linewidth=0.8)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_title(name.split(" (")[0], fontsize=8.0)
+        ax.grid(True, which="both", linestyle=":", alpha=0.5)
+    for ax in axes[1]:
+        ax.set_xlabel(r"$T_t$ (min)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel(r"IAE (K$\cdot$min)")
+    h, lab = axes[0, 0].get_legend_handles_labels()
+    fig.legend(h, lab, loc="upper center", ncol=3, fontsize=6.5)
+    fig.tight_layout(rect=[0.0, 0.0, 1.0, 0.93])
+    exp02.save_grouped(fig, figures_dir / "fig_tt_curve")
+
+
+class _Tap:
+    """Delegating controller that records the PID diagnostics (P, I, D, u_raw) at every sample."""
+
+    def __init__(self, pid) -> None:
+        self.pid, self.u_bias, self.rows = pid, pid.u_bias, []
+
+    def reset(self, *args, **kwargs) -> None:
+        self.pid.reset(*args, **kwargs)
+
+    def compute(self, setpoint, measurement, dt):
+        u, diag = self.pid.compute(setpoint=setpoint, measurement=measurement, dt=dt)
+        self.rows.append((diag["i"], diag["u_unconstrained"]))
+        return u, diag
+
+
+def plot_mechanism(plant, ss, gains: dict, figures_dir: Path) -> None:
+    """u_raw, u_act, e and the integrator state of ZN on the -2 K step under three policies."""
+    g = gains["Ziegler-Nichols"]
+    policies = (("No anti-windup", AW.NONE), ("Sign-blind amp.", AW.CLAMPING_NAIVE),
+                ("Directional rate-aware", AW.CLAMPING))
+    setup_ieee_style(single_column=False)
+    fig_w, _ = exp02.get_figure_dimensions(columns=2)
+    fig, axes = plt.subplots(3, 3, figsize=(fig_w, 4.8), sharex=True, sharey="row", dpi=300)
+    for col, (title, method) in enumerate(policies):
+        tap = _Tap(exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T))
+        res = exp02.ClosedLoopSimulator().run(
+            plant, tap, ss, (0.0, 10.0), SIM_DT, setpoint_func=lambda t: ss.T - 2.0
+        )
+        i_state = np.array([r[0] for r in tap.rows])
+        u_raw = np.array([r[1] for r in tap.rows])
+        axes[0, col].plot(res.t, u_raw, color="#D55E00", linewidth=1.0, label=r"$u_{\mathrm{raw}}$")
+        axes[0, col].plot(res.t, res.u_applied, color="#0072B2", linewidth=1.0, label=r"$u_{\mathrm{act}}$")
+        axes[1, col].plot(res.t, (ss.T - 2.0) - res.states[:, 1], color="#333333", linewidth=1.0)
+        axes[2, col].plot(res.t, i_state, color="#009E73", linewidth=1.0)
+        axes[0, col].set_title(title, fontsize=8.0)
+        axes[2, col].set_xlabel("Time $t$ (min)")
+    axes[0, 0].set_yscale("symlog", linthresh=300.0)
+    axes[2, 0].set_yscale("symlog", linthresh=300.0)
+    axes[0, 0].set_ylabel("Valve command (L/min)")
+    axes[1, 0].set_ylabel(r"Error $e = T_{sp}-T$ (K)")
+    axes[2, 0].set_ylabel(r"Integrator $I$ (L/min)")
+    axes[0, 0].legend(fontsize=6.0, loc="upper left")
+    for ax in axes.flat:
+        ax.grid(True, which="both", linestyle=":", alpha=0.5)
+    fig.tight_layout()
+    exp02.save_grouped(fig, figures_dir / "fig_mechanism")
+
+
+def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
+    """Ablation of the seven integrator policies at a second operating point (re-identified, re-tuned)."""
+    plant = exp02.CSTRPlant()
+    ss2 = plant.find_steady_state(q_j=q_j)
+    foptd2 = exp02.identify_nominal_foptd(plant, ss2, q_j)
+    analytical = {
+        "Ziegler-Nichols": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.ZIEGLER_NICHOLS_PID),
+        "Cohen-Coon": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.COHEN_COON_PID),
+        "Tyreus-Luyben": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.TYREUS_LUYBEN),
+        "AMIGO": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.AMIGO),
+        "Skogestad SIMC": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.SKOGESTAD_SIMC_PID, tau_c=0.4),
+    }
+    rows = []
+    for name, g in analytical.items():
+        row = {"Method": name, "\\(K_p\\)": f"{g.kp:.2f}"}
+        for label, method in ABLATION_VARIANTS:
+            m = _step_run(plant, ss2, g, method, q_j=q_j).metrics
+            row[label] = f"{m.iae:.2f} / {m.overshoot_pct:.1f}"
+        rows.append(row)
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "antiwindup_second_op.tex",
+        caption=(
+            f"Anti-windup ablation at a second operating point ($q_{{j,ss}} = {q_j:g}$~L/min, "
+            f"$T_{{ss}} = {ss2.T:.2f}$~K; FOPTD $K = {foptd2.k_p:.4f}$~K/(L/min), "
+            f"$\\tau = {foptd2.tau:.3f}$~min, $\\theta = {foptd2.theta:.4f}$~min, re-identified; "
+            "analytical rules re-tuned). $-2$~K step, same valve; IAE (K$\\cdot$min) / overshoot (\\%)."
+        ),
+        label="tab:antiwindup_second_op",
+    )
+
+
+def run_model_error_test(plant, ss, foptd, gains: dict, extra: dict, tables_dir: Path) -> None:
+    """Worst-case M_s over +/-20 % errors of K, tau, theta (FOPTD) and of the exact loop (K, delay)."""
+    designs = {
+        exp02.OPT_ITAE: gains[exp02.OPT_ITAE],
+        NAME_EXACT: extra[NAME_EXACT],
+        "AMIGO": gains["AMIGO"],
+        "Skogestad SIMC": gains["Skogestad SIMC"],
+    }
+    corners = [
+        FOPTDModel(k_p=foptd.k_p * a, tau=foptd.tau * b, theta=foptd.theta * c)
+        for a in (0.8, 1.0, 1.2) for b in (0.8, 1.0, 1.2) for c in (0.8, 1.0, 1.2)
+    ]
+    w = np.logspace(-3, 3, 4000)
+    rows = []
+    for name, g in designs.items():
+        ms_f = [calculate_maximum_sensitivity_foptd(m, g) for m in corners]
+        ms_l = []
+        for k_scale in (0.8, 1.0, 1.2):
+            for extra_delay in (0.0, 0.2 * foptd.theta):
+                loop = k_scale * loop_gain_linearized(
+                    plant, ss, 100.0, g, w, theta=SIM_DT / 2.0 + extra_delay
+                )
+                ms_l.append(float(np.max(np.abs(1.0 / (1.0 + loop)))))
+        rows.append({
+            "Tuning": name,
+            "\\(M_s^{\\mathrm{FOPTD}}\\) nominal": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
+            "worst of $27$ corners": f"{max(ms_f):.2f}",
+            "\\(M_s^{\\mathrm{lin}}\\) nominal": f"{_ms_lin(plant, ss, g):.2f}",
+            "worst ($K\\pm20\\%$, $+0.2\\theta$)": f"{max(ms_l):.2f}",
+        })
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "model_error_ms.tex",
+        caption=(
+            "Sensitivity peak under model error: on the FOPTD, the largest $M_s$ over the $27$ "
+            "corners of $K$, $\\tau$, $\\theta$ scaled by $0.8$, $1$, $1.2$; on the exact loop, the "
+            "largest $M_s$ with the loop gain scaled by $0.8$ or $1.2$ and an extra delay of "
+            "$0.2\\,\\theta_{\\mathrm{FOPTD}}$. Deadband and stiction are not modelled."
+        ),
+        label="tab:model_error",
     )
 
 
@@ -425,7 +677,7 @@ def run_n_design_sweep(plant, ss, gains: dict, tables_dir: Path) -> None:
     sigmas = (0.01, 0.05)
 
     def noisy(g, sigma, seed):
-        res = _step_run(plant, ss, g, noise_std=sigma, seed=500 + seed)
+        res = _step_run(plant, ss, g, noise_std=sigma, seed=100 + seed)  # seeds of the noise campaign
         return res.metrics.iae, res.metrics.tv
 
     rows = []
@@ -460,15 +712,22 @@ def run_n_design_sweep(plant, ss, gains: dict, tables_dir: Path) -> None:
 
 
 def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir: Path) -> None:
-    """Sobol campaign plus a direct test of the heat-removal-margin explanation.
+    """Sobol campaign (benchmark sampling and horizon) plus the heat-removal-margin analyses.
 
     u_req is the steady coolant flow that holds the new setpoint on the perturbed plant
-    (closed form); the explanation predicts that IAE rises with u_req towards u_max.
+    (closed form). Samples with u_req > u_max cannot be held by any controller; the first-order
+    indices are therefore also estimated on the feasible subset with the given-data RBD-FAST
+    estimator (the Saltelli design does not survive the removal of rows).
     """
+    from SALib.analyze import rbd_fast
+
     limits = exp02.BENCHMARK_LIMITS
     raw: dict = {}
-    exp02.run_sobol_uncertainty_campaign(gains, 100.0, limits, figures_dir, tables_dir, raw=raw)
+    exp02.run_sobol_uncertainty_campaign(
+        gains, 100.0, limits, figures_dir, tables_dir, raw=raw, dt=SIM_DT, t_final=SOBOL_T_FINAL
+    )
     nom, target = CSTRParameters(), ss.T - 2.0
+    names = exp02.CSTR_UNCERTAINTY_PROBLEM["names"]
 
     def plant_of(x):
         return exp02.CSTRPlant(CSTRParameters(
@@ -477,27 +736,56 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
 
     samples = next(iter(raw.values()))[0]
     u_req = np.array([plant_of(x).required_coolant_flow(target) for x in samples])
-    rows = []
+    feasible = u_req <= limits.u_max
+    problem = dict(exp02.CSTR_UNCERTAINTY_PROBLEM)
+    rows, rows_feas = [], []
     for name, (_, outs) in raw.items():
-        rho = {m: scipy_stats.spearmanr(u_req, [o[m] for o in outs]) for m in ("IAE", "TV")}
+        y = {m: np.array([o[m] for o in outs]) for m in ("IAE", "TV")}
+        rho = {m: scipy_stats.spearmanr(u_req, y[m]) for m in y}
+        rho_f = scipy_stats.spearmanr(u_req[feasible], y["IAE"][feasible])
         rows.append({
             "Method": name,
             "\\(\\rho_s\\)(IAE, \\(u_{\\mathrm{req}}\\))": f"{rho['IAE'].statistic:+.2f}",
+            "\\(\\rho_s^2\\)": f"{rho['IAE'].statistic ** 2:.2f}",
+            "\\(\\rho_s\\) feasible": f"{rho_f.statistic:+.2f}",
             "\\(\\rho_s\\)(TV, \\(u_{\\mathrm{req}}\\))": f"{rho['TV'].statistic:+.2f}",
-            "\\(u_{\\mathrm{req}} > u_{\\max}\\) (\\%)": f"{100.0 * np.mean(u_req > limits.u_max):.1f}",
+            "\\(u_{\\mathrm{req}} > u_{\\max}\\) (\\%)": f"{100.0 * np.mean(~feasible):.1f}",
         })
+        for m in y:
+            full = rbd_fast.analyze(problem, samples, y[m], seed=2026, print_to_console=False)
+            sub = rbd_fast.analyze(
+                problem, samples[feasible], y[m][feasible], seed=2026, print_to_console=False
+            )
+            row = {"Method": name, "Metric": m}
+            for i, nm in enumerate(names):
+                row[exp02.SOBOL_LABELS[nm] + ": all"] = f"{full['S1'][i]:.2f}"
+                row[exp02.SOBOL_LABELS[nm] + ": feasible"] = (
+                    f"{sub['S1'][i]:.2f} $\\pm$ {sub['S1_conf'][i]:.2f}"
+                )
+            rows_feas.append(row)
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "sobol_margin_test.tex",
         caption=(
             "Spearman rank correlation, over the Sobol samples, between the closed-loop metrics and "
             "the steady coolant flow $u_{\\mathrm{req}}$ that the perturbed plant needs at the new "
-            "setpoint (heat-removal demand); last column: share of samples with $u_{\\mathrm{req}}$ "
-            "above the valve stop."
+            "setpoint (heat-removal demand); $\\rho_s^2$ is the rank-variance share; ``feasible'' "
+            "restricts the IAE correlation to samples with $u_{\\mathrm{req}} \\le u_{\\max}$; last "
+            "column: share of samples above the valve stop."
         ),
         label="tab:sobol_margin",
     )
-    names = exp02.CSTR_UNCERTAINTY_PROBLEM["names"]
+    exp02.export_latex_table(
+        data=rows_feas,
+        output_path=tables_dir / "sobol_feasible.tex",
+        caption=(
+            "First-order indices from the given-data RBD-FAST estimator ($M = 10$) on all "
+            f"{len(u_req)} samples and on the {int(feasible.sum())} samples with "
+            "$u_{\\mathrm{req}} \\le u_{\\max}$ (feasible region; $\\pm$: half-width of the $95\\%$ "
+            "bootstrap interval). Total-order indices are not defined on the truncated region."
+        ),
+        label="tab:sobol_feasible",
+    )
     bounds = exp02.CSTR_UNCERTAINTY_PROBLEM["bounds"]
     base = [1.0, 1.0, nom.C_Af, 0.0]
     rows = []
@@ -515,7 +803,7 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
         output_path=tables_dir / "sobol_ranges.tex",
         caption=(
             "Uncertainty box of the Sobol analysis expressed as heat-removal demand: coolant flow "
-            f"needed at the $-2$~K setpoint when one factor sits at a bound and the others are nominal "
+            "needed at the $-2$~K setpoint when one factor sits at a bound and the others are nominal "
             f"(nominal: ${plant.required_coolant_flow(target):.1f}$~L/min; valve stop $300$~L/min). "
             "Ranges of $E_a/R$ and $UA$ are relative to nominal."
         ),
@@ -549,12 +837,16 @@ def remediate_jpc() -> Path:
     stage("anti-windup ablation, scenarios, T_t sweep")
     run_antiwindup_ablation(plant, ss, gains, tables_dir)
     run_aw_scenarios(plant, ss, gains, tables_dir)
-    run_aw_tt_sweep(plant, ss, gains, tables_dir)
+    run_tt_curve(plant, ss, gains, tables_dir, figures_dir)
+    run_smax_map(plant, ss, gains, tables_dir, figures_dir)
+    plot_mechanism(plant, ss, gains, figures_dir)
+    run_second_operating_point(SECOND_OP_Q_J, tables_dir)
     run_exact_robustness(plant, ss, foptd, gains, tables_dir)
     stage("cost of the design-model constraint + joint 2-DOF")
     extra = run_robust_constraint_cost(plant, ss, foptd, gains, tables_dir)
     for name, g in extra.items():
         logger.info("TUNING %s: %s", name, g)
+    run_model_error_test(plant, ss, foptd, gains, extra, tables_dir)
     stage("out-of-sample steps")
     run_out_of_sample(plant, ss, {**gains, **extra}, tables_dir, base=tuple(gains))
     stage("load disturbance: deterministic and replicated")

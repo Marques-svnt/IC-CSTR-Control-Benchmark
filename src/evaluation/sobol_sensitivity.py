@@ -16,6 +16,7 @@ from typing import Any, Optional
 import numpy as np
 import pandas as pd
 import pandera.pandas as pa
+from joblib import Parallel, delayed
 from pandera.typing import Series
 from SALib.analyze import sobol as sobol_analyze
 from SALib.sample import sobol as sobol_sample
@@ -64,6 +65,7 @@ def sobol_indices(
     n_base: int,
     seed: int,
     return_raw: bool = False,
+    n_jobs: int = 1,
 ) -> pd.DataFrame | tuple[pd.DataFrame, np.ndarray, list[Mapping[str, float]]]:
     """Saltelli-sample `problem`, evaluate every sample and return S1/ST per output.
 
@@ -73,6 +75,7 @@ def sobol_indices(
         n_base: Base sample size N (power of 2); the model is run N * (D + 2) times.
         seed: Seed of the scrambled Sobol sequence.
         return_raw: Also return the Saltelli samples and the per-sample outputs.
+        n_jobs: Worker processes for the model runs (-1 = all cores).
 
     Returns:
         Long DataFrame with columns metric, parameter, S1, S1_conf, ST, ST_conf (S*_conf is
@@ -80,7 +83,7 @@ def sobol_indices(
         (DataFrame, samples, outputs).
     """
     samples = sobol_sample.sample(dict(problem), N=n_base, calc_second_order=False, seed=seed)
-    outputs = [evaluate(x) for x in samples]
+    outputs = Parallel(n_jobs=n_jobs)(delayed(evaluate)(x) for x in samples)
     rows = []
     for metric in outputs[0]:
         y = np.array([o[metric] for o in outputs], dtype=np.float64)
@@ -167,6 +170,7 @@ def closed_loop_sobol(
     dt: float = 0.05,
     problem: Mapping[str, Any] = CSTR_UNCERTAINTY_PROBLEM,
     raw: Optional[dict[str, tuple[np.ndarray, list[Mapping[str, float]]]]] = None,
+    n_jobs: int = 1,
 ) -> pd.DataFrame:
     """Sobol indices of IAE and TV for each controller under the CSTR uncertainty box.
 
@@ -184,6 +188,7 @@ def closed_loop_sobol(
         problem: SALib problem with names (E_over_R_scale, UA_scale, C_Af, theta_sensor).
         raw: Optional dict filled with name -> (samples, per-sample outputs), for post-hoc
             analyses such as rank correlations.
+        n_jobs: Worker processes for the model runs (-1 = all cores).
 
     Returns:
         DataFrame validated by SobolIndicesSchema.
@@ -216,7 +221,7 @@ def closed_loop_sobol(
 
         logger.info("Sobol campaign for %s (N=%d)", name, n_base)
         df, samples, outputs = sobol_indices(
-            evaluate, problem, n_base=n_base, seed=seed, return_raw=True
+            evaluate, problem, n_base=n_base, seed=seed, return_raw=True, n_jobs=n_jobs
         )
         if raw is not None:
             raw[name] = (samples, outputs)

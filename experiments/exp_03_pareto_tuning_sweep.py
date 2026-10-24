@@ -338,7 +338,7 @@ def plot_true_pareto_frontier(
         color="#1B7837",
         linestyle="--",
         linewidth=1.4,
-        label=r"Pareto optimal front ($\lambda$-opt)",
+        label=r"Scalarized front ($\lambda$-opt)",
     )
 
     # Discrete tuning rules are identified by marker in the legend; far-off points go to an inset
@@ -371,7 +371,7 @@ def plot_true_pareto_frontier(
     ax1.set_ylim(0.5, y_max)
     ax1.set_xlabel(r"Actuator Total Variation $\mathrm{TV}$ (L/min) [Wear / Effort]", fontsize=8.8)
     ax1.set_ylabel(r"Tracking Error $\mathrm{IAE}$ (K$\cdot$min)", fontsize=8.8)
-    ax1.set_title(r"(a) True Pareto Trade-off: $\mathrm{IAE}$ vs $\mathrm{TV}$", fontsize=9.3)
+    ax1.set_title(r"(a) Tracking error vs valve travel", fontsize=9.3)
     ax1.grid(True, linestyle=":", alpha=0.6)
 
     # Barra de cores para sensibilidade máxima Ms
@@ -559,9 +559,9 @@ def run_experiment() -> None:
         data=table_rows,
         output_path=tables_dir / "pareto_tradeoff_table.tex",
         caption=(
-            "Quantitative trade-off along the continuous Pareto frontier: "
-            "impact of closed-loop tuning parameter $\\tau_c$ and classical rules "
-            "on robustness ($M_s$) and actuator effort ($TV$)."
+            "Trade-off along the SIMC $\\tau_c$ locus and for the discrete rules: "
+            "robustness ($M_s$), tracking error and actuator effort (TV); the locus is a "
+            "one-parameter family, not a Pareto frontier."
         ),
         label="tab:pareto_tradeoff",
     )

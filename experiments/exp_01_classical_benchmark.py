@@ -25,6 +25,8 @@ from experiments.exp_02_robustness_campaign import (
     OVERLEAF_DIR,
     export_latex_table,
     make_factories,
+    plot_grouped_responses,
+    save_grouped,
     setup_controllers,
 )
 from src.classical_control.closed_loop import ClosedLoopSimulator
@@ -121,33 +123,39 @@ def run_benchmark(
     )
 
     # %% [3. Figura 1: resposta temporal]
-    setup_ieee_style(single_column=True)
-    fig_w, fig_h = get_figure_dimensions(columns=1, height_override=4.4)
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(fig_w, fig_h), sharex=True, dpi=300)
-    sample = next(iter(sim_results.values()))
-    ax1.plot(sample.t, sample.setpoint, color=IEEE_PALETTE["Setpoint"],
-             linestyle=IEEE_LINESTYLES["Setpoint"], label="Setpoint ($T_{sp}$)")
-    for name, res in sim_results.items():
-        style = {"color": IEEE_PALETTE[name], "linestyle": IEEE_LINESTYLES[name], "linewidth": 1.1}
-        ax1.plot(res.t, res.t_pv, label=name, **style)
-        ax2.plot(res.t, res.u_applied, **style)
-    ax1.set_ylabel("Reactor Temp. $T$ (K)")
-    ax1.set_ylim(ss.T - 3.0, ss.T + 0.6)
-    ax1.grid(True)
-    for u_lim in (limits.u_min, limits.u_max):
-        ax2.axhline(u_lim, color=IEEE_PALETTE["Constraint"], linestyle=IEEE_LINESTYLES["Constraint"],
-                    linewidth=0.9)
-    ax2.set_ylabel(r"Coolant Flow $q_j$ (L/min)")
-    ax2.set_xlabel("Time $t$ (min)")
-    ax2.set_ylim(-15, 335)
-    ax2.grid(True)
-    h, lab = ax1.get_legend_handles_labels()
-    fig.legend(h, lab, loc="upper center", bbox_to_anchor=(0.5, 1.0), ncol=3, fontsize=5.6,
-               columnspacing=0.5, handletextpad=0.3)
-    fig.tight_layout(rect=[0.0, 0.0, 1.0, 0.875])
-    fig.savefig(figures_dir / "fig1_classical_benchmark.pdf")
-    fig.savefig(figures_dir / "fig1_classical_benchmark.png", dpi=300)
-    plt.close(fig)
+    grouped = plot_grouped_responses(
+        sim_results, limits, (ss.T - 3.0, ss.T + 0.6), "", figures_dir / "fig1_classical_benchmark"
+    )
+    if grouped is not None:
+        save_grouped(grouped[0], figures_dir / "fig1_classical_benchmark")
+    if grouped is None:
+        setup_ieee_style(single_column=True)
+        fig_w, fig_h = get_figure_dimensions(columns=1, height_override=4.4)
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(fig_w, fig_h), sharex=True, dpi=300)
+        sample = next(iter(sim_results.values()))
+        ax1.plot(sample.t, sample.setpoint, color=IEEE_PALETTE["Setpoint"],
+                 linestyle=IEEE_LINESTYLES["Setpoint"], label="Setpoint ($T_{sp}$)")
+        for name, res in sim_results.items():
+            style = {"color": IEEE_PALETTE[name], "linestyle": IEEE_LINESTYLES[name], "linewidth": 1.1}
+            ax1.plot(res.t, res.t_pv, label=name, **style)
+            ax2.plot(res.t, res.u_applied, **style)
+        ax1.set_ylabel("Reactor Temp. $T$ (K)")
+        ax1.set_ylim(ss.T - 3.0, ss.T + 0.6)
+        ax1.grid(True)
+        for u_lim in (limits.u_min, limits.u_max):
+            ax2.axhline(u_lim, color=IEEE_PALETTE["Constraint"], linestyle=IEEE_LINESTYLES["Constraint"],
+                        linewidth=0.9)
+        ax2.set_ylabel(r"Coolant Flow $q_j$ (L/min)")
+        ax2.set_xlabel("Time $t$ (min)")
+        ax2.set_ylim(-15, 335)
+        ax2.grid(True)
+        h, lab = ax1.get_legend_handles_labels()
+        fig.legend(h, lab, loc="upper center", bbox_to_anchor=(0.5, 1.0), ncol=3, fontsize=5.6,
+                   columnspacing=0.5, handletextpad=0.3)
+        fig.tight_layout(rect=[0.0, 0.0, 1.0, 0.875])
+        fig.savefig(figures_dir / "fig1_classical_benchmark.pdf")
+        fig.savefig(figures_dir / "fig1_classical_benchmark.png", dpi=300)
+        plt.close(fig)
 
     # %% [4. Figura: |S(jw)| no laço FOPTD com atraso]
     omegas = np.logspace(-2, 2.5, 3000)
