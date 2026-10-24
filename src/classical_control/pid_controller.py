@@ -41,6 +41,10 @@ class AntiWindupMethod(str, Enum):
     BACK_CALCULATION = "back_calculation"
     # Ablation only: amplitude-only, sign-blind textbook rule (ignores slew-rate cuts and Kp < 0)
     CLAMPING_NAIVE = "clamping_naive"
+    # 2x2 factorial ablation (trigger x sign awareness); CLAMPING = (position+rate, directional)
+    CLAMPING_POS_AGNOSTIC = "clamping_pos_agnostic"  # freeze whenever u_raw leaves [u_min, u_max]
+    CLAMPING_RATE_AGNOSTIC = "clamping_rate_agnostic"  # freeze whenever amplitude or slew cuts u
+    CLAMPING_POS_DIRECTIONAL = "clamping_pos_directional"  # directional, amplitude excess only
 
 
 @dataclass
@@ -240,6 +244,18 @@ class PIDController:
             # da saturação (amplitude ou slew rate); K_p < 0 inverte o sinal de i_gain * e_trap
             sat_excess = self._last_u_unconstrained - self._last_u_applied
             if sat_excess * (i_gain * e_trap) > 0.0:
+                should_integrate = False
+
+        if self._is_saturated:
+            u_unc = self._last_u_unconstrained
+            pos_excess = u_unc - min(max(u_unc, self.limits.u_min), self.limits.u_max)
+            push = i_gain * e_trap
+            aw = self.anti_windup
+            if (
+                (aw == AntiWindupMethod.CLAMPING_POS_DIRECTIONAL and pos_excess * push > 0.0)
+                or (aw == AntiWindupMethod.CLAMPING_POS_AGNOSTIC and pos_excess != 0.0)
+                or aw == AntiWindupMethod.CLAMPING_RATE_AGNOSTIC
+            ):
                 should_integrate = False
 
         if self.anti_windup == AntiWindupMethod.CLAMPING_NAIVE and self._is_saturated:

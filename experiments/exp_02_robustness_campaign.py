@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
+from scipy import stats as scipy_stats
 
 from src.classical_control.closed_loop import ClosedLoopSimulator
 from src.classical_control.foptd import FOPTDModel, identify_foptd
@@ -268,6 +269,8 @@ def run_load_disturbance_campaign(
     limits: ActuatorLimits,
     figures_dir: Path,
     tables_dir: Path,
+    dT_f: float = 5.0,
+    dC_frac: float = 0.2,
 ) -> None:
     """Avalia o controle regulatório contra perturbações não-mensuradas na alimentação.
 
@@ -284,6 +287,8 @@ def run_load_disturbance_campaign(
         limits: Restrições físicas de saturação e taxa da válvula.
         figures_dir: Diretório de destino para figuras.
         tables_dir: Diretório de destino para tabelas.
+        dT_f: Degrau de temperatura de alimentação [K] (padrão +5 K).
+        dC_frac: Degrau relativo de C_Af (padrão +20 %).
     """
     logger.info("=== Executando Campanha de Rejeição de Perturbações de Carga ===")
     sim = ClosedLoopSimulator()
@@ -293,10 +298,10 @@ def run_load_disturbance_campaign(
     def disturbance_profile(t: float) -> dict[str, float]:
         dist = {}
         if 2.0 <= t < 8.0:
-            dist["T_f"] = plant.params.T_f + 5.0
+            dist["T_f"] = plant.params.T_f + dT_f
         elif t >= 8.0:
-            dist["T_f"] = plant.params.T_f + 5.0
-            dist["C_Af"] = plant.params.C_Af + 0.2
+            dist["T_f"] = plant.params.T_f + dT_f
+            dist["C_Af"] = plant.params.C_Af * (1.0 + dC_frac)
         return dist
 
     has_nmpc = any(name.startswith("NMPC") for name in controllers)
@@ -337,8 +342,9 @@ def run_load_disturbance_campaign(
     export_latex_table(
         data=table_rows,
         output_path=tables_dir / "disturbance_rejection_table.tex",
-        caption="Regulatory performance under combined feed temperature ($+5$~K) "
-        "and concentration ($+20\\%$) load disturbances. $T(t_f) - T_{sp}$ is the true "
+        caption=f"Regulatory performance under combined feed temperature ($+{dT_f:g}$~K) "
+        f"and concentration ($+{100 * dC_frac:g}\\%$) load disturbances. "
+        "$T(t_f) - T_{sp}$ is the true "
         "temperature error at $t_f = 15$~min"
         + (
             "; $\\hat\\alpha_{UA}(t_f)$ is the NMPC fouling estimate (true value $1.0$, "
@@ -367,9 +373,9 @@ def run_load_disturbance_campaign(
 
     # Linhas verticais indicando a injeção dos distúrbios com anotações em posições desobstruídas
     ax1.axvline(2.0, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
-    ax1.text(2.1, 395.6, r"$\Delta T_f = +5$ K", fontsize=7.2, color="#444444")
+    ax1.text(2.1, 395.6, rf"$\Delta T_f = +{dT_f:g}$ K", fontsize=7.2, color="#444444")
     ax1.axvline(8.0, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
-    ax1.text(8.1, 395.6, r"$\Delta C_{Af} = +20\%$", fontsize=7.2, color="#444444")
+    ax1.text(8.1, 395.6, rf"$\Delta C_{{Af}} = +{100 * dC_frac:g}\%$", fontsize=7.2, color="#444444")
 
     for name, res in sim_results.items():
         color = IEEE_PALETTE.get(name, "#333333")
@@ -380,7 +386,7 @@ def run_load_disturbance_campaign(
     # Subplot 1: Temperatura do reator com faixa [395.0, 404.0] K
     # Sem legenda interna: desobstrução completa dos transientes e picos de distúrbio
     ax1.set_ylabel("Reactor Temp. $T$ (K)", fontsize=8.5)
-    ax1.set_title(r"Load Disturbance Rejection ($+5$ K & $+20\% C_{Af}$)", fontsize=9.0)
+    ax1.set_title(rf"Load Disturbance Rejection ($+{dT_f:g}$ K & $+{100 * dC_frac:g}\%\ C_{{Af}}$)", fontsize=9.0)
     ax1.set_ylim(394.0, 406.0)
     ax1.grid(True, linestyle=":", alpha=0.6)
 
@@ -621,6 +627,8 @@ def run_noise_and_pareto_campaign(
     limits: ActuatorLimits,
     figures_dir: Path,
     tables_dir: Path,
+    noise_levels: tuple[float, ...] = (0.0, 0.1, 0.2, 0.5, 1.0),
+    filter_taus: tuple[float, ...] = (0.0,),
 ) -> None:
     """Quantifica a sensibilidade ao ruído estocástico de medição via Monte Carlo.
 
@@ -638,6 +646,9 @@ def run_noise_and_pareto_campaign(
         limits: Restrições físicas da válvula.
         figures_dir: Diretório de destino para figuras.
         tables_dir: Diretório de destino para tabelas.
+        noise_levels: Desvios padrão sigma do ruído gaussiano [K].
+        filter_taus: Constantes tau_f [min] do filtro passa-baixa de medição (0 = sem filtro);
+            a figura usa a última, a tabela ganha a coluna tau_f se houver mais de uma.
     """
     logger.info("=== Executando Campanha de Ruído nos Sensores e Chattering da Válvula ===")
     sim = ClosedLoopSimulator()
@@ -645,15 +656,18 @@ def run_noise_and_pareto_campaign(
     dt = 0.02
     target_T = ss.T - 2.0
 
-    noise_levels = [0.0, 0.1, 0.2, 0.5, 1.0]  # Desvio padrão do ruído gaussiano [K]
     n_monte_carlo = 30
+    plot_tau = filter_taus[-1]
 
-    results: dict[str, dict[float, dict[str, list[float]]]] = {
-        name: {sigma: {"iae": [], "tv": []} for sigma in noise_levels}
+    results: dict[tuple[str, float], dict[float, dict[str, list[float]]]] = {
+        (name, tau): {sigma: {"iae": [], "tv": []} for sigma in noise_levels}
         for name in controllers
+        for tau in filter_taus
     }
 
-    def one_run(name: str, sigma: float, seed: int) -> tuple[str, float, float, float]:
+    def one_run(
+        name: str, sigma: float, seed: int, tau: float
+    ) -> tuple[str, float, float, float, float]:
         ctrl = controllers[name](sensor_noise_std=sigma, seed=10_000 + seed)
         res = sim.run(
             plant=plant,
@@ -664,39 +678,61 @@ def run_noise_and_pareto_campaign(
             setpoint_func=lambda t: target_T,  # same servo protocol as exp_01 (step at t = 0)
             noise_std=sigma,
             seed=100 + seed,
+            meas_filter_tau=tau,
         )
-        return name, sigma, res.metrics.iae, res.metrics.tv
+        return name, sigma, tau, res.metrics.iae, res.metrics.tv
 
     tasks = [
-        (name, sigma, seed)
+        (name, sigma, seed, tau)
         for name in controllers
+        for tau in filter_taus
         for sigma in noise_levels
         for seed in range(n_monte_carlo)
     ]
-    for name, sigma, iae, tv in Parallel(n_jobs=-1)(delayed(one_run)(*t) for t in tasks):
-        results[name][sigma]["iae"].append(iae)
-        results[name][sigma]["tv"].append(tv)
+    for name, sigma, tau, iae, tv in Parallel(n_jobs=-1)(delayed(one_run)(*t) for t in tasks):
+        results[(name, tau)][sigma]["iae"].append(iae)
+        results[(name, tau)][sigma]["tv"].append(tv)
 
     table_rows = []
     for name in controllers:
-        for sigma in noise_levels:
-            mean_iae = float(np.mean(results[name][sigma]["iae"]))
-            std_iae = float(np.std(results[name][sigma]["iae"]))
-            mean_tv = float(np.mean(results[name][sigma]["tv"]))
-            std_tv = float(np.std(results[name][sigma]["tv"]))
+        for tau in filter_taus:
+            for sigma in noise_levels:
+                r = results[(name, tau)][sigma]
+                row = {"Method": name}
+                if len(filter_taus) > 1:
+                    row["$\\tau_m$ (min)"] = f"{tau:.2f}"
+                # Multi-filter mode reports the 95 % t-interval of the mean; default keeps mean +- std
+                ci = len(filter_taus) > 1
 
-            table_rows.append({
-                "Method": name,
-                "Noise $\\sigma$ (K)": f"{sigma:.1f}",
-                "IAE (mean $\\pm$ std)": f"{mean_iae:.2f} $\\pm$ {std_iae:.2f}",
-                "TV (L/min)": f"{mean_tv:.1f} $\\pm$ {std_tv:.1f}",
-            })
+                def spread(v: list[float]) -> float:
+                    n = len(v)
+                    return (
+                        scipy_stats.t.ppf(0.975, n - 1) * np.std(v, ddof=1) / np.sqrt(n)
+                        if ci
+                        else float(np.std(v))
+                    )
+
+                row |= {
+                    "Noise $\\sigma$ (K)": f"{sigma:.1f}" if round(sigma, 1) == sigma else f"{sigma:.2f}",
+                    "IAE (mean $\\pm$ " + ("95\\% CI)" if ci else "std)"):
+                        f"{np.mean(r['iae']):.2f} $\\pm$ {spread(r['iae']):.2f}",
+                    "TV (L/min)": f"{np.mean(r['tv']):.1f} $\\pm$ {spread(r['tv']):.1f}",
+                }
+                table_rows.append(row)
+
+    if len(filter_taus) > 1:
+        _export_filter_paired_tests(results, controllers, noise_levels, filter_taus, tables_dir)
 
     export_latex_table(
         data=table_rows,
         output_path=tables_dir / "noise_chattering_table.tex",
         caption="Sensitivity of tracking error (IAE) and actuator effort (TV) "
-        "to measurement noise levels across $30$ Monte Carlo runs.",
+        "to measurement noise levels across $30$ Monte Carlo runs"
+        + (
+            "; $\\tau_m$ is the time constant of the first-order measurement filter ($0$ = unfiltered)."
+            if len(filter_taus) > 1
+            else "."
+        ),
         label="tab:noise_sensitivity",
     )
 
@@ -707,8 +743,8 @@ def run_noise_and_pareto_campaign(
 
     for name in controllers:
         marker = IEEE_MARKERS[name]
-        iaes = [np.mean(results[name][sig]["iae"]) for sig in noise_levels]
-        tvs = [np.mean(results[name][sig]["tv"]) for sig in noise_levels]
+        iaes = [np.mean(results[(name, plot_tau)][sig]["iae"]) for sig in noise_levels]
+        tvs = [np.mean(results[(name, plot_tau)][sig]["tv"]) for sig in noise_levels]
         color = CONTROLLER_COLORS[name]
         ax.plot(
             tvs,
@@ -723,10 +759,10 @@ def run_noise_and_pareto_campaign(
 
     # Anotações limpas com setas indicando os extremos de ruído sem sobreposição de texto
     ref = "Skogestad SIMC" if "Skogestad SIMC" in controllers else next(iter(controllers))
-    sample_iaes = [np.mean(results[ref][sig]["iae"]) for sig in noise_levels]
-    sample_tvs = [np.mean(results[ref][sig]["tv"]) for sig in noise_levels]
+    sample_iaes = [np.mean(results[(ref, plot_tau)][sig]["iae"]) for sig in noise_levels]
+    sample_tvs = [np.mean(results[(ref, plot_tau)][sig]["tv"]) for sig in noise_levels]
     ax.annotate(
-        r"$\sigma = 0.0$ K",
+        rf"$\sigma = {noise_levels[0]:g}$ K",
         xy=(sample_tvs[0], sample_iaes[0]),
         xytext=(35, 12),
         textcoords="offset points",
@@ -735,7 +771,7 @@ def run_noise_and_pareto_campaign(
         arrowprops=dict(arrowstyle="->", lw=0.7, color="#555555"),
     )
     ax.annotate(
-        r"$\sigma = 1.0$ K (high noise)",
+        rf"$\sigma = {noise_levels[-1]:g}$ K (high noise)",
         xy=(sample_tvs[-1], sample_iaes[-1]),
         xytext=(-85, 20),
         textcoords="offset points",
@@ -759,6 +795,48 @@ def run_noise_and_pareto_campaign(
     plt.savefig(fig_pdf)
     plt.close()
     logger.info("Figuras salvas com sucesso em: %s e %s", fig_png, fig_pdf)
+
+
+def _export_filter_paired_tests(
+    results: dict, controllers: Any, noise_levels: tuple[float, ...],
+    filter_taus: tuple[float, ...], tables_dir: Path,
+) -> None:
+    """Paired Wilcoxon signed-rank tests (same noise seeds) of filtered vs unfiltered runs.
+
+    p-values are Benjamini-Hochberg adjusted over all reported tests.
+    """
+    t0, t1 = filter_taus[0], filter_taus[-1]
+    keys, raw, rows = [], [], []
+    for name in controllers:
+        for sigma in noise_levels:
+            if sigma == 0.0:
+                continue  # deterministic: the paired differences are identical, no test
+            a, b = results[(name, t0)][sigma], results[(name, t1)][sigma]
+            d_tv = np.array(b["tv"]) - np.array(a["tv"])
+            d_iae = np.array(b["iae"]) - np.array(a["iae"])
+            keys.append((name, sigma, d_tv.mean(), d_iae.mean()))
+            raw += [scipy_stats.wilcoxon(d_tv).pvalue, scipy_stats.wilcoxon(d_iae).pvalue]
+    adj = scipy_stats.false_discovery_control(np.array(raw))
+    fmt = lambda p: "$<10^{-3}$" if p < 1e-3 else f"{p:.3f}"  # noqa: E731
+    for i, (name, sigma, m_tv, m_iae) in enumerate(keys):
+        rows.append({
+            "Method": name,
+            "Noise $\\sigma$ (K)": f"{sigma:.2f}",
+            "\\(\\Delta\\)TV (L/min)": f"{m_tv:+.1f}",
+            "\\(p_{\\mathrm{adj}}\\) (TV)": fmt(adj[2 * i]),
+            "\\(\\Delta\\)IAE (K$\\cdot$min)": f"{m_iae:+.3f}",
+            "\\(p_{\\mathrm{adj}}\\) (IAE)": fmt(adj[2 * i + 1]),
+        })
+    export_latex_table(
+        data=rows,
+        output_path=tables_dir / "noise_filter_paired_tests.tex",
+        caption=(
+            f"Effect of the measurement filter ($\\tau_m = {t1:g}$~min against none) on the $30$ "
+            "paired noise realizations: mean paired difference and Wilcoxon signed-rank "
+            "$p$-values adjusted by Benjamini--Hochberg over all tests in the table."
+        ),
+        label="tab:noise_filter_paired",
+    )
 
 
 # %% [7. Ensaio 4: Rastreamento Não-Linear em Múltiplos Pontos de Operação]

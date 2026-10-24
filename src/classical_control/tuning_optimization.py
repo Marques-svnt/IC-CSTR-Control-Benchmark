@@ -98,6 +98,35 @@ def loop_gain_linearized(
     return g_jw * np.exp(-s * theta) * _pid_frequency_response(gains, s)
 
 
+def high_frequency_gain(gains: PIDGains) -> float:
+    """K_hf = |K_p| (1 + N): the |C(jw)| plateau of the filtered PID as w -> inf (1 if T_d = 0)."""
+    return abs(gains.kp) * (1.0 + (gains.n_filter if gains.td > 0 else 0.0))
+
+
+def linearized_robustness(
+    plant: CSTRPlant,
+    state: CSTRState,
+    q_j: float,
+    gains: PIDGains,
+    theta: float = 0.0,
+    omegas: Optional[np.ndarray] = None,
+) -> dict[str, float]:
+    """Peaks ||S||, ||T||, ||CS|| (inf-norms) of the exact 3-state linearization with delay theta.
+
+    CS = C / (1 + L) maps measurement noise to the control signal [L/min/K]; its peak, together
+    with K_hf = |K_p|(1+N), is the noise-to-valve gain (Ms alone is not).
+    """
+    w = np.logspace(-3, 4, 6000) if omegas is None else omegas
+    loop = loop_gain_linearized(plant, state, q_j, gains, w, theta=theta)
+    c_jw = _pid_frequency_response(gains, 1j * w)
+    return {
+        "ms": float(np.max(np.abs(1.0 / (1.0 + loop)))),
+        "mt": float(np.max(np.abs(loop / (1.0 + loop)))),
+        "cs_inf": float(np.max(np.abs(c_jw / (1.0 + loop)))),
+        "k_hf": high_frequency_gain(gains),
+    }
+
+
 def phase_margin_deg(loop: np.ndarray, omegas: np.ndarray) -> float:
     """Phase margin at the highest gain crossover |L(jw)| = 1 of a sampled loop gain.
 

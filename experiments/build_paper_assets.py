@@ -11,20 +11,23 @@ Artigo 2 (Computers & Chemical Engineering) duels NMPC with the two best robust 
 only (AMIGO, 1-DOF Optimal ITAE): every campaign is re-run with that controller subset.
 
 Usage:
-    .venv/bin/python experiments/build_paper_assets.py jpc|cace
+    .venv/bin/python experiments/build_paper_assets.py jpc|jpc-remediation|cace
 """
 
 import logging
 import re
 import shutil
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
 import experiments.exp_01_classical_benchmark as exp01
 import experiments.exp_02_robustness_campaign as exp02
@@ -32,6 +35,10 @@ from experiments.exp_01_classical_benchmark import run_benchmark
 from experiments.exp_01b_nmpc_oracle_comparison import (
     run_mhe_tuning_sensitivity,
     run_nmpc_oracle_benchmark,
+)
+from src.classical_control.tuning_optimization import (
+    calculate_maximum_sensitivity_foptd,
+    linearized_robustness,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -50,36 +57,198 @@ def rerender_from_csv(stem: str, tables_dir: Path) -> None:
     exp02.export_latex_table(df.to_dict("records"), tables_dir / f"{stem}.tex", caption, label)
 
 
+AW = exp02.AntiWindupMethod
+ABLATION_VARIANTS = (
+    ("None", AW.NONE),
+    ("Back-calc.", AW.BACK_CALCULATION),
+    ("Textbook", AW.CLAMPING_NAIVE),
+    ("Pos.-only agnostic", AW.CLAMPING_POS_AGNOSTIC),
+    ("Pos.+rate agnostic", AW.CLAMPING_RATE_AGNOSTIC),
+    ("Pos.-only directional", AW.CLAMPING_POS_DIRECTIONAL),
+    ("Directional (proposed)", AW.CLAMPING),
+)
+MEASUREMENT_TAU_F = 0.05  # min
+NOISE_LEVELS = (0.0, 0.01, 0.05, 0.10)  # K
+OOS_STEPS = (-5.0, -2.0, -1.0, 1.0, 2.0, 5.0)  # K; -2 K is the ITAE design (in-sample) step
+
+
 def run_antiwindup_ablation(
     plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", gains: dict, tables_dir: Path
 ) -> None:
-    """Nominal -2 K step with the naive (amplitude-only, sign-blind) vs directional clamping."""
+    """Nominal -2 K step: none / back-calculation / textbook / 2x2 clamping factorial.
+
+    The 2x2 factors are the trigger (amplitude only vs amplitude + slew rate) and the sign
+    awareness (unconditional freeze vs directional (u_raw - u_act)(Kp e) > 0). A second table
+    exposes the windup mechanism of the reverse-acting loop for the high-gain rules.
+    """
     sim = exp02.ClosedLoopSimulator()
-    rows = []
+    rows, mech_rows = [], []
     for name, g in gains.items():
         if name.startswith("2-DOF"):
             continue  # ablation reported on the six distinct feedback loops (1-DOF)
         row = {"Method": name}
-        for label, method in (
-            ("naive", exp02.AntiWindupMethod.CLAMPING_NAIVE),
-            ("directional", exp02.AntiWindupMethod.CLAMPING),
-        ):
+        for label, method in ABLATION_VARIANTS:
             pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T)
-            m = sim.run(plant, pid, ss, (0.0, 10.0), 0.02, setpoint_func=lambda t: ss.T - 2.0).metrics
-            row[f"IAE ({label})"] = f"{m.iae:.3f}"
-            row[f"\\(M_p\\) {label} (\\%)"] = f"{m.overshoot_pct:.1f}"
-            row[f"TV {label} (L/min)"] = f"{m.tv:.1f}"
+            res = sim.run(plant, pid, ss, (0.0, 10.0), 0.02, setpoint_func=lambda t: ss.T - 2.0)
+            m = res.metrics
+            row[label] = f"{m.iae:.2f} / {m.overshoot_pct:.1f}"
+            if name in ("Ziegler-Nichols", "Cohen-Coon") and method in (
+                AW.NONE, AW.CLAMPING_NAIVE, AW.CLAMPING
+            ):
+                t_valve_max = float(np.sum(res.u_applied >= exp02.BENCHMARK_LIMITS.u_max - 1e-9)) * 0.02
+                mech_rows.append({
+                    "Method": name,
+                    "Anti-windup": label,
+                    "\\(T_{\\min}\\) (K)": f"{res.states[:, 1].min():.1f}",
+                    "Time at \\(u_{\\max}\\) (min)": f"{t_valve_max:.2f}",
+                    "\\(T(t_f)-T_{sp}\\) (K)": f"{res.states[-1, 1] - (ss.T - 2.0):+.2f}",
+                    "\\(\\max|u_{\\mathrm{raw}}-u_{\\mathrm{act}}|\\) (L/min)": f"{np.max(np.abs(res.u_unconstrained - res.u_applied)):.0f}",
+                })
         rows.append(row)
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "antiwindup_ablation.tex",
         caption=(
             "Anti-windup ablation on the nominal $-2$~K step (same gains, valve and protocol as "
-            "Table~\\ref{tab:classical_benchmark}): amplitude-only, sign-blind clamping (naive) "
-            "versus the directional amplitude- and rate-aware rule of Eq.~\\eqref{eq:clamping_antiwindup}."
+            "Table~\\ref{tab:classical_benchmark}); each cell reports IAE (K$\\cdot$min) / overshoot (\\%). "
+            "The last four columns are the $2\\times 2$ clamping factorial (trigger: amplitude only or "
+            "amplitude + slew rate; sign awareness: unconditional or directional); the last column is "
+            "Eq.~\\eqref{eq:clamping_antiwindup}. ``Textbook'' is the amplitude-only rule "
+            "$u_{\\text{raw}} \\ge u_{\\max} \\wedge e>0$ of direct-acting loops."
         ),
         label="tab:antiwindup_ablation",
     )
+    exp02.export_latex_table(
+        data=mech_rows,
+        output_path=tables_dir / "antiwindup_mechanism.tex",
+        caption=(
+            "Windup mechanism of the empirical rules on the $-2$~K step: lowest reactor temperature, "
+            "time with the valve at its upper stop, final tracking error and largest "
+            "command--valve discrepancy $\\max|u_{\\text{raw}}-u_{\\text{act}}|$."
+        ),
+        label="tab:antiwindup_mechanism",
+    )
+
+
+def run_exact_robustness(
+    plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", foptd: "exp02.FOPTDModel", gains: dict,
+    tables_dir: Path,
+) -> None:
+    """Plant-exact ||S||, ||T||, ||CS|| (3-state Jacobian + half-sample ZOH) and K_hf."""
+    rows = []
+    for name, g in gains.items():
+        if name.startswith("2-DOF"):
+            continue  # same L(s) as the 1-DOF loop
+        rob = linearized_robustness(plant, ss, 100.0, g, theta=0.02 / 2.0)
+        rows.append({
+            "Method": name,
+            "\\(M_s\\) (FOPTD)": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
+            "\\(\\|S\\|_\\infty\\) (lin.)": f"{rob['ms']:.2f}",
+            "\\(\\|T\\|_\\infty\\) (lin.)": f"{rob['mt']:.2f}",
+            "\\(\\|CS\\|_\\infty\\) (L/min/K)": f"{rob['cs_inf']:.1f}",
+            "\\(K_{\\mathrm{hf}}=|K_p|(1+N)\\) (L/min/K)": f"{rob['k_hf']:.1f}",
+        })
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "exact_robustness_table.tex",
+        caption=(
+            "Plant-exact robustness of the six feedback loops on the Jacobian linearization at "
+            "$\\mathbf{x}_{ss}$ with the half-sample zero-order-hold delay, and the high-frequency "
+            "controller gain that maps measurement noise into valve movement."
+        ),
+        label="tab:exact_robustness",
+    )
+
+
+OPT_ITAE_FREE = "2-DOF Optimal ITAE (free $\\beta,\\gamma$)"
+
+
+def optimize_setpoint_weights(
+    plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", opt: "exp02.PIDGains"
+) -> "exp02.PIDGains":
+    """Free (beta, gamma) in [0, 1]^2 minimizing the -2 K ITAE (6 min) with the feedback gains fixed.
+
+    beta and gamma act on the reference path only, so L(s) and M_s are those of `opt`.
+    """
+
+    def itae(w: np.ndarray) -> float:
+        g = replace(opt, beta=float(w[0]), gamma=float(w[1]))
+        pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, AW.CLAMPING, u_bias=100.0, y_ss=ss.T)
+        res = exp02.ClosedLoopSimulator().run(
+            plant, pid, ss, (0.0, 6.0), 0.02, setpoint_func=lambda t: ss.T - 2.0
+        )
+        return res.metrics.itae
+
+    best = min(
+        (minimize(itae, x0, method="Nelder-Mead", bounds=[(0.0, 1.0)] * 2,
+                  options={"xatol": 1e-3, "fatol": 1e-5}) for x0 in ([0.5, 0.0], [1.0, 0.0], [0.5, 0.5])),
+        key=lambda r: r.fun,
+    )
+    logger.info("Free setpoint weights: beta=%.3f gamma=%.3f ITAE=%.4f", *best.x, best.fun)
+    return replace(opt, beta=float(best.x[0]), gamma=float(best.x[1]))
+
+
+def run_out_of_sample(
+    plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", gains: dict, tables_dir: Path
+) -> None:
+    """ITAE of every tuning on setpoint steps; Optimal ITAE was designed on -2 K only."""
+    sim = exp02.ClosedLoopSimulator()
+    names = list(gains)
+    itae = {n: {} for n in names}
+    for n, g in gains.items():
+        for step in OOS_STEPS:
+            pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, AW.CLAMPING, u_bias=100.0, y_ss=ss.T)
+            itae[n][step] = sim.run(
+                plant, pid, ss, (0.0, 10.0), 0.02, setpoint_func=lambda t, d=step: ss.T + d
+            ).metrics.itae
+    rows = [
+        {"Method": n} | {f"{d:+g} K": f"{itae[n][d]:.3f}" for d in OOS_STEPS} for n in names
+    ]
+    ranks = {d: 1 + sum(itae[n][d] < itae[exp02.OPT_ITAE][d] for n in names) for d in OOS_STEPS}
+    rows.append({"Method": "Rank of Optimal ITAE (1 = best)"} | {f"{d:+g} K": str(ranks[d]) for d in OOS_STEPS})
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "out_of_sample_itae.tex",
+        caption=(
+            "ITAE (K$\\cdot$min$^2$) of every tuning on setpoint steps of different size and sign. "
+            "The Optimal ITAE gains were fitted on the $-2$~K step only (in-sample column); all other "
+            "columns are out-of-sample. Same valve, directional anti-windup and $10$~min horizon."
+        ),
+        label="tab:out_of_sample",
+    )
+
+
+def remediate_jpc() -> Path:
+    """IC-T21/IC-T22 assets of Artigo 1 written in place to papers/01_journal_of_process_control."""
+    root = PROJECT_ROOT / "papers" / "01_journal_of_process_control"
+    figures_dir, tables_dir = root / "figures", root / "tables"
+    exp02.RESULTS_DIR = PROJECT_ROOT / "results" / "jpc"
+    exp02.TABLE_FLOAT_ENV = "table*"
+
+    plant = exp02.CSTRPlant()
+    ss = plant.find_steady_state(q_j=100.0)
+    gains, foptd = exp02.setup_controllers(plant, ss, 100.0)
+    pids = exp02.make_factories(
+        gains, 100.0, exp02.BENCHMARK_LIMITS, dt=0.02, y_ss=ss.T, include_nmpc=False
+    )
+    run_antiwindup_ablation(plant, ss, gains, tables_dir)
+    run_exact_robustness(plant, ss, foptd, gains, tables_dir)
+    free = optimize_setpoint_weights(plant, ss, gains[exp02.OPT_ITAE])
+    logger.info("FREE_WEIGHTS beta=%.3f gamma=%.3f", free.beta, free.gamma)
+    run_out_of_sample(plant, ss, {**gains, OPT_ITAE_FREE: free}, tables_dir)
+    exp02.run_load_disturbance_campaign(
+        plant, ss, 100.0, pids, exp02.BENCHMARK_LIMITS, figures_dir, tables_dir,
+        dT_f=2.0, dC_frac=0.1,
+    )
+    exp02.run_noise_and_pareto_campaign(
+        plant, ss, 100.0, pids, exp02.BENCHMARK_LIMITS, figures_dir, tables_dir,
+        noise_levels=NOISE_LEVELS, filter_taus=(0.0, MEASUREMENT_TAU_F),
+    )
+    for f in tables_dir.glob("*.tex"):
+        if "NMPC" in f.read_text():
+            raise ValueError(f"NMPC content leaked into Artigo 1 table {f.name}")
+    logger.info("Artigo 1 remediation assets written to %s", root)
+    return root
 
 
 def build_jpc() -> Path:
@@ -170,5 +339,5 @@ def build_cace() -> Path:
 
 
 if __name__ == "__main__":
-    builders = {"jpc": build_jpc, "cace": build_cace}
+    builders = {"jpc": build_jpc, "jpc-remediation": remediate_jpc, "cace": build_cace}
     builders[sys.argv[1]]()
