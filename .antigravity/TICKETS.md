@@ -545,7 +545,7 @@
 
 ---
 
-### [ ] `IC-T23`: [Paper 2 - CCE] Offset-Free NMPC Formulation (Disturbance State/Integral Action) & Horizon Audit
+### [x] `IC-T23`: [Paper 2 - CCE] Offset-Free NMPC Formulation (Disturbance State/Integral Action) & Horizon Audit
 - **Paper:** `papers/02_computers_chemical_engineering/`
 - **Target Journal:** *Computers & Chemical Engineering* (Qualis A1)
 - **Reviewer Consensus Issue:** NMPC has $+8.7\text{ K}$ to $+8.9\text{ K}$ offset under unmeasured feed disturbances, while PID has 0; comparing PID to an NMPC without disturbance model is comparing a complete controller to an incomplete one. Explanation of offset was inconsistent with model steady states.
@@ -572,7 +572,7 @@
 
 ---
 
-### [ ] `IC-T24`: [Paper 2 - CCE] De-confounding Controller Comparison, Symmetric Noise Filtering, & Thermodynamic Infeasibility Fix
+### [x] `IC-T24`: [Paper 2 - CCE] De-confounding Controller Comparison, Symmetric Noise Filtering, & Thermodynamic Infeasibility Fix
 - **Blocked by:** `IC-T23`
 - **Paper:** `papers/02_computers_chemical_engineering/`
 - **Reviewer Consensus Issue:** 21% gain confounds 3 factors ($\alpha_{UA}$ estimation, rate planning, nonlinearity); AMIGO was circularly selected post-hoc; valve travel was compared asymmetrically (Oracle without noise vs PID with noise); $60\%\text{ UA}$ is thermodynamically impossible in steady state ($UA_{\text{crit}} = 63.8\%$) yet reported as controller failure.
@@ -678,7 +678,7 @@
 
 ---
 
-### [ ] `IC-T27`: [Cross-Paper] Editorial Hygiene, Authorship Norms (CRediT, ORCID, AI Disclosure) & Zenodo Bundling
+### [x] `IC-T27`: [Cross-Paper] Editorial Hygiene, Authorship Norms (CRediT, ORCID, AI Disclosure) & Zenodo Bundling
 - **Blocked by:** `IC-T21`, `IC-T22`, `IC-T23`, `IC-T24`, `IC-T25`, `IC-T26`
 - **Papers:** All three manuscripts (`papers/01_...`, `papers/02_...`, `papers/03_...`)
 - **Reviewer Consensus Issue:** Missing CRediT statements in Papers 1 & 2; empty ORCID; missing Generative AI disclosure statements; unresolved "companion papers under review" self-citations; missing definitions of $M_p$, $t_s$, units in ITAE ($\text{K}\cdot\text{min}^2$).
