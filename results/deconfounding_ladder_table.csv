@@ -1,0 +1,6 @@
+Step,IAE after step,\(\Delta\)IAE,Share of total gain (\%)
+"Static PID (AMIGO, filtered)",6.439,--,--
+(a) Online adaptation of $\hat\alpha_{UA}$ (gain scheduling),6.225,+0.214,24.6
+(b) Nonlinear model-based prediction,6.237,-0.013,-1.4
+(c) Slew-rate constrained planning,5.568,+0.669,76.8
+NMPC-MHE with frozen $\alpha_{UA}=1$ (adaptation removed from NMPC),24.578,+19.010,--

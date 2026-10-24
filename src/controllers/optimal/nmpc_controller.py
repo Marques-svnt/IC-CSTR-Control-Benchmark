@@ -63,6 +63,9 @@ class AugmentedCstrStateEstimator:
             q_j_ss: Nominal coolant flow whose steady state supplies any prior left as None.
         """
         self.params = params or CSTRParameters()
+        # Integrating disturbances set by the NMPC: T balance [K/min], C_A balance [mol/L/min]
+        self.d_T: float = 0.0
+        self.d_C: float = 0.0
         self.x_ss = _nominal_state(self.params, q_j_ss)
         initial_c_a = self.x_ss[0] if initial_c_a is None else initial_c_a
         initial_t = self.x_ss[1] if initial_t is None else initial_t
@@ -93,6 +96,8 @@ class AugmentedCstrStateEstimator:
         )
         self.P = np.diag([0.05, 1.0, 1.0, 0.05])
         self._history.clear()
+        self.d_T = 0.0
+        self.d_C = 0.0
 
     def _f_augmented(self, x: np.ndarray, u_qj: float) -> np.ndarray:
         """Evaluates continuous time derivatives for [C_A, T, T_j, alpha_UA]."""
@@ -106,11 +111,12 @@ class AugmentedCstrStateEstimator:
         r_a = k * c_a
         ua_eff = alpha * p.UA
 
-        dc_a = (p.q / p.V) * (p.C_Af - c_a) - r_a
+        dc_a = (p.q / p.V) * (p.C_Af - c_a) - r_a + self.d_C
         dt_r = (
             (p.q / p.V) * (p.T_f - t_r)
             + (-p.delta_H / p.rho_cp) * r_a
             - (ua_eff / (p.V * p.rho_cp)) * (t_r - t_j)
+            + self.d_T
         )
         dt_j = (u_qj / p.V_j) * (p.T_jf - t_j) + (ua_eff / (p.V_j * p.rho_j_cp_j)) * (t_r - t_j)
         return np.array([dc_a, dt_r, dt_j, 0.0], dtype=np.float64)
@@ -271,6 +277,7 @@ class CstrNmpcController:
         params: Optional[CSTRParameters] = None,
         rk4_substeps: int = 4,
         true_alpha_ua: Optional[float] = None,
+        disturbance_gain: float = 0.0,
     ) -> None:
         """Initializes NMPC controller with horizon, time step, and online MHE/EKF observer.
 
@@ -290,8 +297,12 @@ class CstrNmpcController:
             seed: Seed for the jacket-sensor noise generator.
             params: Plant parameters of the prediction model (defaults to the benchmark).
             rk4_substeps: RK4 sub-steps per sampling interval in the prediction model.
-            true_alpha_ua: Known fouling factor for 'oracle' mode. None -> the Oracle estimates
-                alpha_UA from the noise-free thermocouples (never from the noisy sensor).
+            true_alpha_ua: Fixed fouling factor imposed on the prediction model in either mode
+                (known value for the Oracle; frozen value for the adaptation ablation). None ->
+                alpha_UA is estimated (Oracle: from the noise-free thermocouples only).
+            disturbance_gain: Gain L of the integrating temperature-balance disturbance d_T
+                [K/min] estimated from the T innovation and added to the prediction model
+                (offset-free NMPC, Pannocchia & Rawlings 2003). 0 -> original NMPC.
 
         Raises:
             ValueError: On unknown feedback mode or non-positive slew rate / time step.
@@ -319,8 +330,12 @@ class CstrNmpcController:
         self.true_alpha_ua = true_alpha_ua
 
         self.estimator = AugmentedCstrStateEstimator(
-            params=self.params, horizon_length=mhe_horizon, q_j_ss=self.u_bias
+            params=self.params,
+            horizon_length=mhe_horizon,
+            q_j_ss=self.u_bias,
         )
+        self.disturbance_gain = float(disturbance_gain)
+        self._prev_fed: Optional[np.ndarray] = None
         self._estimated_c_a: float = float(self.estimator.x_hat[0])
         self._estimated_t_j: float = float(self.estimator.x_hat[2])
         self._estimated_alpha_ua: float = float(self.estimator.x_hat[3])
@@ -348,6 +363,8 @@ class CstrNmpcController:
         q_j = model.set_variable(var_type="_u", var_name="q_j")
         model.set_variable(var_type="_tvp", var_name="T_sp")
         alpha_ua = model.set_variable(var_type="_tvp", var_name="alpha_ua")
+        d_t = model.set_variable(var_type="_tvp", var_name="d_T")
+        d_c = model.set_variable(var_type="_tvp", var_name="d_C")
 
         ua_eff = alpha_ua * p.UA
 
@@ -355,10 +372,11 @@ class CstrNmpcController:
             c_a, t_r, t_j = x[0], x[1], x[2]
             r_a = p.k_0 * ca.exp(-p.E_over_R / t_r) * c_a
             return ca.vertcat(
-                (p.q / p.V) * (p.C_Af - c_a) - r_a,
+                (p.q / p.V) * (p.C_Af - c_a) - r_a + d_c,
                 (p.q / p.V) * (p.T_f - t_r)
                 + (-p.delta_H / p.rho_cp) * r_a
-                - (ua_eff / (p.V * p.rho_cp)) * (t_r - t_j),
+                - (ua_eff / (p.V * p.rho_cp)) * (t_r - t_j)
+                + d_t,
                 (q_j / p.V_j) * (p.T_jf - t_j) + (ua_eff / (p.V_j * p.rho_j_cp_j)) * (t_r - t_j),
             )
 
@@ -414,6 +432,8 @@ class CstrNmpcController:
         def tvp_fun(_t_now: float) -> Any:
             tvp_template["_tvp", :, "T_sp"] = self.target_setpoint_k
             tvp_template["_tvp", :, "alpha_ua"] = self._estimated_alpha_ua
+            tvp_template["_tvp", :, "d_T"] = self.estimator.d_T
+            tvp_template["_tvp", :, "d_C"] = self.estimator.d_C
             return tvp_template
 
         mpc.set_tvp_fun(tvp_fun)
@@ -433,6 +453,7 @@ class CstrNmpcController:
         if initial_u is not None:
             self.u_bias = float(initial_u)
         self._last_u = self.u_bias
+        self._prev_fed = None
         self._rng = np.random.default_rng(self._seed)
         self.estimator.reset(t_meas=float(initial_measurement))
         self._estimated_c_a = float(self.estimator.x_hat[0])
@@ -479,6 +500,27 @@ class CstrNmpcController:
         )
         return action
 
+    def _update_disturbance(self, t_meas: float, c_a_now: Optional[float], dt: float) -> None:
+        """Integrates d_T (and d_C when C_A is measured) from one-step model innovations.
+
+        The prediction starts from the state previously fed to the OCP (true state in Oracle
+        mode, estimate in MHE mode) and uses the exact model the OCP uses, so the
+        disturbances absorb plant-model mismatch only, never estimator bias. d_C is only
+        identifiable when C_A is known, i.e. in Oracle mode.
+        """
+        if self._prev_fed is None:
+            return
+        est = self.estimator
+        x_prev = np.array([*self._prev_fed[:3], self._estimated_alpha_ua])
+        pred = est._rk4_augmented(x_prev, float(self._prev_fed[3]), dt)
+        est.d_T = float(
+            np.clip(est.d_T + self.disturbance_gain * (t_meas - pred[1]) / dt, -50.0, 50.0)
+        )
+        if c_a_now is not None:
+            est.d_C = float(
+                np.clip(est.d_C + self.disturbance_gain * (c_a_now - pred[0]) / dt, -2.0, 2.0)
+            )
+
     def compute(
         self,
         setpoint: float,
@@ -516,7 +558,7 @@ class CstrNmpcController:
         self._estimated_c_a = float(x_est[0])
         self._estimated_t_j = float(x_est[2])
         self._estimated_alpha_ua = float(x_est[3])
-        if self.feedback_mode == "oracle" and self.true_alpha_ua is not None:
+        if self.true_alpha_ua is not None:
             self._estimated_alpha_ua = float(self.true_alpha_ua)
 
         if self.feedback_mode == "oracle" and full_state is not None:
@@ -524,6 +566,9 @@ class CstrNmpcController:
         else:
             c_a, t, t_j = float(x_est[0]), float(x_est[1]), float(x_est[2])
 
+        if self.disturbance_gain > 0.0:
+            self._update_disturbance(t_meas, c_a if self.feedback_mode == "oracle" else None, dt)
+        self._prev_fed = np.array([c_a, t, t_j, self._last_u])
         u = self.compute_action(c_a, t, t_j)
         diag = {
             "u_unconstrained": u,
