@@ -608,7 +608,7 @@
 
 ---
 
-### [ ] `IC-T25`: [Paper 3 - CERD] Dynamic Fouling Sweep ($\kappa_{\text{foul}}$), Stability Mechanism Correction, & Numerical $b_3$ Fix
+### [x] `IC-T25`: [Paper 3 - CERD] Dynamic Fouling Sweep ($\kappa_{\text{foul}}$), Stability Mechanism Correction, & Numerical $b_3$ Fix
 - **Branch:** `fix/paper3-cerd-remediation`
 - **Paper:** `papers/03_chemical_engineering_research_design/`
 - **Target Journal:** *Chemical Engineering Research and Design* (CERD, Elsevier / IChemE, Qualis A1)
@@ -641,7 +641,7 @@
 
 ---
 
-### [ ] `IC-T26`: [Paper 3 - CERD] Slave Gain-Scheduling Simulation, Robustness Bounds ($\|S\|_\infty \ge e^{p\theta}$), & Optimized SISO Baseline
+### [x] `IC-T26`: [Paper 3 - CERD] Slave Gain-Scheduling Simulation, Robustness Bounds ($\|S\|_\infty \ge e^{p\theta}$), & Optimized SISO Baseline
 - **Blocked by:** `IC-T25`
 - **Branch:** `fix/paper3-cerd-remediation`
 - **Paper:** `papers/03_chemical_engineering_research_design/`

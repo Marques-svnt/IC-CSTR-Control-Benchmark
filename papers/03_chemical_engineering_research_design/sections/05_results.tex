@@ -10,7 +10,7 @@ Five controllers of Section~\ref{sec:design} start at the saddle and face either
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig3_saddle_shocks.pdf}
-\caption{Reactor temperature (top) and coolant flow (bottom) at the saddle after a $+10$~K coolant supply shock (left) and a $+5$~K feed temperature shock (right) at $t=\tShock$~min, over the fixed $\horizonShockWin$~min window. Dotted line: setpoint $\TSad$~K. The cascade with feedforward coincides with the plain cascade in the right column because the feedforward does not measure $T_f$.}
+\caption{Reactor temperature (top) and coolant flow (bottom) at the saddle after a $+10$~K coolant supply shock (left) and a $+5$~K feed temperature shock (right) at $t=\tShock$~min, over the fixed $\horizonShockWin$~min window. Dotted line: setpoint $\TSad$~K. In the left column the scheduled cascade lies on top of the plain cascade; in the right column the cascade with feedforward coincides with it because the feedforward does not measure $T_f$.}
 \label{fig:shocks}
 \end{figure*}
 
@@ -41,7 +41,7 @@ Table~\ref{tab:fouling} and Fig.~\ref{fig:fouling} report the fouling runs at $\
 
 \subsection{Fouling rate and the frozen-$UA$ boundary}
 \label{subsec:res_sweep}
-The frozen-$UA$ boundaries of Section~\ref{subsec:mechanism} ($\fstabCascade$--$\fstabSiso\%$ for the SIMC loops) are not the same thing as the capacity at which a fouling run loses regulation: the former is a property of the linearization at fixed $UA$, the latter of a trajectory in which $UA$ keeps falling while a growing mode needs time to reach $\bandRun$~K. Table~\ref{tab:kappa_sweep} and Fig.~\ref{fig:frozen}(d) vary $\kappa_{\mathrm{foul}}$ over three decades, $\{\kappaSweepLo,\kappaSweepMid,\kappaSweepHi\}$~L/mol, i.e.\ effective rates $\kappa_{\mathrm{foul}}\bar r_A$ of $\rateLo$ to $\rateHi$~min$^{-1}$. Without excitation the noise-free simulation would delay the departure by the numerical floor ($\sim10^{-4}$~K) rather than by the dynamics, so a deterministic multisine of $\ripple$~K per component at the four Hopf frequencies is added to $T_{jf}$.
+The frozen-$UA$ boundaries of Section~\ref{subsec:mechanism} ($\fstabCascade$--$\fstabSiso\%$ for the SIMC loops) are not the same thing as the capacity at which a fouling run loses regulation: the former is a property of the linearization at fixed $UA$, the latter of a trajectory in which $UA$ keeps falling while a growing mode needs time to reach $\bandRun$~K. Table~\ref{tab:kappa_sweep} and Fig.~\ref{fig:frozen}(d) vary $\kappa_{\mathrm{foul}}$ over three decades, $\{\kappaSweepLo,\kappaSweepMid,\kappaSweepHi\}$~L/mol, i.e.\ effective rates $\kappa_{\mathrm{foul}}\bar r_A$ of $\rateLo$ to $\rateHi$~min$^{-1}$. Without excitation the noise-free simulation would delay the departure by the integrator's numerical floor rather than by the dynamics, so a deterministic multisine of $\ripple$~K per component at the four Hopf frequencies is added to $T_{jf}$.
 
 \input{tables/cherd_kappa_sweep}
 

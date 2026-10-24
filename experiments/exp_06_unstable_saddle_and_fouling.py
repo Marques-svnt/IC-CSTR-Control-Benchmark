@@ -382,7 +382,7 @@ OMEGAS = np.logspace(-3, 3, 6000)  # rad/min
 
 
 def _plant_response(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> np.ndarray:
-    """c (jwI - A)^-1 b on OMEGAS (batched solve)."""
+    """Evaluate c (jwI - A)^-1 b on OMEGAS (batched solve)."""
     n = a.shape[0]
     m = 1j * OMEGAS[:, None, None] * np.eye(n) - a
     return (c @ np.linalg.solve(m, np.broadcast_to(b, (len(OMEGAS), n, 1))))[:, 0, 0]

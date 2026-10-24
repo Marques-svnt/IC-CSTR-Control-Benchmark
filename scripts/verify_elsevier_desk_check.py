@@ -204,7 +204,9 @@ def main() -> int:
             logger.error("  - %s", err)
         return 1
 
-    logger.info("Desk-check PASSED successfully. Highlights and citations conform to Elsevier standards.")
+    logger.info(
+        "Desk-check PASSED successfully. Highlights and citations conform to Elsevier standards."
+    )
     return 0
 
 
