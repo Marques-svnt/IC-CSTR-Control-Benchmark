@@ -49,6 +49,7 @@ paper03-pdf:
 	cd papers/03_chemical_engineering_research_design && latexmk -pdf -interaction=nonstopmode main.tex
 
 papers-pdf: paper01-pdf paper02-pdf paper03-pdf
+papers: papers-pdf
 
 paper01-pack: paper01-pdf desk-check
 	cd papers/01_journal_of_process_control/ready-to-overleaf && zip -FS -r ../ready_to_overleaf.zip . -x "*.DS_Store" "*__pycache__*"
