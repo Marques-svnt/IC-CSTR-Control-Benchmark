@@ -36,6 +36,19 @@ The integral time of Eq.~\eqref{eq:simc_unstable} changes this picture. Table~\r
 
 \input{tables/cherd_simc_sweep}
 
+\subsection{Optimal single loop and the fundamental sensitivity bound}
+\label{subsec:siso_opt}
+The SIMC single loop above is a weak baseline. Its exact linear loop (third-order plant, half a sample of zero-order-hold delay) has $M_s=\msSimc$, a phase margin of $\pmSimc^\circ$ and a lower gain margin of $\gmDownSimc$, i.e.\ the loop gain may be lowered only by the factor $\gmDownSimc$ before the loop is lost. A fair reference for the cascade is a PI tuned for the same task. We minimize the sum of the IAE of the two shock runs of Section~\ref{subsec:res_shocks} over the fixed window $t\in[0,\horizonShockWin]$~min (a fixed window prevents a sustained oscillation from inflating the horizon-dependent index) with Nelder--Mead, subject to $M_s\le\msMax$ on the exact linear loop and a stable linearization at the saddle and at both post-shock equilibria; a coarse grid supplies the start because the SIMC gains are unstable at the post-shock point. The result is $K_c=\KcOpt$~L/(min\,K) and $\tau_I=\TiOpt$~min, with $M_s=\msOpt$, a phase margin of $\pmOpt^\circ$, gain-margin factors $\gmDownOpt$ and $\gmUpOpt$ and a delay margin of $\dmOpt$~min (Table~\ref{tab:margins}). The optimization is over PI gains only, the same structure as every other loop in this paper.
+
+\paragraph{Fundamental bound.} For a loop with one real right-half-plane pole $p$ and dead time $\theta$, any stabilizing controller satisfies \cite{skogestad2005multivariable,stein2003respect}
+\begin{equation}
+\|S\|_\infty\;\ge\;e^{p\theta}.
+\label{eq:ms_bound}
+\end{equation}
+For the reduced model of Eq.~\eqref{eq:unstable_model}, $p=1/\tau_u=\pUnst$~min$^{-1}$ and $\theta=\thetaU$~min give $\|S\|_\infty\ge\msBound$, which is above $\msMax$; the script verifies it on the reduced loop, where the SIMC and optimal gains give $M_s=\msRedSimc$ and $\msRedOpt$. The bound is a property of the \emph{reduced model}, not of the reactor: $\theta$ there lumps two stable lags and the zero (Section~\ref{subsec:siso_design}) and is not transport delay. The third-order loop has half a sample of delay, for which the same expression gives only $\msBoundZoh$, and that is why $M_s=\msOpt<\msMax$ is attainable. Equation~\eqref{eq:ms_bound} therefore measures how much sensitivity a reduced-model design gives away, not a limit on the physical loop; the physical limits are the valve slew rate and the sampling interval, which the nonlinear runs include.
+
+\input{tables/cherd_margins}
+
 \subsection{Cascade: the exact closed-inner-loop sub-block}
 \label{subsec:cascade_design}
 \paragraph{Slave loop.} The jacket row of Eq.~\eqref{eq:jacobian} gives a first-order model from $q_j$ to $T_j$ with
@@ -60,6 +73,15 @@ At the saddle the thermal element $a_{22}$ is positive---the reactor heats itsel
 \paragraph{Gain overestimation.} A shortcut in sequential cascade tuning is to estimate the master gain as the ratio of the open-loop gains, $G(0)/K_2$ \cite{seborg2010process,shinskey1996process,luyben2007chemical}. Table~\ref{tab:inner_gain} compares this ratio with Eq.~\eqref{eq:k1_exact}. At the stable nominal point the ratio overestimates the master gain by $\gainErrNom\%$, which only makes a ratio-based master loop more conservative. At the saddle the ratio is $\ratioSad$~K/K against an exact $\KoneSad$~K/K: the sign is wrong. The static gain $G(0)$ of an unstable plant describes an equilibrium that cannot be reached in open loop, and the ratio inherits its sign. A master controller tuned with the ratio would apply positive feedback on the reactor temperature.
 
 \input{tables/cherd_inner_loop_gain}
+
+\subsection{Slave gain scheduling}
+\label{subsec:gs}
+The actuator gain of the jacket loop is $|b_3|=(\bar T_j-T_{jf})/V_j$ and falls as fouling lowers the jacket temperature needed to hold the setpoint (Section~\ref{sec:fouling}). Keeping the product $K_{c2}|b_3|$ constant gives the schedule
+\begin{equation}
+K_{c2}(T_j)=K_{c2,0}\,\frac{\bar T_{j,0}-T_{jf}}{T_j-T_{jf}},
+\label{eq:gs_slave}
+\end{equation}
+where $K_{c2,0}$ and $\bar T_{j,0}$ are the clean-jacket values. It is implemented in the cascade controller of the code base: the measured $T_j$ rescales the slave $K_{c2}$ at every sample (denominator floored at 1~K), and because the integral state is stored in valve units the change is bumpless. The master loop is not scheduled.
 
 \paragraph{Master loop.} Because the closed inner loop is stable, the master loop can be tuned from a reaction curve again. A unit step in $T_{j,sp}$ is applied to the linearized system with the slave loop closed and a first-order-plus-delay model is fitted to the response, giving $K_1=\KoneFit$~K/K (close to the exact value of Eq.~\eqref{eq:k1_exact}), $\tau_1=\tauOneFit$~min and $\theta_1=\thetaOneFit$~min. The master SIMC PI with the default $\tau_{c1}=\theta_1$ gives $K_{c1}=\KcMaster$ and $\tau_{I1}=\TiMaster$~min. The linearized cascade has spectral abscissa $\absCasc$~min$^{-1}$, faster than the single loop, although the master loop uses the default, not a tightened, SIMC setting.
 

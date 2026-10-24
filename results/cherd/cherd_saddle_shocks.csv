@@ -1,7 +1,11 @@
-Shock,Architecture,IAE (K min),Peak $|e|$ (K),TV (L/min),$\max q_j$ (L/min),"$T$ p-p, last 20 min (K)"
-$\Delta T_{jf}=+10$ K,SISO SIMC,497.11,19.33,1561.7,177.3,30.46
-$\Delta T_{jf}=+10$ K,Cascade,23.28,1.83,152.9,97.7,0.36
-$\Delta T_{jf}=+10$ K,Cascade + FF,12.89,1.01,96.4,91.6,0.21
-$\Delta T_f=+5$ K,SISO SIMC,230.03,19.24,740.8,167.6,8.34
-$\Delta T_f=+5$ K,Cascade,132.07,24.82,584.4,190.0,0.84
-$\Delta T_f=+5$ K,Cascade + FF,132.07,24.82,584.4,190.0,0.84
+Shock,Architecture,IAE (K min),Peak $|e|$ (K),TV (L/min),$\max q_j$ (L/min),"$T$ p-p, last 5 min (K)"
+$\Delta T_{jf}=+10$ K,SISO SIMC,106.55,18.98,362.4,170.6,27.85
+$\Delta T_{jf}=+10$ K,SISO optimal,8.99,2.32,70.8,103.5,0.24
+$\Delta T_{jf}=+10$ K,Cascade,12.72,1.83,99.8,97.7,2.35
+$\Delta T_{jf}=+10$ K,Cascade + FF,7.07,1.01,66.7,91.6,1.32
+$\Delta T_{jf}=+10$ K,Cascade + gain sched.,12.72,1.83,99.8,97.8,2.35
+$\Delta T_f=+5$ K,SISO SIMC,93.26,19.24,311.2,167.6,14.20
+$\Delta T_f=+5$ K,SISO optimal,10.50,2.77,79.4,109.3,0.28
+$\Delta T_f=+5$ K,Cascade,96.13,24.82,450.8,190.0,14.93
+$\Delta T_f=+5$ K,Cascade + FF,96.13,24.82,450.8,190.0,14.93
+$\Delta T_f=+5$ K,Cascade + gain sched.,85.63,24.70,402.6,191.2,10.51

@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Linear stability of the nominal gains on the saddle of the perturbed model ($E/R$, $k_0$, $\Delta H$ uniform within $\pm5\%$, 36 of 64 Sobol points with $q_j$ inside the valve range). Spectral abscissa in min$^{-1}$.}
+\label{tab:montecarlo}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Architecture & Stable (\%) & Median $\max\Re\lambda$ & Worst $\max\Re\lambda$ \\
+\midrule
+SISO SIMC & 61 & -0.120 & 0.182 \\
+SISO optimal & 100 & -0.187 & -0.171 \\
+Cascade & 69 & -0.168 & 0.256 \\
+Cascade + gain sched. & 75 & -0.168 & 0.160 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
