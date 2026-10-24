@@ -6,72 +6,72 @@
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lcccc}
 \toprule
-Method & $\tau_m$ (min) & Noise $\sigma$ (K) & IAE (mean $\pm$ std) & TV (L/min) \\
+Method & $\tau_m$ (min) & Noise $\sigma$ (K) & IAE (mean $\pm$ 95\% CI) & TV (L/min) \\
 \midrule
 Ziegler-Nichols & 0.00 & 0.0 & 0.94 $\pm$ 0.00 & 81.9 $\pm$ 0.0 \\
-Ziegler-Nichols & 0.00 & 0.01 & 1.00 $\pm$ 0.02 & 585.3 $\pm$ 11.4 \\
-Ziegler-Nichols & 0.00 & 0.05 & 1.43 $\pm$ 0.08 & 748.9 $\pm$ 5.6 \\
-Ziegler-Nichols & 0.00 & 0.1 & 2.03 $\pm$ 0.18 & 773.7 $\pm$ 4.6 \\
+Ziegler-Nichols & 0.00 & 0.01 & 1.00 $\pm$ 0.01 & 585.3 $\pm$ 4.3 \\
+Ziegler-Nichols & 0.00 & 0.05 & 1.43 $\pm$ 0.03 & 748.9 $\pm$ 2.1 \\
+Ziegler-Nichols & 0.00 & 0.1 & 2.03 $\pm$ 0.07 & 773.7 $\pm$ 1.7 \\
 Ziegler-Nichols & 0.05 & 0.0 & 1.10 $\pm$ 0.00 & 119.5 $\pm$ 0.0 \\
-Ziegler-Nichols & 0.05 & 0.01 & 1.13 $\pm$ 0.01 & 300.6 $\pm$ 5.5 \\
-Ziegler-Nichols & 0.05 & 0.05 & 1.33 $\pm$ 0.08 & 633.5 $\pm$ 9.7 \\
-Ziegler-Nichols & 0.05 & 0.1 & 1.66 $\pm$ 0.10 & 714.0 $\pm$ 9.0 \\
+Ziegler-Nichols & 0.05 & 0.01 & 1.13 $\pm$ 0.00 & 300.6 $\pm$ 2.1 \\
+Ziegler-Nichols & 0.05 & 0.05 & 1.33 $\pm$ 0.03 & 633.5 $\pm$ 3.7 \\
+Ziegler-Nichols & 0.05 & 0.1 & 1.66 $\pm$ 0.04 & 714.0 $\pm$ 3.4 \\
 Cohen-Coon & 0.00 & 0.0 & 1.02 $\pm$ 0.00 & 104.0 $\pm$ 0.0 \\
-Cohen-Coon & 0.00 & 0.01 & 1.08 $\pm$ 0.03 & 583.4 $\pm$ 12.4 \\
-Cohen-Coon & 0.00 & 0.05 & 1.54 $\pm$ 0.11 & 749.3 $\pm$ 4.4 \\
-Cohen-Coon & 0.00 & 0.1 & 2.12 $\pm$ 0.15 & 773.1 $\pm$ 4.4 \\
+Cohen-Coon & 0.00 & 0.01 & 1.08 $\pm$ 0.01 & 583.4 $\pm$ 4.7 \\
+Cohen-Coon & 0.00 & 0.05 & 1.54 $\pm$ 0.04 & 749.3 $\pm$ 1.7 \\
+Cohen-Coon & 0.00 & 0.1 & 2.12 $\pm$ 0.06 & 773.1 $\pm$ 1.7 \\
 Cohen-Coon & 0.05 & 0.0 & 1.30 $\pm$ 0.00 & 171.0 $\pm$ 0.0 \\
-Cohen-Coon & 0.05 & 0.01 & 1.34 $\pm$ 0.01 & 326.3 $\pm$ 5.2 \\
-Cohen-Coon & 0.05 & 0.05 & 1.60 $\pm$ 0.08 & 641.8 $\pm$ 10.7 \\
-Cohen-Coon & 0.05 & 0.1 & 2.04 $\pm$ 0.15 & 721.8 $\pm$ 7.3 \\
+Cohen-Coon & 0.05 & 0.01 & 1.34 $\pm$ 0.00 & 326.3 $\pm$ 2.0 \\
+Cohen-Coon & 0.05 & 0.05 & 1.60 $\pm$ 0.03 & 641.8 $\pm$ 4.0 \\
+Cohen-Coon & 0.05 & 0.1 & 2.04 $\pm$ 0.06 & 721.8 $\pm$ 2.8 \\
 Tyreus-Luyben & 0.00 & 0.0 & 0.92 $\pm$ 0.00 & 48.8 $\pm$ 0.0 \\
-Tyreus-Luyben & 0.00 & 0.01 & 0.96 $\pm$ 0.01 & 511.3 $\pm$ 11.9 \\
-Tyreus-Luyben & 0.00 & 0.05 & 1.21 $\pm$ 0.04 & 722.5 $\pm$ 7.3 \\
-Tyreus-Luyben & 0.00 & 0.1 & 1.51 $\pm$ 0.07 & 759.4 $\pm$ 7.5 \\
+Tyreus-Luyben & 0.00 & 0.01 & 0.96 $\pm$ 0.00 & 511.3 $\pm$ 4.5 \\
+Tyreus-Luyben & 0.00 & 0.05 & 1.21 $\pm$ 0.02 & 722.5 $\pm$ 2.8 \\
+Tyreus-Luyben & 0.00 & 0.1 & 1.51 $\pm$ 0.03 & 759.4 $\pm$ 2.8 \\
 Tyreus-Luyben & 0.05 & 0.0 & 0.90 $\pm$ 0.00 & 62.9 $\pm$ 0.0 \\
-Tyreus-Luyben & 0.05 & 0.01 & 0.91 $\pm$ 0.01 & 206.3 $\pm$ 4.2 \\
-Tyreus-Luyben & 0.05 & 0.05 & 1.02 $\pm$ 0.03 & 557.2 $\pm$ 11.5 \\
-Tyreus-Luyben & 0.05 & 0.1 & 1.17 $\pm$ 0.05 & 669.7 $\pm$ 8.1 \\
+Tyreus-Luyben & 0.05 & 0.01 & 0.91 $\pm$ 0.00 & 206.3 $\pm$ 1.6 \\
+Tyreus-Luyben & 0.05 & 0.05 & 1.02 $\pm$ 0.01 & 557.2 $\pm$ 4.4 \\
+Tyreus-Luyben & 0.05 & 0.1 & 1.17 $\pm$ 0.02 & 669.7 $\pm$ 3.1 \\
 AMIGO & 0.00 & 0.0 & 0.93 $\pm$ 0.00 & 40.4 $\pm$ 0.0 \\
-AMIGO & 0.00 & 0.01 & 0.94 $\pm$ 0.01 & 372.3 $\pm$ 10.5 \\
-AMIGO & 0.00 & 0.05 & 1.05 $\pm$ 0.03 & 666.5 $\pm$ 9.1 \\
-AMIGO & 0.00 & 0.1 & 1.24 $\pm$ 0.05 & 727.0 $\pm$ 7.7 \\
+AMIGO & 0.00 & 0.01 & 0.94 $\pm$ 0.00 & 372.3 $\pm$ 4.0 \\
+AMIGO & 0.00 & 0.05 & 1.05 $\pm$ 0.01 & 666.5 $\pm$ 3.5 \\
+AMIGO & 0.00 & 0.1 & 1.24 $\pm$ 0.02 & 727.0 $\pm$ 2.9 \\
 AMIGO & 0.05 & 0.0 & 0.94 $\pm$ 0.00 & 45.9 $\pm$ 0.0 \\
-AMIGO & 0.05 & 0.01 & 0.96 $\pm$ 0.00 & 123.3 $\pm$ 2.4 \\
-AMIGO & 0.05 & 0.05 & 1.02 $\pm$ 0.02 & 413.4 $\pm$ 9.0 \\
-AMIGO & 0.05 & 0.1 & 1.10 $\pm$ 0.04 & 568.9 $\pm$ 10.7 \\
+AMIGO & 0.05 & 0.01 & 0.96 $\pm$ 0.00 & 123.3 $\pm$ 0.9 \\
+AMIGO & 0.05 & 0.05 & 1.02 $\pm$ 0.01 & 413.4 $\pm$ 3.4 \\
+AMIGO & 0.05 & 0.1 & 1.10 $\pm$ 0.01 & 568.9 $\pm$ 4.1 \\
 2-DOF AMIGO & 0.00 & 0.0 & 0.96 $\pm$ 0.00 & 29.3 $\pm$ 0.0 \\
-2-DOF AMIGO & 0.00 & 0.01 & 1.00 $\pm$ 0.02 & 366.7 $\pm$ 10.6 \\
-2-DOF AMIGO & 0.00 & 0.05 & 1.26 $\pm$ 0.05 & 664.4 $\pm$ 9.7 \\
-2-DOF AMIGO & 0.00 & 0.1 & 1.53 $\pm$ 0.07 & 725.8 $\pm$ 7.3 \\
+2-DOF AMIGO & 0.00 & 0.01 & 1.00 $\pm$ 0.01 & 366.7 $\pm$ 4.0 \\
+2-DOF AMIGO & 0.00 & 0.05 & 1.26 $\pm$ 0.02 & 664.4 $\pm$ 3.7 \\
+2-DOF AMIGO & 0.00 & 0.1 & 1.53 $\pm$ 0.03 & 725.8 $\pm$ 2.8 \\
 2-DOF AMIGO & 0.05 & 0.0 & 0.96 $\pm$ 0.00 & 35.5 $\pm$ 0.0 \\
-2-DOF AMIGO & 0.05 & 0.01 & 0.97 $\pm$ 0.01 & 113.9 $\pm$ 2.6 \\
-2-DOF AMIGO & 0.05 & 0.05 & 1.05 $\pm$ 0.02 & 407.7 $\pm$ 9.1 \\
-2-DOF AMIGO & 0.05 & 0.1 & 1.17 $\pm$ 0.04 & 565.1 $\pm$ 10.8 \\
+2-DOF AMIGO & 0.05 & 0.01 & 0.97 $\pm$ 0.00 & 113.9 $\pm$ 1.0 \\
+2-DOF AMIGO & 0.05 & 0.05 & 1.05 $\pm$ 0.01 & 407.7 $\pm$ 3.5 \\
+2-DOF AMIGO & 0.05 & 0.1 & 1.17 $\pm$ 0.01 & 565.1 $\pm$ 4.1 \\
 Skogestad SIMC & 0.00 & 0.0 & 1.29 $\pm$ 0.00 & 15.7 $\pm$ 0.0 \\
-Skogestad SIMC & 0.00 & 0.01 & 1.29 $\pm$ 0.00 & 133.2 $\pm$ 4.5 \\
-Skogestad SIMC & 0.00 & 0.05 & 1.44 $\pm$ 0.05 & 474.1 $\pm$ 12.0 \\
-Skogestad SIMC & 0.00 & 0.1 & 1.71 $\pm$ 0.07 & 603.0 $\pm$ 11.4 \\
+Skogestad SIMC & 0.00 & 0.01 & 1.29 $\pm$ 0.00 & 133.2 $\pm$ 1.7 \\
+Skogestad SIMC & 0.00 & 0.05 & 1.44 $\pm$ 0.02 & 474.1 $\pm$ 4.6 \\
+Skogestad SIMC & 0.00 & 0.1 & 1.71 $\pm$ 0.03 & 603.0 $\pm$ 4.3 \\
 Skogestad SIMC & 0.05 & 0.0 & 1.21 $\pm$ 0.00 & 17.2 $\pm$ 0.0 \\
-Skogestad SIMC & 0.05 & 0.01 & 1.22 $\pm$ 0.00 & 42.7 $\pm$ 0.8 \\
-Skogestad SIMC & 0.05 & 0.05 & 1.25 $\pm$ 0.01 & 153.0 $\pm$ 4.1 \\
-Skogestad SIMC & 0.05 & 0.1 & 1.30 $\pm$ 0.02 & 288.3 $\pm$ 7.6 \\
+Skogestad SIMC & 0.05 & 0.01 & 1.22 $\pm$ 0.00 & 42.7 $\pm$ 0.3 \\
+Skogestad SIMC & 0.05 & 0.05 & 1.25 $\pm$ 0.00 & 153.0 $\pm$ 1.6 \\
+Skogestad SIMC & 0.05 & 0.1 & 1.30 $\pm$ 0.01 & 288.3 $\pm$ 2.9 \\
 Optimal ITAE ($M_s \leq 1.6$) & 0.00 & 0.0 & 0.83 $\pm$ 0.00 & 48.6 $\pm$ 0.0 \\
-Optimal ITAE ($M_s \leq 1.6$) & 0.00 & 0.01 & 0.85 $\pm$ 0.00 & 400.6 $\pm$ 11.2 \\
-Optimal ITAE ($M_s \leq 1.6$) & 0.00 & 0.05 & 1.03 $\pm$ 0.03 & 677.9 $\pm$ 9.7 \\
-Optimal ITAE ($M_s \leq 1.6$) & 0.00 & 0.1 & 1.27 $\pm$ 0.05 & 734.1 $\pm$ 6.8 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.00 & 0.01 & 0.85 $\pm$ 0.00 & 400.6 $\pm$ 4.2 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.00 & 0.05 & 1.03 $\pm$ 0.01 & 677.9 $\pm$ 3.7 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.00 & 0.1 & 1.27 $\pm$ 0.02 & 734.1 $\pm$ 2.6 \\
 Optimal ITAE ($M_s \leq 1.6$) & 0.05 & 0.0 & 0.84 $\pm$ 0.00 & 56.6 $\pm$ 0.0 \\
-Optimal ITAE ($M_s \leq 1.6$) & 0.05 & 0.01 & 0.86 $\pm$ 0.00 & 142.3 $\pm$ 2.7 \\
-Optimal ITAE ($M_s \leq 1.6$) & 0.05 & 0.05 & 0.94 $\pm$ 0.02 & 441.8 $\pm$ 10.1 \\
-Optimal ITAE ($M_s \leq 1.6$) & 0.05 & 0.1 & 1.06 $\pm$ 0.03 & 589.2 $\pm$ 11.0 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.05 & 0.01 & 0.86 $\pm$ 0.00 & 142.3 $\pm$ 1.0 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.05 & 0.05 & 0.94 $\pm$ 0.01 & 441.8 $\pm$ 3.8 \\
+Optimal ITAE ($M_s \leq 1.6$) & 0.05 & 0.1 & 1.06 $\pm$ 0.01 & 589.2 $\pm$ 4.2 \\
 2-DOF Optimal ITAE & 0.00 & 0.0 & 1.08 $\pm$ 0.00 & 25.0 $\pm$ 0.0 \\
-2-DOF Optimal ITAE & 0.00 & 0.01 & 1.13 $\pm$ 0.02 & 389.7 $\pm$ 10.9 \\
-2-DOF Optimal ITAE & 0.00 & 0.05 & 1.50 $\pm$ 0.05 & 675.0 $\pm$ 8.9 \\
-2-DOF Optimal ITAE & 0.00 & 0.1 & 1.80 $\pm$ 0.07 & 732.5 $\pm$ 6.7 \\
+2-DOF Optimal ITAE & 0.00 & 0.01 & 1.13 $\pm$ 0.01 & 389.7 $\pm$ 4.2 \\
+2-DOF Optimal ITAE & 0.00 & 0.05 & 1.50 $\pm$ 0.02 & 675.0 $\pm$ 3.4 \\
+2-DOF Optimal ITAE & 0.00 & 0.1 & 1.80 $\pm$ 0.03 & 732.5 $\pm$ 2.6 \\
 2-DOF Optimal ITAE & 0.05 & 0.0 & 1.01 $\pm$ 0.00 & 31.3 $\pm$ 0.0 \\
-2-DOF Optimal ITAE & 0.05 & 0.01 & 1.04 $\pm$ 0.02 & 119.4 $\pm$ 2.7 \\
-2-DOF Optimal ITAE & 0.05 & 0.05 & 1.16 $\pm$ 0.04 & 430.3 $\pm$ 9.5 \\
-2-DOF Optimal ITAE & 0.05 & 0.1 & 1.36 $\pm$ 0.05 & 582.8 $\pm$ 10.5 \\
+2-DOF Optimal ITAE & 0.05 & 0.01 & 1.04 $\pm$ 0.01 & 119.4 $\pm$ 1.0 \\
+2-DOF Optimal ITAE & 0.05 & 0.05 & 1.16 $\pm$ 0.02 & 430.3 $\pm$ 3.6 \\
+2-DOF Optimal ITAE & 0.05 & 0.1 & 1.36 $\pm$ 0.02 & 582.8 $\pm$ 4.0 \\
 \bottomrule
 \end{tabular}%
 }

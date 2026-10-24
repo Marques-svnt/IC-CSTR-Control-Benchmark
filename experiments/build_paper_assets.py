@@ -18,6 +18,7 @@ import logging
 import re
 import shutil
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -26,6 +27,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
 import experiments.exp_01_classical_benchmark as exp01
 import experiments.exp_02_robustness_campaign as exp02
@@ -158,6 +160,34 @@ def run_exact_robustness(
     )
 
 
+OPT_ITAE_FREE = "2-DOF Optimal ITAE (free $\\beta,\\gamma$)"
+
+
+def optimize_setpoint_weights(
+    plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", opt: "exp02.PIDGains"
+) -> "exp02.PIDGains":
+    """Free (beta, gamma) in [0, 1]^2 minimizing the -2 K ITAE (6 min) with the feedback gains fixed.
+
+    beta and gamma act on the reference path only, so L(s) and M_s are those of `opt`.
+    """
+
+    def itae(w: np.ndarray) -> float:
+        g = replace(opt, beta=float(w[0]), gamma=float(w[1]))
+        pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, AW.CLAMPING, u_bias=100.0, y_ss=ss.T)
+        res = exp02.ClosedLoopSimulator().run(
+            plant, pid, ss, (0.0, 6.0), 0.02, setpoint_func=lambda t: ss.T - 2.0
+        )
+        return res.metrics.itae
+
+    best = min(
+        (minimize(itae, x0, method="Nelder-Mead", bounds=[(0.0, 1.0)] * 2,
+                  options={"xatol": 1e-3, "fatol": 1e-5}) for x0 in ([0.5, 0.0], [1.0, 0.0], [0.5, 0.5])),
+        key=lambda r: r.fun,
+    )
+    logger.info("Free setpoint weights: beta=%.3f gamma=%.3f ITAE=%.4f", *best.x, best.fun)
+    return replace(opt, beta=float(best.x[0]), gamma=float(best.x[1]))
+
+
 def run_out_of_sample(
     plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", gains: dict, tables_dir: Path
 ) -> None:
@@ -203,7 +233,13 @@ def remediate_jpc() -> Path:
     )
     run_antiwindup_ablation(plant, ss, gains, tables_dir)
     run_exact_robustness(plant, ss, foptd, gains, tables_dir)
-    run_out_of_sample(plant, ss, gains, tables_dir)
+    free = optimize_setpoint_weights(plant, ss, gains[exp02.OPT_ITAE])
+    logger.info("FREE_WEIGHTS beta=%.3f gamma=%.3f", free.beta, free.gamma)
+    run_out_of_sample(plant, ss, {**gains, OPT_ITAE_FREE: free}, tables_dir)
+    exp02.run_load_disturbance_campaign(
+        plant, ss, 100.0, pids, exp02.BENCHMARK_LIMITS, figures_dir, tables_dir,
+        dT_f=2.0, dC_frac=0.1,
+    )
     exp02.run_noise_and_pareto_campaign(
         plant, ss, 100.0, pids, exp02.BENCHMARK_LIMITS, figures_dir, tables_dir,
         noise_levels=NOISE_LEVELS, filter_taus=(0.0, MEASUREMENT_TAU_F),
