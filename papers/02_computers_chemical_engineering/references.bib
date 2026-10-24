@@ -161,34 +161,35 @@
 
 @article{grimholt2018optimal,
   author  = {Chriss Grimholt and Sigurd Skogestad},
-  title   = {Optimal {PID} Control of First-Order Plus Time-Delay Systems and Evaluation of the {SIMC} Rules},
+  title   = {Optimal {PI} and {PID} Control of First-Order Plus Delay Processes and Evaluation of the Original and Improved {SIMC} Rules},
   journal = {Journal of Process Control},
   volume  = {70},
-  pages   = {57--72},
+  pages   = {36--46},
   year    = {2018},
-  doi     = {10.1016/j.jprocont.2018.07.014}
+  doi     = {10.1016/j.jprocont.2018.06.011}
 }
 
 % --- Actuator Saturation, Slew-Rate Limits & Anti-Windup ---
 
 @article{tarbouriech2009antiwindup,
   author  = {Sophie Tarbouriech and Matthew C. Turner},
-  title   = {Anti-Windup Design: An Overview of Advanced Methods},
+  title   = {Anti-Windup Design: An Overview of Some Recent Advances and Open Problems},
   journal = {IET Control Theory \& Applications},
   volume  = {3},
-  number  = {7},
-  pages   = {793--808},
+  number  = {1},
+  pages   = {1--19},
   year    = {2009},
-  doi     = {10.1049/iet-cta.2007.0400}
+  doi     = {10.1049/iet-cta:20070435}
 }
 
 @book{hippe2006windup,
   author    = {Peter Hippe},
-  title     = {Windup in Control Technologies: Analysis and Solutions},
-  publisher = {Springer-Verlag},
-  address   = {Berlin, Germany},
+  title     = {Windup in Control: Its Effects and Their Prevention},
+  publisher = {Springer},
+  series    = {Advances in Industrial Control},
+  address   = {London},
   year      = {2006},
-  doi       = {10.1007/1-84628-274-8}
+  doi       = {10.1007/1-84628-323-x}
 }
 
 @article{bohn1995analysis,
@@ -199,18 +200,18 @@
   number  = {2},
   pages   = {34--40},
   year    = {1995},
-  doi     = {10.1109/37.375306}
+  doi     = {10.1109/37.375281}
 }
 
 @article{peng1996nonlinear,
-  author  = {Youbin Peng and Damir Vrancic and Raymond Hanus},
+  author  = {Youbin Peng and Damir Vran{\v{c}}i{\'c} and Raymond Hanus},
   title   = {Anti-Windup, Bumpless, and Conditioned Transfer Techniques for {PID} Controllers},
   journal = {IEEE Control Systems Magazine},
   volume  = {16},
   number  = {4},
   pages   = {48--57},
   year    = {1996},
-  doi     = {10.1109/37.526848}
+  doi     = {10.1109/37.526915}
 }
 
 % --- Non-linear CSTR Dynamics, Multiplicity & Thermal Runaway ---
@@ -223,40 +224,39 @@
   number  = {4},
   pages   = {967--985},
   year    = {1974},
-  doi     = {10.1016/0009-2509(74)80088-4}
+  doi     = {10.1016/0009-2509(74)80089-8}
 }
 
 @article{aris1958analysis,
   author  = {Rutherford Aris and Neal R. Amundson},
-  title   = {An Analysis of Chemical Reactor Stability and Control--{I}: The Possibility of Local Instability},
+  title   = {An Analysis of Chemical Reactor Stability and Control---{I}},
   journal = {Chemical Engineering Science},
   volume  = {7},
   number  = {3},
   pages   = {121--131},
   year    = {1958},
-  doi     = {10.1016/0009-2509(58)80020-0}
+  doi     = {10.1016/0009-2509(58)80019-6}
 }
 
 @article{hedengren2014nonlinear,
   author  = {John D. Hedengren and Reza Asgharzadeh Shishavan and Kody M. Powell and Thomas F. Edgar},
-  title   = {Nonlinear Modeling and Control of Chemical Processes},
-  journal = {Processes},
-  volume  = {2},
-  number  = {3},
-  pages   = {611--649},
+  title   = {Nonlinear Modeling, Estimation and Predictive Control in {APMonitor}},
+  journal = {Computers \& Chemical Engineering},
+  volume  = {70},
+  pages   = {133--148},
   year    = {2014},
-  doi     = {10.3390/pr2030611}
+  doi     = {10.1016/j.compchemeng.2014.04.013}
 }
 
-@article{alvarez1995robust,
-  author  = {Jes{\'u}s Alvarez and Rodolfo Su{\'a}rez and Agust{\'i}n S{\'a}nchez},
-  title   = {Semiglobal Nonlinear Control of a Continuous Stirred Tank Reactor},
+@article{alvarez1989global,
+  author  = {Jes{\'u}s Alvarez and Jaime Alvarez and Estela Gonz{\'a}lez},
+  title   = {Global Nonlinear Control of a Continuous Stirred Tank Reactor},
   journal = {Chemical Engineering Science},
-  volume  = {50},
-  number  = {19},
-  pages   = {3101--3114},
-  year    = {1995},
-  doi     = {10.1016/0009-2509(95)00142-D}
+  volume  = {44},
+  number  = {5},
+  pages   = {1147--1160},
+  year    = {1989},
+  doi     = {10.1016/0009-2509(89)87014-9}
 }
 
 % --- Multi-Objective Trade-offs, Sensitivity Peaks (Ms) & Robust Optimization ---
@@ -269,50 +269,51 @@
   number  = {5},
   pages   = {568--577},
   year    = {2014},
-  doi     = {10.1016/j.jprocont.2014.02.001}
+  doi     = {10.1016/j.jprocont.2014.02.020}
 }
 
-@article{alcantara2013simple,
-  author  = {Salvador Alc{\'a}ntara and Weidong Zhang and Carles Pedret and Ramon Vilanova and Sigurd Skogestad},
-  title   = {{IMC}-Like Properties of the {SIMC} Tuning Rules and Its Extension to Any Desired Closed-Loop Speed},
+@article{alcantara2013pid,
+  author  = {Salvador Alc{\'a}ntara and Ramon Vilanova and Carles Pedret},
+  title   = {{PID} Control in Terms of Robustness/Performance and Servo/Regulator Trade-offs: A Unifying Approach to Balanced Autotuning},
   journal = {Journal of Process Control},
   volume  = {23},
-  number  = {2},
-  pages   = {159--167},
+  number  = {4},
+  pages   = {527--542},
   year    = {2013},
-  doi     = {10.1016/j.jprocont.2012.09.006}
+  doi     = {10.1016/j.jprocont.2013.01.003}
 }
 
-@article{reynoso2021multiobjective,
-  author  = {Oscar E. Reynoso-Jard{\'o}n and Jos{\'e} M. Romero-Col{\'a}s and Victor H. Hern{\'a}ndez-P{\'e}rez},
-  title   = {Multi-Objective Tuning of {PID} Controllers for Non-linear Exothermic {CSTR} Systems},
-  journal = {Chemical Engineering Research and Design},
-  volume  = {171},
-  pages   = {312--325},
-  year    = {2021},
-  doi     = {10.1016/j.cherd.2021.05.012}
+@article{marques2020applications,
+  author  = {Tainara Marques and Gilberto Reynoso-Meza},
+  title   = {Applications of Multi-Objective Optimisation for {PID}-like Controller Tuning: A 2015--2019 Review and Analysis},
+  journal = {IFAC-PapersOnLine},
+  volume  = {53},
+  number  = {2},
+  pages   = {7933--7940},
+  year    = {2020},
+  doi     = {10.1016/j.ifacol.2020.12.2140}
 }
 
-@article{padula2012optimal,
+@article{padula2011tuning,
   author  = {Fabrizio Padula and Antonio Visioli},
-  title   = {Tuning Rules for Optimal {PID} Controllers of First-Order-Plus-Dead-Time Processes},
+  title   = {Tuning Rules for Optimal {PID} and Fractional-Order {PID} Controllers},
   journal = {Journal of Process Control},
-  volume  = {22},
-  number  = {3},
-  pages   = {573--581},
-  year    = {2012},
-  doi     = {10.1016/j.jprocont.2011.12.002}
+  volume  = {21},
+  number  = {1},
+  pages   = {69--81},
+  year    = {2011},
+  doi     = {10.1016/j.jprocont.2010.10.006}
 }
 
 @article{choudhury2005modelling,
-  author    = {M. A. A. Shoukat Choudhury and Sirish L. Shah and Nina F. Thornhill},
-  title     = {Modelling valve stiction in chemical process control loops},
-  journal   = {Control Engineering Practice},
-  volume    = {13},
-  number    = {5},
-  pages     = {641--658},
-  year      = {2005},
-  doi       = {10.1016/j.conengprac.2004.05.005}
+  author  = {M. A. A. Shoukat Choudhury and Nina F. Thornhill and Sirish L. Shah},
+  title   = {Modelling Valve Stiction},
+  journal = {Control Engineering Practice},
+  volume  = {13},
+  number  = {5},
+  pages   = {641--658},
+  year    = {2005},
+  doi     = {10.1016/j.conengprac.2004.05.005}
 }
 
 @article{astrom2004revisiting,
@@ -414,7 +415,7 @@
 }
 
 @article{andrade2026robust,
-  title = {Robust {PID} Tuning under Actuator Saturation in Nonlinear Exothermic {CSTR}s: Performance, Anti-Windup and Sensitivity Trade-Offs},
+  title = {Anti-Windup for Reverse-Acting {PID} Loops under Amplitude and Slew-Rate Limits: An Implementation Study on an Exothermic {CSTR}},
   author = {Andrade, Gabriel Marques de and Edwards, Elilton Rodrigues},
   journal = {Journal of Process Control},
   year = {2026},
