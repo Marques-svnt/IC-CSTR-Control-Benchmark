@@ -1,18 +1,18 @@
 \section{Controller design on the unstable saddle}
 \label{sec:design}
 
-Two architectures are compared at the saddle: a single loop $T\rightarrow q_j$ (SISO) and a cascade $T\rightarrow T_{j,sp}\rightarrow q_j$, with and without feedforward from the coolant supply temperature. All controllers are discrete PI controllers with conditional-integration anti-windup acting on the valve model of Section~\ref{sec:model}, and all gains are computed by the campaign script from the Jacobian of Eq.~\eqref{eq:jacobian}; none is adjusted by hand. A reaction-curve test, the usual starting point of SIMC tuning \cite{skogestad2003simple}, is not available for the single loop because the open-loop response to a step in $q_j$ diverges.
+Two architectures are compared at the saddle: a single loop $T\rightarrow q_j$ (SISO) and a cascade $T\rightarrow T_{j,sp}\rightarrow q_j$, with and without feedforward from the coolant supply temperature. All controllers are discrete PI controllers with conditional-integration anti-windup acting on the valve model of Section~\ref{sec:model} \cite{astrom2006pid,astrom1995pid,odwyer2009handbook,tarbouriech2009antiwindup}, and all gains are computed by the campaign script from the Jacobian of Eq.~\eqref{eq:jacobian}; none is adjusted by hand. A reaction-curve test, the usual starting point of SIMC tuning \cite{skogestad2003simple,grimholt2018optimal}, is not available for the single loop because the open-loop response to a step in $q_j$ diverges.
 
 \subsection{Single loop: SIMC for an unstable reduced model}
 \label{subsec:siso_design}
-At the saddle the transfer function of Eq.~\eqref{eq:gs} has one unstable pole, $1/\tau_u$, two stable poles with time constants $\tau_a>\tau_b$, and a zero with time constant $T_0=-1/a_{11}=\Tzero$~min. The zero is merged with the slower stable lag through $(T_0s+1)/(\tau_as+1)\approx 1/((\tau_a-T_0)s+1)$, which requires $\tau_a>T_0$ and is checked by the script. Skogestad's half rule assigns half of the largest neglected lag to the dominant time constant \cite{skogestad2003simple}; here the dominant pole is unstable and cannot absorb a stable lag, so the remaining lags and half a sampling interval are all lumped into the effective delay. The result is
+At the saddle the transfer function of Eq.~\eqref{eq:gs} has one unstable pole, $1/\tau_u$, two stable poles with time constants $\tau_a>\tau_b$, and a zero with time constant $T_0=-1/a_{11}=\Tzero$~min. The zero is merged with the slower stable lag through $(T_0s+1)/(\tau_as+1)\approx 1/((\tau_a-T_0)s+1)$, which requires $\tau_a>T_0$ and is checked by the script. Skogestad's half rule assigns half of the largest neglected lag to the dominant time constant \cite{skogestad2003simple,rivera1986internal}; here the dominant pole is unstable and cannot absorb a stable lag, so the remaining lags and half a sampling interval are all lumped into the effective delay. The result is
 \begin{equation}
 G(s)\approx \frac{k\,e^{-\theta s}}{\tau_us-1},\qquad k=-G(0)=\kU~\frac{\text{K}}{\text{L/min}},
 \label{eq:unstable_model}
 \end{equation}
 with $\tau_u=\tauUmodel$~min and $\theta=\thetaU$~min. The ratio $\theta/\tau_u$ is close to one half, far from the lag-dominant regime, which already signals that this loop is difficult.
 
-Above the frequency $1/\tau_u$ the unstable lag behaves as an integrator with gain $k/\tau_u$, and the SIMC rule for integrating processes \cite{skogestad2003simple} gives
+Above the frequency $1/\tau_u$ the unstable lag behaves as an integrator with gain $k/\tau_u$, and the SIMC rule for integrating processes \cite{skogestad2003simple,alcantara2013simple} gives
 \begin{equation}
 K_c=\frac{\tau_u}{k\,(\tau_c+\theta)},\qquad \tau_I=4\,(\tau_c+\theta),
 \label{eq:simc_unstable}
@@ -42,7 +42,7 @@ The integral time of Eq.~\eqref{eq:simc_unstable} changes this picture. Table~\r
 \begin{equation}
 K_2=-\frac{b_3}{a_{33}}=\Ktwo~\frac{\text{K}}{\text{L/min}},\quad \tau_2=-\frac{1}{a_{33}}=\tauTwo~\text{min};
 \end{equation}
-one sampling interval is taken as delay. Following the usual inner-loop-first sequential design \cite{seborg2010process}, the slave SIMC PI is tuned with $\tau_{c2}=\tau_2$, which gives $K_{c2}=\KcSlave$~L/(min\,K) and $\tau_{I2}=\TiSlave$~min.
+one sampling interval is taken as delay. Following the usual inner-loop-first sequential design \cite{seborg2010process,shinskey1996process,visioli2006practical}, the slave SIMC PI is tuned with $\tau_{c2}=\tau_2$, which gives $K_{c2}=\KcSlave$~L/(min\,K) and $\tau_{I2}=\TiSlave$~min.
 
 \paragraph{What the master loop sees.} If the slave loop held $T_j$ exactly at its setpoint, the jacket state would become an input and the reactor would reduce to the upper $2\times2$ block of Eq.~\eqref{eq:jacobian},
 \begin{equation}
@@ -57,7 +57,7 @@ K_1=G_1(0)=-\frac{a_{11}\,a_{23}}{\det\mathbf{A}_{12}}.
 \end{equation}
 At the saddle the thermal element $a_{22}$ is positive---the reactor heats itself faster than its feed and wall cool it at fixed $T_j$---but the concentration feedback through $a_{12}a_{21}$ dominates: $\operatorname{tr}\mathbf{A}_{12}=\traceSad$~min$^{-1}$ and $\det\mathbf{A}_{12}=\detSad$~min$^{-2}$, so both eigenvalues of $\mathbf{A}_{12}$ lie in the left half plane (largest real part $\absASad$~min$^{-1}$). The instability of the saddle therefore lives in the coupling between reactor and jacket: when the reactor warms, the jacket warms with it and removes less heat. Holding the jacket temperature cuts this positive feedback. With the actual slave loop closed and the master loop open, the linearized system is already stable, with spectral abscissa $\absInner$~min$^{-1}$. The master loop of the cascade does not stabilize anything; it removes offset on a stable plant.
 
-\paragraph{Gain overestimation.} A shortcut in sequential cascade tuning is to estimate the master gain as the ratio of the open-loop gains, $G(0)/K_2$ \cite{seborg2010process,shinskey1996process}. Table~\ref{tab:inner_gain} compares this ratio with Eq.~\eqref{eq:k1_exact}. At the stable nominal point the ratio overestimates the master gain by $\gainErrNom\%$, which only makes a ratio-based master loop more conservative. At the saddle the ratio is $\ratioSad$~K/K against an exact $\KoneSad$~K/K: the sign is wrong. The static gain $G(0)$ of an unstable plant describes an equilibrium that cannot be reached in open loop, and the ratio inherits its sign. A master controller tuned with the ratio would apply positive feedback on the reactor temperature.
+\paragraph{Gain overestimation.} A shortcut in sequential cascade tuning is to estimate the master gain as the ratio of the open-loop gains, $G(0)/K_2$ \cite{seborg2010process,shinskey1996process,luyben2007chemical}. Table~\ref{tab:inner_gain} compares this ratio with Eq.~\eqref{eq:k1_exact}. At the stable nominal point the ratio overestimates the master gain by $\gainErrNom\%$, which only makes a ratio-based master loop more conservative. At the saddle the ratio is $\ratioSad$~K/K against an exact $\KoneSad$~K/K: the sign is wrong. The static gain $G(0)$ of an unstable plant describes an equilibrium that cannot be reached in open loop, and the ratio inherits its sign. A master controller tuned with the ratio would apply positive feedback on the reactor temperature.
 
 \input{tables/cherd_inner_loop_gain}
 

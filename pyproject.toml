@@ -44,6 +44,8 @@ ai = [
     "casadi>=3.6.0",
     "langgraph>=0.0.30",
     "langchain-core>=0.1.30",
+    "osqp>=1.0.0",
+    "qpsolvers>=4.0.0",
 ]
 
 [tool.setuptools.packages.find]

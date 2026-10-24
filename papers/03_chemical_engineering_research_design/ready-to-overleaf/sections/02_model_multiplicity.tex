@@ -8,7 +8,7 @@ The reactor hosts the irreversible first-order reaction $A\rightarrow B$ with ra
 \frac{dT}{dt} &= \frac{q}{V}\left(T_f-T\right) + \frac{-\Delta H}{\rho c_p}\,r_A - \frac{UA}{V\rho c_p}\left(T-T_j\right), \label{eq:energy}\\
 \frac{dT_j}{dt} &= \frac{q_j}{V_j}\left(T_{jf}-T_j\right) + \frac{UA}{V_j\rho_j c_{pj}}\left(T-T_j\right). \label{eq:jacket}
 \end{align}
-The manipulated variable is the coolant flow $q_j$; the measured outputs are $T$ and $T_j$. The valve is limited to $q_j\in[0,\umax]$~L/min and to a slew rate of $\slew$~L/min$^2$, and the controllers run with a zero-order hold at $\Delta t=\dtCtrl$~min. Table~\ref{tab:parameters} lists the parameters. The heat-transfer capacity $UA$ enters Eqs.~\eqref{eq:energy}--\eqref{eq:jacket} as a time-varying input, which is how fouling is introduced in Section~\ref{sec:fouling}; all other parameters are constant except where a disturbance is stated.
+The manipulated variable is the coolant flow $q_j$; the measured outputs are $T$ and $T_j$. The valve is limited to $q_j\in[0,\umax]$~L/min and to a slew rate of $\slew$~L/min$^2$, and the controllers run with a zero-order hold at $\Delta t=\dtCtrl$~min \cite{hippe2006windup,tarbouriech2009antiwindup,choudhury2005modelling}. Table~\ref{tab:parameters} lists the parameters. The heat-transfer capacity $UA$ enters Eqs.~\eqref{eq:energy}--\eqref{eq:jacket} as a time-varying input, which is how fouling is introduced in Section~\ref{sec:fouling}; all other parameters are constant except where a disturbance is stated.
 
 \input{tables/cherd_parameters}
 
@@ -31,12 +31,12 @@ At steady state, the mass and jacket balances give
 C_A(T)=\frac{qC_{Af}}{q+Vk(T)},\\
 T_j(T,q_j)=\frac{q_jT_{jf}+(UA/\rho_jc_{pj})\,T}{q_j+UA/\rho_jc_{pj}}.
 \end{gather}
-Equilibria are the intersections of the heat generation and removal curves \cite{aris1958analysis,uppal1974dynamic}
+Equilibria are the intersections of the heat generation and removal curves \cite{aris1958analysis,uppal1974dynamic,alvarez1995robust}
 \begin{align}
 Q_g(T) &= (-\Delta H)\,V\,k(T)\,C_A(T), \label{eq:qg}\\
 Q_r(T,q_j) &= q\rho c_p\,(T-T_f) + UA\,\bigl(T-T_j(T,q_j)\bigr). \label{eq:qr}
 \end{align}
-An intersection at which $\partial Q_g/\partial T>\partial Q_r/\partial T$ violates the Van Heerden slope condition and is open-loop unstable \cite{seborg2010process,bequette2003process}; the converse is necessary but not sufficient, so stability is always checked here on the spectrum of $\mathbf{A}$.
+An intersection at which $\partial Q_g/\partial T>\partial Q_r/\partial T$ violates the Van Heerden slope condition and is open-loop unstable \cite{seborg2010process,bequette2003process,luyben2007chemical}; the converse is necessary but not sufficient, so stability is always checked here on the spectrum of $\mathbf{A}$.
 
 Figure~\ref{fig:van_heerden}(b) shows the equilibrium temperature versus coolant flow, computed by bracketing every sign change of $Q_g-Q_r$ on a fine temperature grid and refining it with Brent's method. With the nominal feed temperature, $T_f=\TfNom$~K, the curve is single-valued: over the whole valve range there is one equilibrium, and none of the sampled equilibria has an eigenvalue with positive real part (count of unstable points: $\nNomUnstable$). At the nominal flow of $\qjNom$~L/min the reactor sits at $\TNom$~K with $\convNom\%$ conversion and eigenvalues $\lamANom$, $\lamBNom$ and $\lamCNom$~min$^{-1}$.
 
