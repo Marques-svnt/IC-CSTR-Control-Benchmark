@@ -5,6 +5,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from src.classical_control.cascade_controller import CascadePIDController, CascadePIDGains
 from src.classical_control.closed_loop import ClosedLoopSimulator
 from src.classical_control.foptd import FOPTDModel
 from src.classical_control.pid_controller import AntiWindupMethod, PIDController, PIDGains
@@ -274,3 +275,39 @@ class TestNaiveClampingAblation:
         i1 = pid.compute(setpoint=360.0, measurement=350.0, dt=0.1)[1]["i"]
         i2 = pid.compute(setpoint=360.0, measurement=350.0, dt=0.1)[1]["i"]
         assert i2 == pytest.approx(i1)
+
+
+# %% [Slave gain scheduling: Kc2(T_j) = Kc2_0 (T_j0 - T_jf) / (T_j - T_jf)]
+def _scheduled_cascade(t_j_ref: float | None) -> CascadePIDController:
+    gains = CascadePIDGains(
+        master_gains=PIDGains(kp=0.1, ti=1.0),
+        slave_gains=PIDGains(kp=-4.0, ti=0.5),
+        t_j_ref=t_j_ref,
+        t_j_supply=300.0,
+    )
+    ctrl = CascadePIDController(gains, ActuatorLimits(), u_bias=50.0, t_j_bias=329.0)
+    ctrl.reset(initial_t=345.0, initial_tj=329.0, initial_u=50.0)
+    return ctrl
+
+
+@given(tj=st.floats(min_value=302.0, max_value=360.0))
+@settings(max_examples=25, deadline=None)
+def test_slave_gain_schedule_keeps_gain_times_actuator_effectiveness_constant(tj: float) -> None:
+    """Kc2 * (T_j - T_jf) is invariant, so the loop gain Kc2 |b_3| does not drift with fouling."""
+    ctrl = _scheduled_cascade(t_j_ref=329.0)
+    _, diag = ctrl.compute(t_sp=345.0, t_pv=345.0, tj_pv=tj, dt=0.02)
+    assert diag["slave_kp"] * (tj - 300.0) == pytest.approx(-4.0 * (329.0 - 300.0), rel=1e-12)
+
+
+def test_slave_gain_schedule_off_by_default_and_floored() -> None:
+    _, diag = _scheduled_cascade(t_j_ref=None).compute(t_sp=345.0, t_pv=345.0, tj_pv=310.0, dt=0.02)
+    assert diag["slave_kp"] == -4.0
+    # T_j at/below T_jf: denominator is floored at 1 K instead of dividing by zero
+    ctrl = _scheduled_cascade(t_j_ref=329.0)
+    _, diag = ctrl.compute(t_sp=345.0, t_pv=345.0, tj_pv=299.0, dt=0.02)
+    assert diag["slave_kp"] == pytest.approx(-4.0 * 29.0)
+
+
+def test_slave_gain_schedule_rejects_reference_below_supply() -> None:
+    with pytest.raises(ValueError):
+        CascadePIDGains(PIDGains(kp=0.1, ti=1.0), PIDGains(kp=-4.0, ti=0.5), t_j_ref=300.5)

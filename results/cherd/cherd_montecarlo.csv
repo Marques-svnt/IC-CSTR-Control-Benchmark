@@ -1,0 +1,5 @@
+Architecture,Stable (\%),Median $\max\Re\lambda$,Worst $\max\Re\lambda$
+SISO SIMC,61,-0.120,0.182
+SISO optimal,100,-0.187,-0.171
+Cascade,69,-0.168,0.256
+Cascade + gain sched.,75,-0.168,0.160

@@ -15,7 +15,7 @@ e filtragem derivativa no controlador primário.
 """
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
@@ -40,12 +40,29 @@ class CascadePIDGains:
         slave_gains: Ganhos do controlador secundário (temperatura da jaqueta T_j -> q_j).
         t_j_min: Limite inferior de saturação para o setpoint da camisa [K]. Padrão: 300.0 K (T_jf).
         t_j_max: Limite superior de saturação para o setpoint da camisa [K]. Padrão: 380.0 K.
+        t_j_ref: Temperatura da jaqueta T_j,0 em que `slave_gains` foi sintonizado [K]. Se
+            fornecido, ativa o agendamento de ganho do escravo
+            Kc2(T_j) = Kc2_0 (T_j,0 - T_jf) / (T_j - T_jf), que mantém constante o produto
+            Kc2 |b_3| quando a incrustação reduz o ganho do atuador |b_3| = (T_j - T_jf)/V_j.
+        t_j_supply: Temperatura de suprimento do fluido de resfriamento T_jf [K].
+        t_j_floor_k: Piso de (T_j - T_jf) no denominador do agendamento [K] (evita divisão por 0).
     """
 
     master_gains: PIDGains
     slave_gains: PIDGains
     t_j_min: float = 300.0
     t_j_max: float = 380.0
+    t_j_ref: Optional[float] = None
+    t_j_supply: float = 300.0
+    t_j_floor_k: float = 1.0
+
+    def __post_init__(self) -> None:
+        """Valida o agendamento: T_j,0 deve estar acima de T_jf."""
+        if self.t_j_ref is not None and self.t_j_ref - self.t_j_supply < self.t_j_floor_k:
+            raise ValueError(
+                f"t_j_ref - t_j_supply = {self.t_j_ref - self.t_j_supply:.3f} K "
+                f"< piso {self.t_j_floor_k} K"
+            )
 
 
 # %% [Classe do Controlador em Cascata]
@@ -146,7 +163,13 @@ class CascadePIDController:
         # Garante saturação física em T_j,sp
         tj_sp_clamped = float(np.clip(tj_sp_cmd, self.t_j_min, self.t_j_max))
 
-        # 2. Executa o controlador Escravo (Jacket Temperature Loop)
+        # 2. Agenda o ganho do escravo (estado integral em unidades de q_j: sem solavanco)
+        g = self.gains
+        if g.t_j_ref is not None:
+            ratio = (g.t_j_ref - g.t_j_supply) / max(tj_pv - g.t_j_supply, g.t_j_floor_k)
+            self.slave_controller.gains = replace(g.slave_gains, kp=g.slave_gains.kp * ratio)
+
+        # 3. Executa o controlador Escravo (Jacket Temperature Loop)
         q_j_applied, slave_diag = self.slave_controller.compute(
             setpoint=tj_sp_clamped,
             measurement=tj_pv,
@@ -164,6 +187,7 @@ class CascadePIDController:
             "slave_error": tj_sp_clamped - tj_pv,
             "master_is_saturated": master_diag.get("is_saturated", False),
             "slave_is_saturated": slave_diag.get("is_saturated", False),
+            "slave_kp": self.slave_controller.gains.kp,
         }
 
         return q_j_applied, diagnostics

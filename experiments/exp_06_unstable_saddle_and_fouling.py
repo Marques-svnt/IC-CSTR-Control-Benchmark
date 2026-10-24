@@ -13,13 +13,17 @@ Steps:
 3. Shocks Delta T_jf = +10 K and Delta T_f = +5 K on the saddle.
 4. Fouling d(UA)/dt = -kappa r_A (UA - UA_min) at the nominal point and at the saddle,
    time to valve saturation and to loss of thermal regulation.
+5. Mechanism of the loss of stability (K_c k > 1 at the boundary, complex pair crossing the
+   imaginary axis), kappa_foul sweep towards the frozen-UA boundary, slave gain scheduling
+   K_c2(T_j) = K_c2,0 (T_j0 - T_jf)/(T_j - T_jf), an M_s <= 1.6 optimal SISO baseline,
+   stability margins and a +-5 % Monte Carlo on (E/R, k_0, dH).
 
 Outputs: tables/figures/numbers.tex in the ChERD paper folder; CSV mirrors in results/cherd/.
 """
 
 import logging
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -32,12 +36,14 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 from scipy.integrate import solve_ivp
-from scipy.optimize import brentq
+from scipy.optimize import brentq, minimize
+from scipy.stats import qmc
 
 from src.classical_control.cascade_controller import CascadePIDController, CascadePIDGains
 from src.classical_control.foptd import FOPTDModel, identify_foptd
 from src.classical_control.pid_controller import PIDController, PIDGains
 from src.classical_control.tuning_analytical import TuningRule, tune_analytical
+from src.classical_control.tuning_optimization import _pid_frequency_response
 from src.evaluation.plot_styles import (
     IEEE_DOUBLE_COL_WIDTH_INCHES,
     IEEE_SINGLE_COL_WIDTH_INCHES,
@@ -49,7 +55,7 @@ from src.sim_core.schemas import validate_trajectory_dataframe
 
 logger = logging.getLogger("exp_06_saddle_fouling")
 
-PAPER_DIR = PROJECT_ROOT / "Artigos_Rascunhos" / "03_Chemical_Engineering_Research_Design"
+PAPER_DIR = PROJECT_ROOT / "papers" / "03_chemical_engineering_research_design"
 RESULTS_DIR = PROJECT_ROOT / "results" / "cherd"
 
 DT = 0.02  # control period [min]
@@ -62,14 +68,25 @@ KAPPA_FOUL = 0.10  # fouling rate constant [L/mol]
 UA_MIN_FRAC = 0.30  # asymptotic UA_min / UA_0
 RUNAWAY_BAND = 5.0  # loss of regulation: T - T_sp above this [K]
 SHOCK_TIME = 2.0
-SHOCK_HORIZON = 60.0
+SHOCK_HORIZON = 15.0  # fixed evaluation window t in [0, 15] min: no limit-cycle horizon inflation
+P2P_WINDOW = 5.0  # window for the settled-vs-oscillating test [min]
 FOULING_HORIZON = 80.0
+MS_MAX = 1.60  # sensitivity ceiling of the optimized SISO baseline
+KAPPA_SWEEP = (0.005, 0.05, 0.5)  # fouling-rate constants [L/mol]; effective rate kappa * r_A [1/min]
+SWEEP_RIPPLE_K = 0.1  # amplitude of each sine of the T_jf multisine that seeds the Hopf mode [K]
+MC_SAMPLES = 64  # Sobol points of the +-5 % parametric sweep
+MC_SPREAD = 0.05
 ARCH_LABELS = {
     "siso": "SISO SIMC",
+    "siso_opt": "SISO optimal",
     "cascade": "Cascade",
     "cascade_ff": "Cascade + FF",
+    "cascade_gs": "Cascade + gain sched.",
 }
-ARCH_COLORS = {"siso": "#D95F02", "cascade": "#1B9E77", "cascade_ff": "#7570B3"}
+ARCH_COLORS = {
+    "siso": "#D95F02", "siso_opt": "#E6AB02", "cascade": "#1B9E77",
+    "cascade_ff": "#7570B3", "cascade_gs": "#1F78B4",
+}
 
 
 @dataclass(frozen=True)
@@ -92,6 +109,8 @@ class ControllerDesign:
     siso_model: tuple[float, float, float]  # (k, tau, theta); tau < 0 flags tau_u
     slave_model: FOPTDModel
     master_model: FOPTDModel
+    tj_ref: float = 0.0  # T_j,0 at which the slave gain was tuned (gain-scheduling reference) [K]
+    siso_opt: Optional[PIDGains] = None  # M_s-constrained optimal PI, see optimize_siso_pi
 
 
 # %% [Steady states and heat balance]
@@ -145,16 +164,17 @@ def nominal_point() -> OperatingPoint:
 
 def find_saddle_point(
     t_target: float = T_SADDLE, t_f: float = T_F_SADDLE, ua_frac: float = 1.0,
-    t_jf: float = CSTRParameters().T_jf,
+    t_jf: float = CSTRParameters().T_jf, **overrides: float,
 ) -> OperatingPoint:
     """Coolant flow that places an equilibrium at t_target, confirmed by root finding.
 
-    ua_frac scales UA (frozen fouling level); t_jf moves the coolant supply temperature.
+    ua_frac scales UA (frozen fouling level); t_jf moves the coolant supply temperature;
+    `overrides` replace kinetic parameters (k_0, E_over_R, delta_H).
 
     Raises:
         ValueError: If the equilibrium is not open-loop unstable or q_j leaves the valve range.
     """
-    plant = CSTRPlant(CSTRParameters(T_f=t_f, UA=CSTRParameters().UA * ua_frac, T_jf=t_jf))
+    plant = CSTRPlant(CSTRParameters(T_f=t_f, UA=CSTRParameters().UA * ua_frac, T_jf=t_jf, **overrides))
     p = plant.params
     k = p.k_0 * np.exp(-p.E_over_R / t_target)
     c_a = p.q * p.C_Af / (p.q + p.V * k)
@@ -246,23 +266,48 @@ def _inner_loop(op: OperatingPoint, slave: PIDGains) -> tuple[np.ndarray, ...]:
 
 def closed_loop_abscissa(op: OperatingPoint, design: ControllerDesign, arch: str) -> float:
     """Largest real part of the linear closed-loop spectrum (continuous PI, exact Jacobian)."""
-    if arch == "siso":
+    eig = closed_loop_eigenvalues(op, design, arch)
+    return float(eig.real.max())
+
+
+def scheduled_slave(op: OperatingPoint, design: ControllerDesign) -> PIDGains:
+    """Slave PI with K_c2 = K_c2,0 (T_j0 - T_jf) / (T_j - T_jf) at the equilibrium of `op`."""
+    ratio = (design.tj_ref - op.plant.params.T_jf) / (op.ss.T_j - op.plant.params.T_jf)
+    return replace(design.slave, kp=design.slave.kp * ratio)
+
+
+def closed_loop_eigenvalues(op: OperatingPoint, design: ControllerDesign, arch: str) -> np.ndarray:
+    """Spectrum of the linear closed loop (continuous PI, exact Jacobian).
+
+    Architectures: siso (SIMC), siso_opt, cascade, cascade_gs (scheduled slave gain).
+    """
+    if arch in ("siso", "siso_opt"):
+        gains = design.siso if arch == "siso" else design.siso_opt
+        if gains is None:
+            raise ValueError("design.siso_opt is not set")
         A, B = op.plant.linearize(op.ss, op.q_j)
-        a_cl = _pi_loop(A, B, np.array([[0.0, 1.0, 0.0]]), design.siso)[0]
-    else:
-        a_i, b_i, c_i = _inner_loop(op, design.slave)
+        a_cl = _pi_loop(A, B, np.array([[0.0, 1.0, 0.0]]), gains)[0]
+    elif arch in ("cascade", "cascade_gs"):
+        slave = scheduled_slave(op, design) if arch == "cascade_gs" else design.slave
+        a_i, b_i, c_i = _inner_loop(op, slave)
         a_cl = _pi_loop(a_i, b_i, c_i, design.master)[0]
-    return float(np.linalg.eigvals(a_cl).real.max())
+    else:
+        raise ValueError(f"Unknown architecture {arch}")
+    return np.linalg.eigvals(a_cl)
 
 
 def stability_boundary(design: ControllerDesign, arch: str, f_low: float) -> float:
-    """UA/UA_0 below which the fixed-gain loop no longer stabilizes the 345 K saddle.
+    """UA/UA_0 below which the loop no longer stabilizes the 345 K saddle (NaN if it never does).
 
-    Each frozen UA has its own equilibrium q_j; the gains stay those designed at UA_0.
+    Each frozen UA has its own equilibrium q_j; the gains stay those designed at UA_0
+    (cascade_gs rescales the slave gain with T_j).
     """
-    return float(brentq(
-        lambda f: closed_loop_abscissa(find_saddle_point(ua_frac=f), design, arch), f_low, 1.0
-    ))
+    def abscissa(f: float) -> float:
+        return closed_loop_abscissa(find_saddle_point(ua_frac=f), design, arch)
+
+    if abscissa(f_low) < 0.0:
+        return float("nan")  # stable down to f_low
+    return float(brentq(abscissa, f_low, 1.0))
 
 
 def p_only_abscissa(op: OperatingPoint, kp: float) -> float:
@@ -306,7 +351,7 @@ def design_controllers(op: OperatingPoint, tau_c_siso: Optional[float] = None) -
         "[%s] SISO %s | slave %s | master %s (FOPTD %s, RMSE %.3f K)",
         op.name, siso, slave, master, master_model, rmse,
     )
-    return ControllerDesign(siso, slave, master, siso_model, slave_model, master_model)
+    return ControllerDesign(siso, slave, master, siso_model, slave_model, master_model, tj_ref=op.ss.T_j)
 
 
 def inner_loop_gains(op: OperatingPoint) -> dict[str, float]:
@@ -332,6 +377,195 @@ def feedforward_flow(op: OperatingPoint, t_jf: float) -> float:
     return float(min(LIMITS.u_max, p.UA / p.rho_j_cp_j * (ss.T - ss.T_j) / den))
 
 
+# %% [Frequency-domain margins and the fundamental bound]
+OMEGAS = np.logspace(-3, 3, 6000)  # rad/min
+
+
+def _plant_response(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> np.ndarray:
+    """c (jwI - A)^-1 b on OMEGAS (batched solve)."""
+    n = a.shape[0]
+    m = 1j * OMEGAS[:, None, None] * np.eye(n) - a
+    return (c @ np.linalg.solve(m, np.broadcast_to(b, (len(OMEGAS), n, 1))))[:, 0, 0]
+
+
+def loop_margins(loop: np.ndarray) -> dict[str, float]:
+    """M_s, gain margins, phase margin and delay margin of a sampled loop gain L(jw) on OMEGAS.
+
+    The plant is open-loop unstable, so the gain can be both raised and lowered: `gm_up` is the
+    smallest factor > 1 and `gm_down` the largest factor < 1 that put L on -1 (NaN if none).
+    The phase margin is the smallest angular distance of L from -1 at |L| = 1, the delay margin
+    PM / w_c for the same crossover.
+    """
+    ms = float(np.max(np.abs(1.0 / (1.0 + loop))))
+    phase = np.unwrap(np.angle(loop))
+    # real-axis crossings with L < 0: gain factor -1/L
+    cross = np.where(np.diff(np.sign(np.imag(loop))) != 0)[0]
+    factors = []
+    for k in cross:
+        w = (OMEGAS[k], OMEGAS[k + 1])
+        frac = np.imag(loop[k]) / (np.imag(loop[k]) - np.imag(loop[k + 1]))
+        re = np.real(loop[k]) + frac * (np.real(loop[k + 1]) - np.real(loop[k]))
+        if re < 0.0 and w[0] > 0.0:
+            factors.append(-1.0 / re)
+    up = [f for f in factors if f > 1.0]
+    down = [f for f in factors if f < 1.0]
+    mag = np.abs(loop)
+    gc = np.where((mag[:-1] - 1.0) * (mag[1:] - 1.0) < 0.0)[0]
+    pms = [(np.degrees(abs(np.angle(np.exp(1j * (phase[k] + np.pi))))), OMEGAS[k]) for k in gc]
+    pm, wc = min(pms) if pms else (float("nan"), float("nan"))
+    return {
+        "Ms": ms, "gm_up": min(up) if up else float("nan"),
+        "gm_down": max(down) if down else float("nan"),
+        "pm_deg": float(pm), "dm_min": float(np.radians(pm) / wc) if pms else float("nan"),
+    }
+
+
+def siso_loop(op: OperatingPoint, gains: PIDGains) -> np.ndarray:
+    """L(jw) of the single loop T -> q_j with PI `gains` and half a sample of ZOH delay."""
+    A, B = op.plant.linearize(op.ss, op.q_j)
+    g = _plant_response(A, B, np.array([[0.0, 1.0, 0.0]]))
+    return g * np.exp(-1j * OMEGAS * DT / 2.0) * _pid_frequency_response(gains, 1j * OMEGAS)
+
+
+def jacket_loop(op: OperatingPoint, slave: PIDGains) -> np.ndarray:
+    """L(jw) of the inner loop T_j -> q_j with the reactor loop open."""
+    A, B = op.plant.linearize(op.ss, op.q_j)
+    g = _plant_response(A, B, np.array([[0.0, 0.0, 1.0]]))
+    return g * np.exp(-1j * OMEGAS * DT / 2.0) * _pid_frequency_response(slave, 1j * OMEGAS)
+
+
+def master_loop(op: OperatingPoint, slave: PIDGains, master: PIDGains) -> np.ndarray:
+    """L(jw) of the reactor loop broken at T_j,sp, with the slave loop closed."""
+    a_i, b_i, c_i = _inner_loop(op, slave)
+    g = _plant_response(a_i, b_i, c_i)
+    return g * np.exp(-1j * OMEGAS * DT / 2.0) * _pid_frequency_response(master, 1j * OMEGAS)
+
+
+def reduced_model_ms(k: float, tau_u: float, theta: float, gains: PIDGains) -> float:
+    """M_s of the reduced loop k e^{-theta s}/(tau_u s - 1) with PI `gains`."""
+    s = 1j * OMEGAS
+    loop = k * np.exp(-s * theta) / (tau_u * s - 1.0) * _pid_frequency_response(gains, s)
+    return float(np.max(np.abs(1.0 / (1.0 + loop))))
+
+
+def ms_lower_bound(p: float, theta: float) -> float:
+    """||S||_inf >= exp(p theta) for a loop with one real RHP pole p and dead time theta."""
+    return float(np.exp(p * theta))
+
+
+def optimize_siso_pi(
+    op: OperatingPoint, shocked: list[OperatingPoint],
+    disturbances: list[Callable[[float], dict[str, float]]], max_ms: float = MS_MAX,
+) -> PIDGains:
+    """PI minimizing the summed IAE over [0, SHOCK_HORIZON] min of the nonlinear shock runs.
+
+    Constraints (quadratic penalty): M_s <= max_ms on the exact linear loop with half a sample of
+    delay, and a stable linear spectrum at the saddle and at every post-shock equilibrium.
+    Coarse grid for a feasible start (the SIMC gains are unstable at the post-shock equilibrium,
+    so they cannot seed a penalty search), then Nelder--Mead on (-K_c, tau_I).
+    """
+    zeros = FOPTDModel(1, 1, 0)
+
+    def cost(x: np.ndarray) -> float:
+        if x[0] <= 0.0 or x[1] <= 0.05:
+            return 1e6
+        g = PIDGains(kp=-float(x[0]), ti=float(x[1]))
+        d = ControllerDesign(g, g, g, (0, 0, 0), zeros, zeros, siso_opt=g)
+        pts = [op, *shocked]
+        if max(closed_loop_abscissa(o, d, "siso_opt") for o in pts) >= 0.0:
+            return 1e6
+        ms = loop_margins(siso_loop(op, g))["Ms"]
+        margin = max_ms - 0.01  # soft penalty settles on the edge, so aim just inside the ceiling
+        total = 1e4 * max(0.0, ms - margin) ** 2 + (1e2 * (ms - margin) if ms > margin else 0.0)
+        for dist in disturbances:
+            df = simulate(op, d, "siso_opt", SHOCK_HORIZON, disturbance=dist)
+            total += shock_metrics(df, SHOCK_TIME)["IAE"]
+        return float(total)
+
+    grid = [np.array([kc, ti]) for kc in (4.0, 8.0, 12.0, 16.0, 24.0, 32.0, 48.0) for ti in (1.0, 2.0, 4.0, 8.0)]
+    start = min(grid, key=cost)
+    if cost(start) >= 1e6:
+        raise RuntimeError("No stabilizing PI found on the start grid")
+    res = minimize(cost, start, method="Nelder-Mead",
+                   options={"maxiter": 150, "xatol": 1e-3, "fatol": 1e-3})
+    best = PIDGains(kp=-float(res.x[0]), ti=float(res.x[1]))
+    ms = loop_margins(siso_loop(op, best))["Ms"]
+    if ms > max_ms + 1e-3:
+        raise RuntimeError(f"Optimized SISO PI violates M_s <= {max_ms}: M_s = {ms:.3f}")
+    return best
+
+
+def fouling_mechanism(ds: ControllerDesign, f_grid: np.ndarray) -> pd.DataFrame:
+    """K_c k(UA) and the dominant closed-loop eigenvalue pair along frozen-UA saddles.
+
+    k(UA) = -G(0) of the full third-order model at each frozen equilibrium; gains stay at UA_0.
+    """
+    rows = []
+    for f in f_grid:
+        op_f = find_saddle_point(ua_frac=float(f))
+        A, B = op_f.plant.linearize(op_f.ss, op_f.q_j)
+        k_f = -float((np.array([[0.0, 1.0, 0.0]]) @ np.linalg.solve(-A, B))[0, 0])
+        k_one = inner_loop_gains(op_f)["K1"]
+        row = {"ua_frac": float(f), "k": k_f, "K1": k_one, "Kc1_K1": ds.master.kp * k_one,
+               "Kc_k_siso": ds.siso.kp * k_f,
+               "Kc_k_siso_opt": ds.siso_opt.kp * k_f if ds.siso_opt else float("nan"),
+               "b3": float(B[2, 0])}
+        for arch in ("siso", "cascade", "cascade_gs"):
+            eig = closed_loop_eigenvalues(op_f, ds, arch)
+            lead = eig[np.argmax(eig.real)]
+            row[f"{arch}_re"], row[f"{arch}_im"] = float(lead.real), float(abs(lead.imag))
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def jacket_gain_at_critical(op: OperatingPoint) -> tuple[float, float, float]:
+    """(T_j, b_3, UA_crit/UA_0) at the critical capacity, in closed form.
+
+    T_j = T - Q_load/UA_crit and b_3 = dT_j'/dq_j = (T_jf - T_j)/V_j; cross-checked against the
+    Jacobian just above UA_crit (where q_j is still inside the valve range).
+    """
+    p, ss = op.plant.params, op.ss
+    f_crit = critical_ua_fraction(op)
+    q_load = p.V * p.rho_cp * (
+        p.q / p.V * (p.T_f - ss.T) + op.plant.reaction_rate(ss.C_A, ss.T) * -p.delta_H / p.rho_cp
+    )
+    t_j = ss.T - q_load / (f_crit * p.UA)
+    b3 = (p.T_jf - t_j) / p.V_j
+    op_c = find_saddle_point(ua_frac=f_crit + 1e-6)
+    b3_jac = float(op_c.plant.linearize(op_c.ss, op_c.q_j)[1][2, 0])
+    if abs(b3 - b3_jac) > 1e-3 * abs(b3):
+        raise RuntimeError(f"Closed-form b3 = {b3:.4f} disagrees with Jacobian b3 = {b3_jac:.4f}")
+    return float(t_j), float(b3), float(f_crit)
+
+
+def monte_carlo_robustness(ds: ControllerDesign, n: int = MC_SAMPLES) -> pd.DataFrame:
+    """Linear stability of nominal-UA_0 gains on saddles of the +-5 % perturbed model.
+
+    Sobol points over (E/R, k_0, dH); each perturbed plant is re-solved for the q_j that holds
+    T = 345 K (the integral action does this), so the loop sees a different b_3 and Jacobian.
+    Samples whose saddle needs q_j outside the valve range are kept with NaN columns.
+    """
+    nominal = CSTRParameters()
+    unit = qmc.Sobol(d=3, scramble=True, seed=0).random(n)
+    scale = 1.0 + MC_SPREAD * (2.0 * unit - 1.0)
+    rows = []
+    for sc in scale:
+        row: dict[str, float] = {"s_E": sc[0], "s_k0": sc[1], "s_dH": sc[2]}
+        try:
+            op = find_saddle_point(
+                E_over_R=nominal.E_over_R * sc[0], k_0=nominal.k_0 * sc[1], delta_H=nominal.delta_H * sc[2]
+            )
+        except ValueError:
+            rows.append(row)
+            continue
+        row["q_j"] = op.q_j
+        row["b3"] = float(op.plant.linearize(op.ss, op.q_j)[1][2, 0])
+        for arch in ("siso", "siso_opt", "cascade", "cascade_gs"):
+            row[arch] = closed_loop_abscissa(op, ds, arch)
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 # %% [Closed-loop simulation with fouling state]
 def _augmented_rhs(
     plant: CSTRPlant, y: np.ndarray, q_j: float, dist: dict[str, float],
@@ -352,14 +586,21 @@ def _make_controller(
         return lambda x, t_jf: (op.q_j, float("nan"))
     if design is None:
         raise ValueError(f"Architecture {arch} needs a ControllerDesign")
-    if arch == "siso":
-        pid = PIDController(gains=design.siso, actuator_limits=LIMITS, u_bias=op.q_j)
+    if arch in ("siso", "siso_opt"):
+        gains = design.siso if arch == "siso" else design.siso_opt
+        if gains is None:
+            raise ValueError("design.siso_opt is not set")
+        pid = PIDController(gains=gains, actuator_limits=LIMITS, u_bias=op.q_j)
         pid.reset(initial_measurement=ss.T, initial_u=op.q_j)
         return lambda x, t_jf: (pid.compute(setpoint=ss.T, measurement=x[1], dt=DT)[0], float("nan"))
-    if arch not in ("cascade", "cascade_ff"):
+    if arch not in ("cascade", "cascade_ff", "cascade_gs"):
         raise ValueError(f"Unknown architecture {arch}")
     casc = CascadePIDController(
-        gains=CascadePIDGains(master_gains=design.master, slave_gains=design.slave),
+        gains=CascadePIDGains(
+            master_gains=design.master, slave_gains=design.slave,
+            t_j_ref=design.tj_ref if arch == "cascade_gs" else None,
+            t_j_supply=op.plant.params.T_jf,
+        ),
         actuator_limits=LIMITS, u_bias=op.q_j, t_j_bias=ss.T_j,
     )
     casc.reset(initial_t=ss.T, initial_tj=ss.T_j, initial_u=op.q_j)
@@ -382,8 +623,11 @@ def simulate(
     kappa: float = 0.0,
     ua_min_frac: float = UA_MIN_FRAC,
     x0_offset_T: float = 0.0,
+    stop_band: Optional[float] = None,
 ) -> pd.DataFrame:
     """Sampled-data simulation (ZOH, DT) of the plant with the fouling state UA.
+
+    stop_band: end the run once T - T_sp exceeds it (loss of regulation), keeping that sample.
 
     Returns:
         Trajectory validated by CstrTrajectorySchema, plus columns UA and T_j_sp.
@@ -394,10 +638,14 @@ def simulate(
     x = np.array([op.ss.C_A, op.ss.T + x0_offset_T, op.ss.T_j, plant.params.UA])
     t_grid = np.arange(0.0, t_end + 1e-9, DT)
     xs, us, sps = np.empty((len(t_grid), 4)), np.empty(len(t_grid)), np.empty(len(t_grid))
+    n = len(t_grid)
     for i, t in enumerate(t_grid):
         dist = disturbance(t) if disturbance else {}
         q_j, tj_sp = ctrl(x, dist.get("T_jf", plant.params.T_jf))
         xs[i], us[i], sps[i] = x, q_j, tj_sp
+        if stop_band is not None and x[1] - op.ss.T > stop_band:
+            n = i + 1
+            break
         sol = solve_ivp(
             lambda _t, y: _augmented_rhs(plant, y, q_j, dist, kappa, ua_min),
             (t, t + DT), x, method="RK45", rtol=1e-8, atol=1e-10,
@@ -405,8 +653,8 @@ def simulate(
         if not sol.success:
             raise RuntimeError(f"ODE integration failed at t = {t:.2f} min: {sol.message}")
         x = sol.y[:, -1]
-    df = validate_trajectory_dataframe(t_grid, xs[:, :3], us, np.full(len(t_grid), op.ss.T))
-    return df.assign(UA=xs[:, 3], T_j_sp=sps)
+    df = validate_trajectory_dataframe(t_grid[:n], xs[:n, :3], us[:n], np.full(n, op.ss.T))
+    return df.assign(UA=xs[:n, 3], T_j_sp=sps[:n])
 
 
 def first_time(df: pd.DataFrame, mask: pd.Series) -> float:
@@ -424,8 +672,8 @@ def shock_metrics(df: pd.DataFrame, t_shock: float) -> dict[str, float]:
         "peak": float(err.max()),
         "TV": float(post["q_j"].diff().abs().sum()),
         "q_max": float(post["q_j"].max()),
-        # peak-to-peak of T over the last 20 min: separates settling from a limit cycle
-        "p2p": float(np.ptp(df.loc[df["t"] >= df["t"].iloc[-1] - 20.0, "T"])),
+        # peak-to-peak of T over the last P2P_WINDOW min: separates settling from a limit cycle
+        "p2p": float(np.ptp(df.loc[df["t"] >= df["t"].iloc[-1] - P2P_WINDOW, "T"])),
     }
 
 
@@ -643,7 +891,19 @@ def run_campaign() -> None:
     )
 
     designs = {key: design_controllers(op) for key, op in points.items()}
+    shocks = {
+        "Tjf": ("$\\Delta T_{jf}=+10$ K", lambda t: {"T_jf": p0.T_jf + (10.0 if t >= SHOCK_TIME else 0.0)}),
+        "Tf": ("$\\Delta T_f=+5$ K", lambda t: {"T_f": T_F_SADDLE + (5.0 if t >= SHOCK_TIME else 0.0)}),
+    }
+    shocked = {"Tjf": find_saddle_point(t_jf=p0.T_jf + 10.0), "Tf": find_saddle_point(t_f=T_F_SADDLE + 5.0)}
+    siso_opt = optimize_siso_pi(
+        sad, list(shocked.values()), [d for _, d in shocks.values()]
+    )
+    designs["saddle"] = replace(designs["saddle"], siso_opt=siso_opt)
     ds = designs["saddle"]
+    num.update(KcOpt=_fmt(siso_opt.kp, 3), TiOpt=_fmt(siso_opt.ti, 3), msMax=_fmt(MS_MAX, 2),
+               absOpt=_fmt(closed_loop_abscissa(sad, ds, "siso_opt"), 3),
+               horizonShockWin=_fmt(SHOCK_HORIZON, 0), ptpWin=_fmt(P2P_WINDOW, 0))
     num.update(
         KcSiso=_fmt(ds.siso.kp, 3), TiSiso=_fmt(ds.siso.ti, 3),
         Ktwo=_fmt(ds.slave_model.k_p, 4), tauTwo=_fmt(ds.slave_model.tau, 4),
@@ -655,6 +915,63 @@ def run_campaign() -> None:
         absCasc=_fmt(closed_loop_abscissa(sad, ds, "cascade"), 3),
         absInner=_fmt(float(np.linalg.eigvals(_inner_loop(sad, ds.slave)[0]).real.max()), 3),
         ffSad=_fmt(feedforward_flow(sad, p0.T_jf + 10.0), 2),
+    )
+    # Fundamental bound on the reduced model, and margins of the exact linear loops
+    p_unst = 1.0 / tau_u
+    bound = ms_lower_bound(p_unst, theta)
+    ms_red = {"Simc": reduced_model_ms(k, tau_u, theta, ds.siso), "Opt": reduced_model_ms(k, tau_u, theta, siso_opt)}
+    if min(ms_red.values()) < bound - 1e-9:
+        raise RuntimeError("Reduced-model M_s fell below exp(p theta): bound or model is wrong")
+    num.update(pUnst=_fmt(p_unst, 4), msBound=_fmt(bound, 2), msRedSimc=_fmt(ms_red["Simc"], 1),
+               msRedOpt=_fmt(ms_red["Opt"], 1), thetaZoh=_fmt(DT / 2.0, 2),
+               msBoundZoh=_fmt(ms_lower_bound(p_unst, DT / 2.0), 3))
+    loops = {
+        "SISO SIMC": ("Simc", siso_loop(sad, ds.siso)),
+        "SISO optimal": ("Opt", siso_loop(sad, siso_opt)),
+        "Cascade, reactor loop": ("CascOut", master_loop(sad, ds.slave, ds.master)),
+        "Cascade, jacket loop": ("CascIn", jacket_loop(sad, ds.slave)),
+    }
+    margin_rows = []
+    for label, (tag, loop) in loops.items():
+        m = loop_margins(loop)
+        num.update({f"ms{tag}": _fmt(m["Ms"], 2), f"gmUp{tag}": _fmt(m["gm_up"], 1),
+                    f"gmDown{tag}": _fmt(m["gm_down"], 2), f"pm{tag}": _fmt(m["pm_deg"], 1),
+                    f"dm{tag}": _fmt(m["dm_min"], 3)})
+        margin_rows.append({
+            "Loop": label, "$M_s$": _fmt(m["Ms"], 2), "GM$^\\uparrow$": _fmt(m["gm_up"], 1),
+            "GM$^\\downarrow$": _fmt(m["gm_down"], 2), "PM (deg)": _fmt(m["pm_deg"], 1),
+            "DM (min)": _fmt(m["dm_min"], 3),
+        })
+    _export(
+        margin_rows, "cherd_margins",
+        "Stability margins of the exact linearized loops at the saddle, with half a sample of ZOH "
+        f"delay. GM$^\\uparrow$/GM$^\\downarrow$: factors by which the loop gain can be raised/lowered "
+        f"before instability (the plant is open-loop unstable); DM: delay margin. Reduced-model bound "
+        f"$\\|S\\|_\\infty\\ge e^{{p\\theta}}={bound:.2f}$ (Eq.~\\eqref{{eq:ms_bound}}).",
+        "tab:margins", wide=True,
+    )
+    mc = monte_carlo_robustness(ds)
+    mc.to_csv(RESULTS_DIR / "monte_carlo_parametric.csv", index=False)
+    feasible = mc.dropna(subset=["q_j"])
+    num.update(mcN=str(len(mc)), mcFeasible=str(len(feasible)), mcSpread=_fmt(100 * MC_SPREAD, 0),
+               mcQjMin=_fmt(feasible["q_j"].min(), 1), mcQjMax=_fmt(feasible["q_j"].max(), 1),
+               mcBThreeMin=_fmt(feasible["b3"].max(), 3), mcBThreeMax=_fmt(feasible["b3"].min(), 3))
+    mc_rows = []
+    for arch in ("siso", "siso_opt", "cascade", "cascade_gs"):
+        stable = float((feasible[arch] < 0.0).mean())
+        tag = arch.replace("_", "").capitalize()
+        num.update({f"mcStable{tag}": _fmt(100 * stable, 0), f"mcWorst{tag}": _fmt(feasible[arch].max(), 3)})
+        mc_rows.append({
+            "Architecture": ARCH_LABELS[arch], "Stable (\\%)": _fmt(100 * stable, 0),
+            "Median $\\max\\Re\\lambda$": _fmt(feasible[arch].median(), 3),
+            "Worst $\\max\\Re\\lambda$": _fmt(feasible[arch].max(), 3),
+        })
+    _export(
+        mc_rows, "cherd_montecarlo",
+        f"Linear stability of the nominal gains on the saddle of the perturbed model ($E/R$, $k_0$, "
+        f"$\\Delta H$ uniform within $\\pm{100 * MC_SPREAD:.0f}\\%$, {len(feasible)} of {len(mc)} "
+        "Sobol points with $q_j$ inside the valve range). Spectral abscissa in min$^{-1}$.",
+        "tab:montecarlo", wide=True,
     )
     gain_rows = []
     for key, op in points.items():
@@ -684,16 +1001,13 @@ def run_campaign() -> None:
     )
 
     # --- 3. Shocks on the saddle ---------------------------------------------------------
-    shocks = {
-        "Tjf": ("$\\Delta T_{jf}=+10$ K", lambda t: {"T_jf": p0.T_jf + (10.0 if t >= SHOCK_TIME else 0.0)}),
-        "Tf": ("$\\Delta T_f=+5$ K", lambda t: {"T_f": T_F_SADDLE + (5.0 if t >= SHOCK_TIME else 0.0)}),
-    }
-    shocked = {"Tjf": find_saddle_point(t_jf=p0.T_jf + 10.0), "Tf": find_saddle_point(t_f=T_F_SADDLE + 5.0)}
     for s_key, op_s in shocked.items():
         num[f"qjShock{s_key}"] = _fmt(op_s.q_j, 2)
         num[f"bThreeShock{s_key}"] = _fmt(float(op_s.plant.linearize(op_s.ss, op_s.q_j)[1][2, 0]), 3)
-        for arch in ("siso", "cascade"):
-            num[f"absShock{s_key}{arch.capitalize()}"] = _fmt(closed_loop_abscissa(op_s, ds, arch), 3)
+        for arch in ("siso", "siso_opt", "cascade", "cascade_gs"):
+            num[f"absShock{s_key}{arch.replace('_', '').capitalize()}"] = _fmt(
+                closed_loop_abscissa(op_s, ds, arch), 3
+            )
     shock_rows, traj = [], {}
     for s_key, (s_label, dist) in shocks.items():
         for arch in ARCH_LABELS:
@@ -709,16 +1023,19 @@ def run_campaign() -> None:
                 "Shock": s_label, "Architecture": ARCH_LABELS[arch],
                 "IAE (K min)": _fmt(m["IAE"], 2), "Peak $|e|$ (K)": _fmt(m["peak"], 2),
                 "TV (L/min)": _fmt(m["TV"], 1), "$\\max q_j$ (L/min)": _fmt(m["q_max"], 1),
-                "$T$ p-p, last 20 min (K)": _fmt(m["p2p"], 2),
+                f"$T$ p-p, last {P2P_WINDOW:.0f} min (K)": _fmt(m["p2p"], 2),
             })
     for s_key in shocks:
-        base, casc = (float(num[f"iae{s_key}{a}"]) for a in ("Siso", "Cascade"))
-        num[f"iaeRed{s_key}"] = _fmt(100.0 * (1.0 - casc / base), 1)
+        simc, opt, casc, gs = (float(num[f"iae{s_key}{a}"]) for a in ("Siso", "Sisoopt", "Cascade", "Cascadegs"))
+        num[f"iaeRed{s_key}"] = _fmt(100.0 * (1.0 - casc / opt), 1)  # fair: cascade vs optimal SISO
+        num[f"iaeRedSimc{s_key}"] = _fmt(100.0 * (1.0 - casc / simc), 1)
+        num[f"iaeRedGs{s_key}"] = _fmt(100.0 * (1.0 - gs / opt), 1)
     num["iaeRedFF"] = _fmt(100.0 * (1.0 - float(num["iaeTjfCascadeff"]) / float(num["iaeTjfCascade"])), 1)
     _export(
         shock_rows, "cherd_saddle_shocks",
         f"Regulation at the open-loop unstable saddle ($T_{{sp}}={sad.ss.T:.0f}$ K) after shocks at "
-        f"$t={SHOCK_TIME:.0f}$ min; metrics over $t\\ge {SHOCK_TIME:.0f}$ min.",
+        f"$t={SHOCK_TIME:.0f}$ min; metrics over the fixed window $t\\in[{SHOCK_TIME:.0f},{SHOCK_HORIZON:.0f}]$ min; "
+        f"p-p: peak-to-peak of $T$ over the last {P2P_WINDOW:.0f} min.",
         "tab:saddle_shocks", wide=True,
     )
     fig, axes = plt.subplots(2, 2, figsize=(IEEE_DOUBLE_COL_WIDTH_INCHES, 4.0), sharex=True)
@@ -734,45 +1051,135 @@ def run_campaign() -> None:
     fig.tight_layout()
     _save(fig, "fig3_saddle_shocks")
 
-    # --- 4. Dynamic fouling --------------------------------------------------------------
+    # --- 4. Fouling: mechanism of the loss of stability -----------------------------------
     f_crit_sad = critical_ua_fraction(sad)
-    stab_rows = []
-    f_grid = np.linspace(1.0, f_crit_sad + 0.01, 40)
-    for f in f_grid:
-        op_f = find_saddle_point(ua_frac=float(f))
-        stab_rows.append({
-            "ua_frac": f, "q_j": op_f.q_j,
-            "b3": float(op_f.plant.linearize(op_f.ss, op_f.q_j)[1][2, 0]),
-            "open_loop": float(np.linalg.eigvals(op_f.plant.linearize(op_f.ss, op_f.q_j)[0]).real.max()),
-            "siso": closed_loop_abscissa(op_f, ds, "siso"),
-            "cascade": closed_loop_abscissa(op_f, ds, "cascade"),
+    t_j_crit, b3_c, _ = jacket_gain_at_critical(sad)
+    f_grid = np.append(np.linspace(1.0, f_crit_sad + 0.01, 40)[:-1], f_crit_sad + 1e-6)
+    mech = fouling_mechanism(ds, f_grid)
+    mech.to_csv(RESULTS_DIR / "frozen_ua_stability.csv", index=False)
+    b3_0 = float(mech["b3"].iloc[0])
+    num.update(bThreeNom=_fmt(b3_0, 3), bThreeCrit=_fmt(b3_c, 3), bThreeRatio=_fmt(b3_0 / b3_c, 1),
+               TjCrit=_fmt(t_j_crit, 2), KcKnom=_fmt(mech["Kc_k_siso"].iloc[0], 2))
+    archs_frozen = ("siso", "siso_opt", "cascade", "cascade_gs")
+    w_hopf: list[float] = []
+    f_stab = {a: stability_boundary(ds, a, f_crit_sad + 0.01) for a in archs_frozen}
+    for arch, f_b in f_stab.items():
+        tag = arch.replace("_", "").capitalize()
+        if np.isnan(f_b):  # stable all the way to UA_crit: no Hopf crossing before the valve limit
+            num[f"fstab{tag}"] = "<" + _fmt(100 * (f_crit_sad + 0.01), 0)
+            continue
+        op_b = find_saddle_point(ua_frac=f_b)
+        eig = closed_loop_eigenvalues(op_b, ds, arch)
+        lead = eig[np.argmax(eig.real)]
+        # Hopf: a complex-conjugate pair on the imaginary axis (Re = 0, Im != 0), not a real pole at 0
+        if abs(lead.real) > 1e-6 or abs(lead.imag) < 1e-3 or not np.any(np.isclose(eig, lead.conjugate())):
+            raise RuntimeError(f"{arch}: boundary eigenvalue {lead} is not a Hopf pair")
+        w_hopf.append(float(abs(lead.imag)))
+        k_b = float(np.interp(f_b, mech["ua_frac"][::-1], mech["k"][::-1]))
+        k_one_b = inner_loop_gains(op_b)["K1"]
+        gains = {"siso": ds.siso, "siso_opt": ds.siso_opt}.get(arch, ds.siso)
+        num.update({
+            f"fstab{tag}": _fmt(100 * f_b, 1), f"qstab{tag}": _fmt(op_b.q_j, 1),
+            f"wHopf{tag}": _fmt(abs(lead.imag), 2), f"perHopf{tag}": _fmt(2 * np.pi / abs(lead.imag), 2),
+            f"KcK{tag}": _fmt(gains.kp * k_b, 2),  # cascade rows: SIMC single-loop gain, as reference
+            f"KcOneKOne{tag}": _fmt(ds.master.kp * k_one_b, 2),
         })
-    stab_df = pd.DataFrame(stab_rows)
-    stab_df.to_csv(RESULTS_DIR / "frozen_ua_stability.csv", index=False)
+    num["KcOneKOneNom"] = _fmt(float(mech["Kc1_K1"].iloc[0]), 2)
+
+    fig, axes = plt.subplots(2, 2, figsize=(IEEE_DOUBLE_COL_WIDTH_INCHES, 4.6))
+    ua_pct = 100 * mech["ua_frac"]
+    ax = axes[0, 0]
+    ax.plot(ua_pct, mech["Kc_k_siso"], color=ARCH_COLORS["siso"], lw=1.3, label="SISO SIMC: $K_c k$")
+    ax.plot(ua_pct, mech["Kc1_K1"], color=ARCH_COLORS["cascade"], lw=1.3, label="cascade: $K_{c1}K_1$")
+    ax.axhline(1.0, color="k", lw=0.8, ls="--")
     for arch in ("siso", "cascade"):
-        f_stab = stability_boundary(ds, arch, f_crit_sad + 0.01)
-        op_b = find_saddle_point(ua_frac=f_stab)
-        num[f"fstab{arch.capitalize()}"] = _fmt(100 * f_stab, 1)
-        num[f"qstab{arch.capitalize()}"] = _fmt(op_b.q_j, 1)
-    b3_0, b3_c = stab_df["b3"].iloc[0], stab_df["b3"].iloc[-1]
-    num.update(bThreeNom=_fmt(b3_0, 3), bThreeCrit=_fmt(b3_c, 3), bThreeRatio=_fmt(b3_0 / b3_c, 1))
-    fig, ax = plt.subplots(figsize=(IEEE_SINGLE_COL_WIDTH_INCHES, 2.5))
-    ax.plot(100 * stab_df["ua_frac"], stab_df["siso"], color=ARCH_COLORS["siso"], lw=1.3,
-            label=ARCH_LABELS["siso"])
-    ax.plot(100 * stab_df["ua_frac"], stab_df["cascade"], color=ARCH_COLORS["cascade"], lw=1.3,
-            label=ARCH_LABELS["cascade"])
-    ax.axhline(0.0, color="k", lw=0.8)
-    ax.axvline(100 * f_crit_sad, color="gray", ls="--", lw=0.9)
-    ax.set(xlabel="$UA/UA_0$ (%)", ylabel="$\\max\\Re\\lambda_{cl}$ (min$^{-1}$)")
+        ax.axvline(100 * f_stab[arch], color=ARCH_COLORS[arch], ls=":", lw=1.0)
+    ax.set(xlabel="$UA/UA_0$ (%)", ylabel="static loop gain", title="(a) static loop gains", ylim=(0.0, 4.0))
     ax.invert_xaxis()
     ax.legend(fontsize=7)
+    ax = axes[0, 1]
+    for arch in ("siso", "cascade", "cascade_gs"):
+        ax.plot(mech[f"{arch}_re"], mech[f"{arch}_im"], color=ARCH_COLORS[arch], lw=1.3,
+                label=ARCH_LABELS[arch])
+        i0 = int(np.argmin(np.abs(mech[f"{arch}_re"])))
+        ax.plot(mech[f"{arch}_re"].iloc[i0], mech[f"{arch}_im"].iloc[i0], "o", mfc="white",
+                mec=ARCH_COLORS[arch], ms=5)
+    ax.axvline(0.0, color="k", lw=0.8)
+    ax.set(xlabel="$\\Re\\lambda$ (min$^{-1}$)", ylabel="$|\\Im\\lambda|$ (rad/min)",
+           title="(b) dominant pair as $UA$ falls")
+    ax.legend(fontsize=6.5)
+    ax = axes[1, 0]
+    for arch in ("siso", "cascade", "cascade_gs"):
+        ax.plot(ua_pct, mech[f"{arch}_re"], color=ARCH_COLORS[arch], lw=1.3, label=ARCH_LABELS[arch])
+    ax.axhline(0.0, color="k", lw=0.8)
+    ax.axvline(100 * f_crit_sad, color="gray", ls="--", lw=0.9)
+    ax.set(xlabel="$UA/UA_0$ (%)", ylabel="$\\max\\Re\\lambda_{cl}$ (min$^{-1}$)",
+           title="(c) frozen-$UA$ spectral abscissa")
+    ax.invert_xaxis()
+
+    # --- 4b. Rate sweep: slow fouling approaches the frozen boundary ------------------------
+    sweep_archs = ("siso", "siso_opt", "cascade", "cascade_gs")
+    r_a_sad = sad.plant.reaction_rate(sad.ss.C_A, sad.ss.T)
+    sweep_rows, sweep_pts = [], []
+    # persistent excitation at the four Hopf frequencies (otherwise the noise-free run delays the
+    # departure by the numerical floor, ~1e-4 K, and the sweep measures that floor)
+    ripple = lambda t: {"T_jf": p0.T_jf + SWEEP_RIPPLE_K * sum(  # noqa: E731
+        np.sin(w * t + i) for i, w in enumerate(w_hopf))}
+    for kappa in KAPPA_SWEEP:
+        horizon = predicted_saturation_time(sad, kappa, UA_MIN_FRAC)
+        for arch in sweep_archs:
+            df = simulate(sad, ds, arch, horizon, disturbance=ripple, kappa=kappa,
+                          ua_min_frac=UA_MIN_FRAC, stop_band=RUNAWAY_BAND)
+            t_run = first_time(df, df["T"] - sad.ss.T > RUNAWAY_BAND)
+            ua_run = float(np.interp(t_run, df["t"], df["UA"])) / sad.plant.params.UA if np.isfinite(t_run) else float("nan")
+            sweep_pts.append({"kappa": kappa, "rate": kappa * r_a_sad, "arch": arch, "t_run": t_run, "ua_run": ua_run})
+            tag = f"{arch.replace('_', '').capitalize()}K{('Lo', 'Mid', 'Hi')[KAPPA_SWEEP.index(kappa)]}"
+            num[f"uaRun{tag}"] = _fmt(100 * ua_run, 1)
+            num[f"tRun{tag}"] = _fmt(t_run, 1)
+            f_b = f_stab[arch]
+            sweep_rows.append({
+                "$\\kappa_{\\mathrm{foul}}$ (L/mol)": _fmt(kappa, 3),
+                "$\\kappa r_A$ (min$^{-1}$)": _fmt(kappa * r_a_sad, 4),
+                "Architecture": ARCH_LABELS[arch],
+                "$t_{\\mathrm{runaway}}$ (min)": _fmt(t_run, 1),
+                "$UA(t_{\\mathrm{runaway}})/UA_0$ (\\%)": _fmt(100 * ua_run, 1),
+                "Frozen boundary (\\%)": _fmt(100 * f_b, 1) if np.isfinite(f_b) else f"$<{100 * (f_crit_sad + 0.01):.0f}$",
+            })
+    sweep_df = pd.DataFrame(sweep_pts)
+    sweep_df.to_csv(RESULTS_DIR / "kappa_sweep.csv", index=False)
+    num.update(kappaSweepLo=_fmt(KAPPA_SWEEP[0], 3), kappaSweepMid=_fmt(KAPPA_SWEEP[1], 2),
+               kappaSweepHi=_fmt(KAPPA_SWEEP[2], 1), rateLo=_fmt(KAPPA_SWEEP[0] * r_a_sad, 4),
+               rateHi=_fmt(KAPPA_SWEEP[-1] * r_a_sad, 3), ripple=_fmt(SWEEP_RIPPLE_K, 1))
+    for arch in sweep_archs:
+        tag = arch.replace("_", "").capitalize()
+        d = sweep_df[(sweep_df["arch"] == arch) & (sweep_df["kappa"] == KAPPA_SWEEP[0])]
+        num[f"gapSlow{tag}"] = _fmt(100 * f_stab[arch] - 100 * float(d["ua_run"].iloc[0]), 1)
+    _export(
+        sweep_rows, "cherd_kappa_sweep",
+        "Dynamic departure ($T-T_{sp}>5$ K) at the saddle for three fouling rates, with a deterministic "
+        f"{SWEEP_RIPPLE_K:.1f} K multisine on $T_{{jf}}$ at the Hopf frequencies as persistent excitation. "
+        "The capacity at departure is compared with the frozen-$UA$ boundary of the same gains.",
+        "tab:kappa_sweep", wide=True,
+    )
+    ax = axes[1, 1]
+    for arch in sweep_archs:
+        d = sweep_df[sweep_df["arch"] == arch]
+        ax.plot(d["rate"], 100 * d["ua_run"], "o-", color=ARCH_COLORS[arch], lw=1.2, ms=4,
+                label=ARCH_LABELS[arch])
+        if np.isfinite(f_stab[arch]):
+            ax.axhline(100 * f_stab[arch], color=ARCH_COLORS[arch], ls=":", lw=0.9)
+    ax.set(xscale="log", xlabel="$\\kappa\\,r_A$ (min$^{-1}$)", ylabel="$UA/UA_0$ at departure (%)",
+           title="(d) slow-fouling limit", ylim=(28.0, 92.0))
+    ax.legend(fontsize=6, loc="lower center", ncol=2)
     fig.tight_layout()
     _save(fig, "fig5_frozen_ua_stability")
 
+    # --- 4c. Fouling at kappa = KAPPA_FOUL: nominal point and saddle -------------------------
     foul_rows, foul_traj = [], {}
+    arch_by_point = {"nominal": ("siso", "cascade"), "saddle": ("siso", "siso_opt", "cascade", "cascade_gs")}
     for key, op in points.items():
         t_pred = predicted_saturation_time(op, KAPPA_FOUL, UA_MIN_FRAC)
-        for arch in ("siso", "cascade"):
+        for arch in arch_by_point[key]:
             df = simulate(op, designs[key], arch, FOULING_HORIZON, kappa=KAPPA_FOUL,
                           ua_min_frac=UA_MIN_FRAC)
             df.to_csv(RESULTS_DIR / f"fouling_{key}_{arch}.csv", index=False)
@@ -780,9 +1187,11 @@ def run_campaign() -> None:
             t_sat = first_time(df, df["q_j"] >= LIMITS.u_max - 1e-6)
             t_run = first_time(df, df["T"] - op.ss.T > RUNAWAY_BAND)
             ua_sat = float(np.interp(t_sat, df["t"], df["UA"])) / op.plant.params.UA
-            tag = ("Nom" if key == "nominal" else "Sad") + arch.capitalize()
+            ua_run = float(np.interp(t_run, df["t"], df["UA"])) / op.plant.params.UA if np.isfinite(t_run) else float("nan")
+            tag = ("Nom" if key == "nominal" else "Sad") + arch.replace("_", "").capitalize()
             num.update({f"tsat{tag}": _fmt(t_sat, 2), f"trun{tag}": _fmt(t_run, 2),
-                        f"Tend{tag}": _fmt(df["T"].iloc[-1], 2), f"uaSat{tag}": _fmt(100 * ua_sat, 1)})
+                        f"Tend{tag}": _fmt(df["T"].iloc[-1], 2), f"uaSat{tag}": _fmt(100 * ua_sat, 1),
+                        f"uaRunPct{tag}": _fmt(100 * ua_run, 1)})
             foul_rows.append({
                 "Point": "Nominal" if key == "nominal" else "Saddle",
                 "Architecture": ARCH_LABELS[arch],
@@ -790,6 +1199,7 @@ def run_campaign() -> None:
                 "$t_{\\mathrm{sat}}$ (min)": _fmt(t_sat, 2),
                 "$UA(t_{\\mathrm{sat}})/UA_0$ (\\%)": _fmt(100 * ua_sat, 1),
                 "$t_{\\mathrm{runaway}}$ (min)": _fmt(t_run, 2),
+                "$UA(t_{\\mathrm{runaway}})/UA_0$ (\\%)": _fmt(100 * ua_run, 1),
                 f"$T({FOULING_HORIZON:.0f}$ min) (K)": _fmt(df["T"].iloc[-1], 2),
             })
         num[f"tpred{'Nom' if key == 'nominal' else 'Sad'}"] = _fmt(t_pred, 2)
@@ -804,7 +1214,7 @@ def run_campaign() -> None:
     )
     fig, axes = plt.subplots(3, 2, figsize=(IEEE_DOUBLE_COL_WIDTH_INCHES, 4.8), sharex=True)
     for col, (key, op) in enumerate(points.items()):
-        for arch in ("siso", "cascade"):
+        for arch in arch_by_point[key]:
             df = foul_traj[(key, arch)]
             axes[0, col].plot(df["t"], df["UA"] / op.plant.params.UA, color=ARCH_COLORS[arch], lw=1.3,
                               label=ARCH_LABELS[arch])
@@ -817,7 +1227,7 @@ def run_campaign() -> None:
         axes[0, col].set(ylabel="$UA/UA_0$", title=f"{op.name.capitalize()} point")
         axes[1, col].set(ylabel="$T$ (K)")
         axes[2, col].set(ylabel="$q_j$ (L/min)", xlabel="$t$ (min)")
-    axes[0, 0].legend(fontsize=7)
+    axes[0, 1].legend(fontsize=6.5)
     fig.tight_layout()
     _save(fig, "fig4_fouling_runaway")
 
