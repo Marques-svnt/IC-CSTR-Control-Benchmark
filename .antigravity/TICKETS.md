@@ -476,7 +476,7 @@
 
 ---
 
-### [ ] `IC-T21`: [Paper 1 - JPC] Reframe Scope & Complete $2 \times 2$ Anti-Windup Ablation with Back-Calculation
+### [x] `IC-T21`: [Paper 1 - JPC] Reframe Scope & Complete $2 \times 2$ Anti-Windup Ablation with Back-Calculation
 - **Paper:** `papers/01_journal_of_process_control/`
 - **Target Journal:** *Journal of Process Control* (Qualis A1)
 - **Reviewer Consensus Issue:** Scope risk (JPC excludes PID tuning shootouts) + Ablation is a strawman (naive clamping never triggers for $K_p < 0$, valve gets stuck at 100% cooling = $377.9\text{ K}$, explaining identical $842.5\%$ IAE; missing tracking/back-calculation).
@@ -511,7 +511,7 @@
 
 ---
 
-### [ ] `IC-T22`: [Paper 1 - JPC] Plant-Exact Robustness ($\|CS\|_\infty$, HF Gain), Measurement Filter & Out-of-Sample Validation
+### [x] `IC-T22`: [Paper 1 - JPC] Plant-Exact Robustness ($\|CS\|_\infty$, HF Gain), Measurement Filter & Out-of-Sample Validation
 - **Blocked by:** `IC-T21`
 - **Paper:** `papers/01_journal_of_process_control/`
 - **Reviewer Consensus Issue:** $M_s$ from FOPTD is an apparent-delay artifact (exact linear plant has $M_s = 1.57$ for ZN and $1.75$ for CC); noise sensitivity is driven by high-frequency gain $|K_p|(1+N)$; noise campaign chatters at kinematic limit ($800\text{ L/min}$) without filter; Optimal ITAE evaluated in-sample; disturbance hits saturation ceiling ($297.3 / 300\text{ L/min}$).
