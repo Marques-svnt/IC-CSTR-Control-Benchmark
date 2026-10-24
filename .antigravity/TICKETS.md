@@ -444,3 +444,269 @@
 - **Security Audit:** Overleaf session credentials (`.olauth`) and pickle caches purged from Git.
 - **LaTeX Footer Fix:** `cas-common.sty` uncommented `\clearpage` in `\AtEndDocument`, fixing the "Page 10 of 8" footer anomaly across all papers.
 
+
+
+---
+
+## Wave 6 — Peer-Review Remediation: Multi-Branch Concurrent Orchestration (`IC-T21` $\to$ `IC-T27`)
+
+> **Architecture: Hub-and-Spoke (3 Branch Conversations $\to$ Main Coordinator)**
+> Rather than a slow sequential queue, Wave 6 is organized into **three concurrent branch conversations** (one dedicated branch per paper) that work in parallel and report back to the **Main Coordinator Conversation**:
+>
+> 1. **Branch 1 (`fix/paper1-jpc-remediation`):** Executes `IC-T21` + `IC-T22` (*Journal of Process Control*). Compute: **Low** ($\approx 1-2\text{ min}$).
+> 2. **Branch 2 (`fix/paper2-cce-remediation`):** Executes `IC-T23` + `IC-T24` (*Computers & Chemical Engineering*). Compute: **High** ($\approx 25-35\text{ min}$ due to CasADi/IPOPT NMPC in closed loop). Use Latin Hypercube Sampling ($N=25-30$) and `joblib` multi-core parallelization.
+> 3. **Branch 3 (`fix/paper3-cerd-remediation`):** Executes `IC-T25` + `IC-T26` (*Chemical Engineering Research and Design — CERD*). Compute: **Low** ($\approx 1\text{ min}$).
+> 4. **Main Coordinator (Hub / `main`):** Receives branch reports, merges changes, validates cross-cutting dependencies in `src/`, and executes `IC-T27` (cross-paper metadata, unified pytest suite, and Overleaf bundling).
+>
+> **Target Journals (Locked):**
+> - **Paper 1:** *Journal of Process Control* (Elsevier, IFAC) — Qualis A1
+> - **Paper 2:** *Computers & Chemical Engineering* (Elsevier) — Qualis A1
+> - **Paper 3:** *Chemical Engineering Research and Design* (CERD, Elsevier / IChemE) — Qualis A1
+
+---
+
+### Computational Cost Profiling Summary:
+- `IC-T21`: **Negligible** ($\approx 2-4\text{ s}$). 40 ODE runs (PID + CSTR RK4).
+- `IC-T22`: **Low** ($\approx 1-2\text{ min}$). Exact linear algebra ($H_\infty$) + 840 short filtered ODE runs + Nelder-Mead.
+- `IC-T23`: **Moderate** ($\approx 4-6\text{ min}$). 12 NMPC runs with CasADi/IPOPT ($500$ steps $\times$ $35\text{ ms}$).
+- `IC-T24`: **HIGH COMPUTATIONAL DEMAND** ($\approx 25-35\text{ min}$ serial / $\approx 5-7\text{ min}$ parallel). Requires closed-loop NMPC evaluations across parametric mismatch and stochastic noise. **Mitigation:** Employ Latin Hypercube Sampling ($N=25-30$ points) and parallelize with `joblib.Parallel(n_jobs=-1)`.
+- `IC-T25`: **Negligible** ($\approx 3-5\text{ s}$). ODE fouling sweeps and $3 \times 3$ eigenvalue tracking.
+- `IC-T26`: **Low** ($\approx 30-45\text{ s}$). Scheduled cascade ODE and Nelder-Mead SISO optimization.
+- `IC-T27`: **Negligible** ($\approx 30\text{ s}$). `pytest` suite + `latexmk -pdf` compilation.
+
+---
+
+### [ ] `IC-T21`: [Paper 1 - JPC] Reframe Scope & Complete $2 \times 2$ Anti-Windup Ablation with Back-Calculation
+- **Paper:** `papers/01_journal_of_process_control/`
+- **Target Journal:** *Journal of Process Control* (Qualis A1)
+- **Reviewer Consensus Issue:** Scope risk (JPC excludes PID tuning shootouts) + Ablation is a strawman (naive clamping never triggers for $K_p < 0$, valve gets stuck at 100% cooling = $377.9\text{ K}$, explaining identical $842.5\%$ IAE; missing tracking/back-calculation).
+- **Files:**
+  - `src/classical_control/pid_controller.py`
+  - `experiments/build_paper_assets.py`
+  - `experiments/exp_01_classical_benchmark.py`
+  - `papers/01_journal_of_process_control/sections/01_intro.tex`
+  - `papers/01_journal_of_process_control/sections/03_pid_classical.tex`
+  - `papers/01_journal_of_process_control/sections/04_results.tex`
+  - `papers/01_journal_of_process_control/highlights.tex`
+  - `tests/test_classical_control.py`
+- **Requirements:**
+  1. **Ablation & Anti-Windup Architecture (`pid_controller.py`):**
+     - Add `AntiWindupMethod.NONE` (integrator accumulates freely without any clamping or feedback).
+     - Add `AntiWindupMethod.BACK_CALCULATION` implementing standard tracking:
+       $$\dot{v}_I(t) = \frac{K_p}{T_i} e(t) + \frac{1}{T_t} [u_{\text{act}}(t) - u_{\text{raw}}(t)]$$
+       with tracking time constant $T_t = \sqrt{T_i T_d}$ (or $T_t = T_i$ when $T_d = 0$).
+     - Implement full $2 \times 2$ factorial test matrix in `run_antiwindup_ablation`:
+       - Factor 1: Trigger condition (Position-only saturation vs Position + Slew-rate saturation).
+       - Factor 2: Sign awareness (Directional sign-aware $(u_{\text{raw}} - u_{\text{act}})(K_p e_k) > 0$ vs Sign-agnostic / unconditional).
+     - In `results/` and Table 3, report all 5 cases: `None`, `Back-Calculation`, `Pos-only Agnostic`, `Pos+Rate Agnostic`, `Directional (Proposed)`.
+     - Mechanically document why naive clamping fails: for $K_p < 0$, the old condition never froze the integrator, leaving cooling stuck at $300\text{ L/min}$ and $T = 377.9\text{ K}$.
+  2. **Editorial Repositioning (JPC Scope Defense):**
+     - Rewrite title, abstract, and highlights (< 85 chars): Reposition the paper from a "PID tuning comparison" to an "Implementation and benchmarking methodology for constrained actuators (amplitude and slew rate) with directional anti-windup in exothermic reactors".
+     - In Section 1 and Section 3, cite concrete literature (Åström & Rundqwist 1989; Galeani et al. 2009; Tarbouriech & Turner 2009; Visioli 2006) instead of general textbooks when discussing anti-windup under velocity limits.
+- **Acceptance Criteria:**
+  - `pytest tests/test_classical_control.py` passes with tests for `NONE`, `BACK_CALCULATION`, and the $2 \times 2$ matrix.
+  - Table 3 in Paper 1 updated with complete ablation.
+  - Highlights conform to JPC char limit (< 85 chars per bullet).
+  - Clean compilation of `papers/01_journal_of_process_control/main.pdf`.
+
+---
+
+### [ ] `IC-T22`: [Paper 1 - JPC] Plant-Exact Robustness ($\|CS\|_\infty$, HF Gain), Measurement Filter & Out-of-Sample Validation
+- **Blocked by:** `IC-T21`
+- **Paper:** `papers/01_journal_of_process_control/`
+- **Reviewer Consensus Issue:** $M_s$ from FOPTD is an apparent-delay artifact (exact linear plant has $M_s = 1.57$ for ZN and $1.75$ for CC); noise sensitivity is driven by high-frequency gain $|K_p|(1+N)$; noise campaign chatters at kinematic limit ($800\text{ L/min}$) without filter; Optimal ITAE evaluated in-sample; disturbance hits saturation ceiling ($297.3 / 300\text{ L/min}$).
+- **Files:**
+  - `src/classical_control/foptd.py`
+  - `src/classical_control/closed_loop.py`
+  - `src/classical_control/tuning_optimization.py`
+  - `experiments/exp_01_classical_benchmark.py`
+  - `experiments/exp_02_robustness_campaign.py`
+  - `papers/01_journal_of_process_control/sections/04_results.tex`
+  - `papers/01_journal_of_process_control/sections/05_conclusion.tex`
+  - `papers/01_journal_of_process_control/tables/`
+- **Requirements:**
+  1. **Exact Linearized Robustness Metrics:**
+     - Compute $\|S\|_\infty$, $\|T\|_\infty$, and control sensitivity $\|CS\|_\infty$ using the exact 3-state linearized model $(A, B, C)$ with ZOH.
+     - Compute explicit high-frequency gain $K_{\text{hf}} = |K_p|(1+N)$ (e.g. 490 L/min/K for ZN, 559 for CC, 77 for SIMC).
+     - In Section 4.4, 4.7, and Conclusion 2, explain that noise vulnerability in ZN/CC stems from $K_{\text{hf}}$ and $\|CS\|_\infty$, not an unstable sensitivity peak in the physical plant.
+  2. **Filtered Measurement Campaign & Paired Statistics:**
+     - Add measurement low-pass filter on reactor temperature: $\dot{T}_{\text{meas}} = \frac{1}{\tau_f}(T_{\text{true}} + \eta - T_{\text{meas}})$ with $\tau_f = 0.05\text{ min}$ (or derivative filter $N = 10$).
+     - Re-run noise campaign across $\sigma \in \{0.0, 0.01, 0.05, 0.10\}\text{ K}$. Verify that TV does not saturate at $800\text{ L/min}$ and discriminates valve wear.
+     - Add 95% confidence intervals and paired Wilcoxon/t-tests across the 30 seeds in Table 7.
+  3. **Out-of-Sample Setpoint Evaluation:**
+     - Evaluate all controllers on setpoint steps not seen during ITAE optimization: $\Delta T_{\text{sp}} \in \{-5, -1, +1, +2, +5\}\text{ K}$.
+     - Re-optimize 2-DOF Optimal ITAE with free $(\beta, \gamma) \in [0, 1]^2$ rather than fixing $\beta = 0.5$.
+  4. **Graduated Disturbance Scenarios:**
+     - Replace extreme $T_f + 5\text{ K}, C_{Af} + 20\%$ (which requires $297.3\text{ L/min}$ cooling, leaving only $2.7\text{ L/min}$ before saturation) with moderate disturbances ($T_f + 2\text{ K}$, $C_{Af} + 10\%$) that allow controllers to demonstrate regulatory performance without being crushed against the actuator ceiling.
+- **Acceptance Criteria:**
+  - `pytest tests/test_classical_control.py tests/test_metrics.py` passes.
+  - Tables 4, 5, 6, 7 and Figure 2/5 updated in `papers/01_journal_of_process_control/`.
+  - PDF compiles cleanly with 0 errors.
+
+---
+
+### [ ] `IC-T23`: [Paper 2 - CCE] Offset-Free NMPC Formulation (Disturbance State/Integral Action) & Horizon Audit
+- **Paper:** `papers/02_computers_chemical_engineering/`
+- **Target Journal:** *Computers & Chemical Engineering* (Qualis A1)
+- **Reviewer Consensus Issue:** NMPC has $+8.7\text{ K}$ to $+8.9\text{ K}$ offset under unmeasured feed disturbances, while PID has 0; comparing PID to an NMPC without disturbance model is comparing a complete controller to an incomplete one. Explanation of offset was inconsistent with model steady states.
+- **Files:**
+  - `src/controllers/optimal/nmpc_controller.py`
+  - `experiments/exp_01b_nmpc_oracle_comparison.py`
+  - `papers/02_computers_chemical_engineering/sections/03_nmpc_mhe.tex`
+  - `papers/02_computers_chemical_engineering/sections/04_results.tex`
+  - `tests/test_sobol_and_nmpc.py`
+- **Requirements:**
+  1. **Offset-Free NMPC Implementation (`nmpc_controller.py`):**
+     - Augment the NMPC formulation with an integrating disturbance model or state-tracking error integral:
+       - Either add disturbance state $d_k$ to the temperature balance: $\dot{T} = f_T(x, u) + d$, with $d$ estimated by the augmented MHE/EKF.
+       - Or add an explicit integral penalty state $z_{k+1} = z_k + \Delta t (T_k - T_{\text{sp}})$ into the stage cost $J = \sum (T - T_{\text{sp}})^2 Q_T + q_j^2 R_u + \Delta q_j^2 R_{\Delta u} + z^2 Q_I$.
+     - Re-run disturbance scenario ($T_f + 5\text{ K}$, $C_{Af} + 20\%$) and verify that steady-state offset drops from $+8.8\text{ K}$ to $< 0.05\text{ K}$.
+  2. **Diagnostic Analysis of Original Offset:**
+     - Perform horizon sweep $N \in \{30, 50, 75, 100\}$.
+     - Plot predicted horizon trajectory vs realized closed-loop trajectory to prove whether short horizon ($N=50 \implies 1.0\text{ min}$, allowing only $\Delta q_j = 80\text{ L/min}$) causes perpetual postponement of control action.
+     - Correct explanation in Section 4.6 (replace the claim that nominal equilibrium was already at $T_{\text{sp}}$ with actual steady-state energy balance values: $111\text{ L/min}$ nominal vs $166\text{ L/min}$ disturbed).
+- **Acceptance Criteria:**
+  - Unit test in `tests/test_sobol_and_nmpc.py` verifies offset-free tracking under unmeasured $T_f$ step ($|e_{\text{ss}}| < 0.05\text{ K}$).
+  - Table 5 of Paper 2 regenerated with Offset-Free NMPC showing zero offset.
+  - Paper 2 PDF compiles cleanly.
+
+---
+
+### [ ] `IC-T24`: [Paper 2 - CCE] De-confounding Controller Comparison, Symmetric Noise Filtering, & Thermodynamic Infeasibility Fix
+- **Blocked by:** `IC-T23`
+- **Paper:** `papers/02_computers_chemical_engineering/`
+- **Reviewer Consensus Issue:** 21% gain confounds 3 factors ($\alpha_{UA}$ estimation, rate planning, nonlinearity); AMIGO was circularly selected post-hoc; valve travel was compared asymmetrically (Oracle without noise vs PID with noise); $60\%\text{ UA}$ is thermodynamically impossible in steady state ($UA_{\text{crit}} = 63.8\%$) yet reported as controller failure.
+- **Files:**
+  - `src/controllers/optimal/nmpc_controller.py`
+  - `src/classical_control/pid_controller.py`
+  - `experiments/exp_01b_nmpc_oracle_comparison.py`
+  - `experiments/exp_02_robustness_campaign.py`
+  - `papers/02_computers_chemical_engineering/sections/04_results.tex`
+  - `papers/02_computers_chemical_engineering/sections/05_conclusion.tex`
+  - `papers/02_computers_chemical_engineering/tables/`
+- **Requirements:**
+  1. **Factor De-confounding Ablation:**
+     - Run NMPC with frozen $\alpha_{UA} = 1.0$ during the 30% fouling transient.
+     - Implement Gain-Scheduled PID: $K_p(\hat{\alpha}_{UA}) = K_{p0} / \hat{\alpha}_{UA}$ where $\hat{\alpha}_{UA}$ comes from the MHE/EKF.
+     - Benchmark all standard PID rules (ZN, CC, TL, AMIGO, SIMC, Optimal ITAE) in the fouling transient rather than picking AMIGO post-hoc.
+     - Isolate the percentage contribution of: (a) Online parameter adaptation; (b) Slew-rate constrained trajectory optimization; (c) Nonlinear phenomenological prediction.
+  2. **Parametric Plant-Model Mismatch:**
+     - Introduce $\pm 5\%$ to $\pm 10\%$ parametric mismatch in plant parameters ($E_a/R$, $k_0$, $\Delta H$, $T_f$, $C_{Af}$) between the true plant and the NMPC internal model.
+     - Verify performance degradation via a 50-run Monte Carlo sweep.
+  3. **Symmetric Noise & TV Reporting:**
+     - Compare NMPC-MHE against PID with measurement filter.
+     - Rephrase claims in abstract and text: report the true, fair valve travel reduction ($15-24\%$, not "less than half" or "four times less").
+     - Clarify why NMPC-MHE had slightly lower IAE than Oracle in Tab. 7 (filter smoothing effect).
+  4. **Thermodynamic Reality at $60\%\text{ UA}$:**
+     - Prove mathematically that at $T = 394.65\text{ K}$, $UA_{\text{crit}} = 63.8\%$. At $UA = 60\%$, maximum cooling ($300\text{ L/min}$) yields an equilibrium of $396.65\text{ K} > T_{\text{sp}}$.
+     - Remove $60\%\text{ UA}$ from the "controller shootout" ranking; present it in Section 4.5 as a demonstration of thermodynamic loss of controllability. Correct Conclusion 5.
+- **Acceptance Criteria:**
+  - De-confounding table generated in `papers/02_computers_chemical_engineering/tables/`.
+  - Claims of valve travel reduction adjusted to 15–24% with symmetric noise.
+  - $UA_{\text{crit}} = 63.8\%$ explicitly formulated and explained in text.
+  - Paper 2 PDF compiles cleanly.
+
+---
+
+### [ ] `IC-T25`: [Paper 3 - CERD] Dynamic Fouling Sweep ($\kappa_{\text{foul}}$), Stability Mechanism Correction, & Numerical $b_3$ Fix
+- **Branch:** `fix/paper3-cerd-remediation`
+- **Paper:** `papers/03_chemical_engineering_research_design/`
+- **Target Journal:** *Chemical Engineering Research and Design* (CERD, Elsevier / IChemE, Qualis A1)
+- **Compute Cost:** Negligible ($\approx 3-5\text{ s}$).
+- **Reviewer Consensus Issue:** Mechanism of instability loss is dynamic (complex conjugate pair crossing imaginary axis), NOT loss of actuator gain ($K_c k \approx 1.5 > 1$ at boundary); headline 86–89% is frozen linear eigenvalue criterion, whereas dynamic simulation regulates until $52\%\text{ UA}$ ($t=28\text{ min}$); numerical discrepancy in $b_3$ ($-0.268$ vs $-0.315\text{ K/L}$).
+- **Files:**
+  - `src/sim_core/cstr_plant.py`
+  - `experiments/exp_06_unstable_saddle_and_fouling.py`
+  - `papers/03_chemical_engineering_research_design/sections/04_thermal_limits.tex`
+  - `papers/03_chemical_engineering_research_design/sections/05_cascade.tex`
+  - `papers/03_chemical_engineering_research_design/highlights.tex`
+  - `tests/test_cstr_model.py`
+- **Requirements:**
+  1. **Correction of Instability Mechanism:**
+     - Plot $K_c \cdot k$ along $UA \in [0.4, 1.0]$ and demonstrate that at $UA = 89.25\%$ (SISO) and $86.15\%$ (cascade), $K_c \cdot k = 1.57$ and $1.49$ (well above the static threshold of 1.0).
+     - Plot the root locus / eigenvalue trajectories $\lambda(UA)$: prove that instability occurs via a complex conjugate pair crossing the imaginary axis ($\mathrm{Re}(\lambda) = 0, \mathrm{Im}(\lambda) \neq 0$), representing an oscillatory dynamic bifurcation, not static gain collapse.
+     - Rewrite Section 4.3, 5.2, and Figure 5 to eliminate "loss of actuator gain" and correctly explain the dynamic eigenvalue crossing.
+  2. **Dynamic Fouling Rate Sweep ($\kappa_{\text{foul}}$):**
+     - Run dynamic simulations across fouling rates $\kappa_{\text{foul}} \in \{0.005, 0.05, 0.5\}\text{ min}^{-1}$.
+     - Demonstrate that as $\kappa_{\text{foul}} \to 0$ (quasi-static fouling), the dynamic departure time converges asymptotically to the frozen eigenvalue boundary ($86-89\%$).
+     - Rephrase abstract, Highlight 4, and Conclusion 5 to explicitly distinguish between the "analytical linear stability boundary ($86-89\%$)" and the "practical loss of regulation in fast transients ($52\%$ for SISO)".
+  3. **Numerical Discrepancy Resolution in $b_3$:**
+     - Recalculate $b_3 = \frac{\partial \dot{T}_j}{\partial q_j} = \frac{T_{jf} - \bar{T}_j}{V_j}$ at $UA_{\text{crit}}$.
+     - Verify with $\bar{T}_j = \bar{T} - Q_{\text{load}}/UA_{\text{crit}} = 305.35\text{ K}$: $b_3 = -0.268\text{ K/L}$ (factor 5.4) vs $-0.315\text{ K/L}$ (factor 4.6). Fix the number and factor in Section 4.3.
+- **Acceptance Criteria:**
+  - `pytest tests/test_cstr_model.py` passes.
+  - Figure 5 updated with eigenvalue root locus and $K_c \cdot k(UA)$.
+  - Abstract and highlights updated with dual linear/dynamic distinction.
+  - Paper 3 PDF compiles cleanly.
+
+---
+
+### [ ] `IC-T26`: [Paper 3 - CERD] Slave Gain-Scheduling Simulation, Robustness Bounds ($\|S\|_\infty \ge e^{p\theta}$), & Optimized SISO Baseline
+- **Blocked by:** `IC-T25`
+- **Branch:** `fix/paper3-cerd-remediation`
+- **Paper:** `papers/03_chemical_engineering_research_design/`
+- **Target Journal:** *Chemical Engineering Research and Design* (CERD, Elsevier / IChemE, Qualis A1)
+- **Compute Cost:** Low ($\approx 30-45\text{ s}$).
+- **Reviewer Consensus Issue:** Core practical recommendation (gain scheduling slave loop) was never simulated; SISO baseline was unoptimized SIMC with slow dominant pole; fundamental robustness lower bound $\|S\|_\infty \ge 1.62$ was not reported; lack of parametric sensitivity.
+- **Files:**
+  - `src/classical_control/cascade_controller.py`
+  - `src/classical_control/tuning_optimization.py`
+  - `experiments/exp_05_cascade_benchmark.py`
+  - `experiments/exp_06_unstable_saddle_and_fouling.py`
+  - `papers/03_chemical_engineering_research_design/sections/03_open_loop_saddle.tex`
+  - `papers/03_chemical_engineering_research_design/sections/05_cascade.tex`
+  - `papers/03_chemical_engineering_research_design/sections/06_conclusions.tex`
+  - `papers/03_chemical_engineering_research_design/tables/`
+- **Requirements:**
+  1. **Simulate Slave Gain-Scheduling:**
+     - Implement scheduled slave controller in `src/classical_control/cascade_controller.py`:
+       $$K_{c2}(T_j) = K_{c2,0} \frac{\bar{T}_{j,0} - T_{jf}}{T_j - T_{jf}}$$
+     - Re-run fouling campaign with scheduled cascade; report in Table 6 and Figure 5 that stability is extended well beyond $86.15\%$.
+  2. **Optimized SISO PID Baseline:**
+     - Replace the unoptimized SIMC SISO baseline ($\tau_c = 0.10$, dominant pole at $-0.064\text{ min}^{-1}$) with an optimal PID baseline tuned with explicit constraint $M_s \le 1.60$.
+     - Evaluate disturbance rejection in a fixed time window ($t \in [0, 15]\text{ min}$) to prevent limit-cycle horizon inflation.
+     - Recalculate the true fair IAE reduction of cascade vs optimal SISO.
+  3. **Fundamental Robustness Bounds & Sensitivities:**
+     - For unstable saddle pole $p = 0.7435\text{ min}^{-1}$ and delay $\theta = 0.648\text{ min}$, report the fundamental bound $\|S\|_\infty \ge e^{p\theta} \approx 1.62$.
+     - Report $M_s$, gain margin, phase margin, and delay margin for both SISO and cascade loops.
+     - Run a Monte Carlo sensitivity sweep on $E_a/R$, $k_0$, and $\Delta H$ ($\pm 5\%$) to quantify robustness under saddle hypersensitivity.
+- **Acceptance Criteria:**
+  - Scheduled cascade implemented and tested in `tests/test_classical_control.py`.
+  - Table 6 updated with scheduled cascade and optimized SISO baseline.
+  - Robustness margins and sensitivity bound documented in Section 3 and 5.
+  - Paper 3 PDF compiles cleanly.
+
+---
+
+### [ ] `IC-T27`: [Cross-Paper] Editorial Hygiene, Authorship Norms (CRediT, ORCID, AI Disclosure) & Zenodo Bundling
+- **Blocked by:** `IC-T21`, `IC-T22`, `IC-T23`, `IC-T24`, `IC-T25`, `IC-T26`
+- **Papers:** All three manuscripts (`papers/01_...`, `papers/02_...`, `papers/03_...`)
+- **Reviewer Consensus Issue:** Missing CRediT statements in Papers 1 & 2; empty ORCID; missing Generative AI disclosure statements; unresolved "companion papers under review" self-citations; missing definitions of $M_p$, $t_s$, units in ITAE ($\text{K}\cdot\text{min}^2$).
+- **Files:**
+  - `papers/01_journal_of_process_control/main.tex`
+  - `papers/02_computers_chemical_engineering/main.tex`
+  - `papers/03_chemical_engineering_research_design/main.tex`
+  - `papers/01_journal_of_process_control/references.bib`
+  - `papers/02_computers_chemical_engineering/references.bib`
+  - `papers/03_chemical_engineering_research_design/references.bib`
+  - `Makefile`
+- **Requirements:**
+  1. **CRediT & Metadata Uniformity:**
+     - Add formal Elsevier CRediT authorship statement to Paper 1 and Paper 2 matching Paper 3:
+       `Gabriel Marques de Andrade: Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data Curation, Writing - Original Draft, Writing - Review & Editing, Visualization.`
+     - Populate author ORCID: `0009-0008-8868-5100`.
+     - Add explicit Elsevier-compliant Generative AI disclosure statement in backmatter of all three papers.
+  2. **Nomenclature & Units Sanitation:**
+     - Explicitly define $M_p$ (% overshoot) and $t_s$ (2% settling band criterion) in all nomenclature sections and table footnotes.
+     - Ensure all occurrences of ITAE carry explicit units ($\text{K}\cdot\text{min}^2$).
+     - Merge redundant tables (e.g. Table 2 and Table 6 in Paper 1).
+  3. **Bibliography Modernization & Overleaf Archives:**
+     - Add recent literature (2019–2026) on rate-limited anti-windup, CSTR control benchmarks, and NMPC/MHE.
+     - Cleanly resolve citations between the 3 companion papers (cite as companion preprints with title and GitHub/Zenodo repository).
+     - Run `make papers` or compilation script; verify all three `main.pdf` compile with 0 LaTeX errors, 0 undefined citations, and 0 overfull boxes $> 15\text{ pt}$.
+     - Rebuild `ready_to_overleaf.zip` for each paper and generate SHA-256 checksums.
+- **Acceptance Criteria:**
+  - All 3 manuscripts compile cleanly with 0 errors.
+  - CRediT, ORCID, and AI statements present in all 3 papers.
+  - `ready_to_overleaf.zip` updated for all three papers.
+  - Test suite passes: `.venv/bin/pytest tests/`.
