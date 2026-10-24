@@ -1,7 +1,7 @@
 Method,Anti-windup,\(T_{\min}\) (K),Time at \(u_{\max}\) (min),\(T(t_f)-T_{sp}\) (K),\(\max|u_{\mathrm{raw}}-u_{\mathrm{act}}|\) (L/min)
 Ziegler-Nichols,None,382.0,0.00,+17.15,7775
-Ziegler-Nichols,Textbook,377.8,3.86,-16.72,4474
-Ziegler-Nichols,Directional (proposed),394.2,0.00,+0.00,92
+Ziegler-Nichols,Sign-blind amp.,377.8,3.86,-16.72,4474
+Ziegler-Nichols,Amp.+rate direct. (Eq.~13),394.2,0.00,+0.00,92
 Cohen-Coon,None,382.8,0.00,+8.52,8022
-Cohen-Coon,Textbook,377.8,4.06,-16.72,3540
-Cohen-Coon,Directional (proposed),394.0,0.00,-0.00,105
+Cohen-Coon,Sign-blind amp.,377.8,4.06,-16.72,3540
+Cohen-Coon,Amp.+rate direct. (Eq.~13),394.0,0.00,-0.00,105

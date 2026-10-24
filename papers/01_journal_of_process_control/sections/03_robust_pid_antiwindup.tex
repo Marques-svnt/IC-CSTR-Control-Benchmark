@@ -5,7 +5,7 @@ The controller is a parallel PID sampled at $\Delta t = 0.02$~min, with $u_{\tex
     I_k &= I_{k-1} + \frac{K_p}{T_i}\,\frac{e_k + e_{k-1}}{2}\,\Delta t, \label{eq:integral_trapezoidal} \\
     D_k &= \frac{\tau_f}{\tau_f + \Delta t} D_{k-1} - \frac{K_p T_d}{\tau_f + \Delta t}\,(y_{pv,k} - y_{pv,k-1}), \label{eq:derivative_filtered}
 \end{align}
-with derivative on the measurement and filter time $\tau_f = T_d/N$, $N = 10$ \cite{astrom1995pid, visioli2006practical}. The loop is reverse-acting: more coolant lowers the temperature, so all tunings have $K_p < 0$.
+with derivative on the measurement and filter time $\tau_f = T_d/N$ \cite{astrom1995pid, visioli2006practical}. The coefficient $N$ is a design variable: the benchmark uses the common value $N = 10$ for every rule, and Section~\ref{subsec:noise_results} shows how much of the noise-to-valve gain of the empirical rules is due to that choice \cite{segovia2013noise}. The loop is reverse-acting: more coolant lowers the temperature, so all tunings have $K_p < 0$.
 
 \subsection{Directional amplitude- and rate-aware clamping}
 Let $u_{\text{act},k-1}$ be the valve position actually reached at the previous sample after amplitude \emph{and} slew-rate limitation. With the trapezoidal increment $\delta I_k = (K_p/T_i)\,\tfrac{1}{2}(e_k + e_{k-1})\,\Delta t$ of Eq.~\eqref{eq:integral_trapezoidal}, the integrator is frozen when the previous command was cut by either limit and the increment pushes further in the same direction:
@@ -16,7 +16,7 @@ Let $u_{\text{act},k-1}$ be the valve position actually reached at the previous 
     \end{cases}
     \label{eq:clamping_antiwindup}
 \end{equation}
-Evaluating the saturation residual at the previous sample avoids an algebraic loop between $I_k$, $u_{\text{raw},k}$ and the nonlinear valve map. The product form contains the sign of the loop: with $K_p < 0$ a negative error drives the command towards $u_{\max}$, so the textbook condition ``$u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$'' is false while the integrator winds up and becomes true only when the error has reversed, i.e. when the integrator must unwind (Section~\ref{subsec:ablation}). It also covers rate saturation: a $2$~K setpoint step demands more than $S_{\max}\Delta t = 1.6$~L/min per sample from most tunings, so the valve spends the first part of the transient rate-limited but far from its amplitude stops, and an amplitude-only rule keeps integrating during the whole ramp \cite{bohn1995analysis, peng1996nonlinear}. Section~\ref{subsec:ablation} quantifies the difference against the textbook rule and the other variants defined next.
+Evaluating the saturation residual at the previous sample avoids an algebraic loop between $I_k$, $u_{\text{raw},k}$ and the nonlinear valve map. The product form contains the sign of the loop: with $K_p < 0$ a negative error drives the command towards $u_{\max}$, so the sign-blind condition ``$u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$'' is false while the integrator winds up and becomes true only when the error has reversed, i.e. when the integrator must unwind (Section~\ref{subsec:ablation}). It also covers rate saturation: a $2$~K setpoint step demands more than $S_{\max}\Delta t = 1.6$~L/min per sample from most tunings, so the valve spends the first part of the transient rate-limited but far from its amplitude stops, and an amplitude-only rule keeps integrating during the whole ramp \cite{bohn1995analysis, peng1996nonlinear}. Section~\ref{subsec:ablation} quantifies the difference against sign-blind clamping and the other variants defined next. The rule is the sign-of-increment form of conditional integration, evaluated on the slew-limited valve position; it is adopted, not proposed as new (Section~\ref{subsec:positioning}).
 
 \subsection{Anti-windup variants of the ablation}
 \label{subsec:aw_variants}
@@ -25,7 +25,32 @@ Seven integrator policies are compared (Table~\ref{tab:antiwindup_ablation}). \e
     I_k = I_{k-1} + \delta I_k + \frac{\Delta t}{T_t}\left(u_{\text{act},k-1} - u_{\text{raw},k-1}\right), \qquad T_t = \sqrt{T_i T_d}\ (T_t = T_i \text{ if } T_d = 0),
     \label{eq:back_calculation}
 \end{equation}
-with $T_t$ fixed by this rule and not tuned. The \emph{textbook} rule freezes the integrator when $u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$, or $u_{\text{raw}} \le u_{\min}$ and $e_k < 0$, which is correct for a direct-acting loop. The remaining four variants form the $2\times 2$ factorial of the clamping family. The \emph{trigger} is either amplitude only ($u_{\text{raw},k-1}$ outside $[u_{\min}, u_{\max}]$) or amplitude plus slew rate ($u_{\text{raw},k-1} \ne u_{\text{act},k-1}$). The \emph{sign awareness} is either unconditional (the integrator is frozen whenever the trigger holds, whatever the sign of $\delta I_k$) or directional (frozen only if $(u_{\text{raw},k-1} - u_{\text{act},k-1})\,\delta I_k > 0$, Eq.~\eqref{eq:clamping_antiwindup}). The proposed rule is the amplitude-plus-rate, directional cell.
+with the default $T_t$ above; because the scheme is sensitive to $T_t$, Table~\ref{tab:antiwindup_tt_sweep} repeats it with $0.1T_t$ and $10T_t$. \emph{Sign-blind amplitude clamping} freezes the integrator when $u_{\text{raw}} \ge u_{\max}$ and $e_k > 0$, or $u_{\text{raw}} \le u_{\min}$ and $e_k < 0$, which is the sign convention of a direct-acting loop. The remaining four variants form the $2\times 2$ factorial of the clamping family. The \emph{trigger} is either amplitude only ($u_{\text{raw},k-1}$ outside $[u_{\min}, u_{\max}]$) or amplitude plus slew rate ($u_{\text{raw},k-1} \ne u_{\text{act},k-1}$). The \emph{sign awareness} is either unconditional (the integrator is frozen whenever the trigger holds, whatever the sign of $\delta I_k$) or directional (frozen only if $(u_{\text{raw},k-1} - u_{\text{act},k-1})\,\delta I_k > 0$, Eq.~\eqref{eq:clamping_antiwindup}). The rule adopted in the benchmark is the amplitude-plus-rate, directional cell; Algorithm~\ref{alg:integrator} gives its implementation.
+
+\begin{algorithm}[t]
+\caption{Integrator update with directional amplitude- and rate-aware clamping (one sampling instant, reverse- or direct-acting).}\label{alg:integrator}
+\begin{algorithmic}[1]
+\Require $e_k$, $e_{k-1}$, $I_{k-1}$, previous command $u_{\text{raw},k-1}$ and previous valve position $u_{\text{act},k-1}$ (after amplitude \emph{and} slew limits)
+\State $\delta I \gets (K_p/T_i)\,\tfrac12 (e_k + e_{k-1})\,\Delta t$
+\If{$(u_{\text{raw},k-1} - u_{\text{act},k-1})\,\delta I > 0$}
+    \State $I_k \gets I_{k-1}$ \Comment{limit cut the last move and the increment pushes further into it}
+\Else
+    \State $I_k \gets I_{k-1} + \delta I$
+\EndIf
+\State $u_{\text{raw},k} \gets u_{\text{bias}} + P_k + I_k + D_k$; \quad $u_{\text{act},k} \gets \operatorname{rate}(\operatorname{sat}(u_{\text{raw},k}))$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Checklist for reporting the anti-windup logic}
+\label{subsec:checklist}
+A comparison of PID tunings on a valve-limited loop is only interpretable if it states the following five items; each one changed a conclusion in this study.
+\begin{enumerate}
+    \item \textbf{Loop sign.} Is the loop reverse-acting ($K_p<0$ in the convention used), and was the clamping condition written for that sign?
+    \item \textbf{Trigger.} Does the logic react to the amplitude limit only, or also to the slew-rate limit (i.e.\ does it use the post-rate-limit valve position)?
+    \item \textbf{Sign awareness.} Is the integrator frozen unconditionally, or only if the increment pushes further into the limit?
+    \item \textbf{Tracking constant.} If back-calculation is used, what is $T_t$ and how sensitive is the result to $0.1T_t$ and $10T_t$?
+    \item \textbf{Measurement path.} Which derivative-filter coefficient $N$ and which measurement filter $\tau_m$ were used, and are the errors evaluated on the true or on the measured signal?
+\end{enumerate}
 
 \subsection{Measurement filter}
 \label{subsec:meas_filter}
@@ -50,8 +75,8 @@ The eight tunings span the main design philosophies for a lag-dominant loop:
     \item \textbf{AMIGO} \cite{astrom2004revisiting, astrom2006pid}: $K_p = (0.2 + 0.45\,\tau/\theta)/K$, $T_i = \theta\,(0.4\theta + 0.8\tau)/(\theta + 0.1\tau)$, $T_d = 0.5\theta\tau/(0.3\theta + \tau)$, designed for $M_s \approx 1.4$ by maximizing the integral gain.
     \item \textbf{2-DOF AMIGO}: the AMIGO gains with setpoint weights $\beta = 0.5$, $\gamma = 0$ (Section~\ref{subsec:two_dof}), the use for which AMIGO is intended in servo tasks \cite{astrom2004revisiting}.
     \item \textbf{SIMC} \cite{skogestad2003simple, grimholt2018optimal}: $K_p = \tau/(K(\tau_c + \theta))$, $T_i = \min(\tau, 4(\tau_c + \theta))$, $T_d = 0.33\theta$, with $\tau_c = 0.40$~min.
-    \item \textbf{Optimal ITAE ($M_s \le 1.6$)}: Nelder--Mead minimization of the ITAE of a $-2$~K step on the nonlinear plant and the benchmark valve, with the penalty $10^4\max(0, M_s - 1.6)^2$ and $M_s$ evaluated on the dead-time loop of Eq.~\eqref{eq:foptd}. Evaluating $M_s$ on the delay-free Jacobian instead would return values close to one for almost any gain and silently disable the constraint. Because the simplex is local, it is started from a default guess and from every analytical tuning already inside the robust set (AMIGO, SIMC). The default start stops at a PI-like local optimum ($T_d = 0$, $\mathrm{ITAE} = 0.34$~K$\cdot$min$^2$); the analytical starts reach $0.20$--$0.21$~K$\cdot$min$^2$. The retained optimum has $M_s = 1.60$: the constraint is active, and the derivative action is kept because it buys the phase margin that allows a higher proportional gain at the same $M_s$.
-    \item \textbf{2-DOF Optimal ITAE}: the optimal gains with $\beta = 0.5$, $\gamma = 0$.
+    \item \textbf{Optimal ITAE ($M_s^{\mathrm{FOPTD}} \le 1.6$)}: Nelder--Mead minimization of the ITAE of a $-2$~K step on the nonlinear plant and the benchmark valve, with the penalty $10^4\max(0, M_s - 1.6)^2$ and $M_s$ evaluated on the identified dead-time loop of Eq.~\eqref{eq:foptd}; the superscript records that the bound is imposed on the design model, not on the exact loop (Section~\ref{subsec:constraint_cost}). Evaluating $M_s$ on the delay-free Jacobian instead would return values close to one for almost any gain and silently disable the constraint. Because the simplex is local, it is started from a default guess and from every analytical tuning already inside the robust set (AMIGO, SIMC). The default start stops at a PI-like local optimum ($T_d = 0$, $\mathrm{ITAE} = 0.34$~K$\cdot$min$^2$); the analytical starts reach $0.20$--$0.21$~K$\cdot$min$^2$. The retained optimum has $M_s^{\mathrm{FOPTD}} = 1.60$: the constraint is active on the design model, and the derivative action is kept because it buys the phase margin that allows a higher proportional gain at the same $M_s$.
+    \item \textbf{2-DOF Optimal ITAE}: the optimal gains with the setpoint weights fixed at $\beta = 0.5$, $\gamma = 0$. It is a 2-DOF \emph{variant}, not an optimized 2-DOF design; the joint optimization of gains and weights is reported in Section~\ref{subsec:constraint_cost}.
 \end{enumerate}
 The resulting gains are listed in Table~\ref{tab:classical_benchmark}.
 
@@ -71,4 +96,4 @@ Robustness is quantified by the sensitivity peak \cite{astrom2006pid, skogestad2
     M_s = \sup_{\omega \ge 0} \left|\frac{1}{1 + G_p(j\omega)C(j\omega)}\right|,
     \label{eq:sensitivity_func}
 \end{equation}
-evaluated with the exact delay $e^{-j\omega\theta}$ and $C(s) = K_p\,(1 + 1/(T_i s) + T_d s/(\tau_f s + 1))$. The bound $M_s \le 1.6$ guarantees a gain margin of at least $2.67$ and a phase margin of at least $36.4^\circ$ \cite{garpinger2014performance, padula2012optimal}. The FOPTD and the true plant agree at low frequency but diverge above the identification bandwidth: the delay adds phase lag without bound, whereas the phase of the relative-degree-two $G_{\text{true}}$ saturates. The FOPTD therefore overestimates the high-frequency lag, which makes $M_s$ conservative for loops whose peak lies at high frequency, while near crossover the comparison can go either way. Section~\ref{subsec:margins} evaluates both loops.
+evaluated with the exact delay $e^{-j\omega\theta}$ and $C(s) = K_p\,(1 + 1/(T_i s) + T_d s/(\tau_f s + 1))$. The bound $M_s \le 1.6$ guarantees a gain margin of at least $2.67$ and a phase margin of at least $36.4^\circ$ \cite{garpinger2014performance, padula2011tuning}. The FOPTD and the true plant agree at low frequency but diverge above the identification bandwidth: the delay adds phase lag without bound, whereas the phase of the relative-degree-two $G_{\text{true}}$ saturates. The FOPTD therefore overestimates the high-frequency lag, which makes $M_s$ conservative for loops whose peak lies at high frequency, while near crossover the comparison can go either way. Section~\ref{subsec:margins} evaluates both loops.

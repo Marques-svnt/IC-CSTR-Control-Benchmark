@@ -1,21 +1,21 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Regulatory performance under combined feed temperature ($+2$~K) and concentration ($+10\%$) load disturbances. $T(t_f) - T_{sp}$ is the true temperature error at $t_f = 15$~min.}
+\caption{Regulatory performance under combined feed temperature ($+2$~K) and concentration ($+10\%$) load disturbances. Noise-free (deterministic) response. TV/ceiling is TV relative to the kinematic ceiling $S_{\max}t_f$. $T(t_f) - T_{sp}$ is the true temperature error at $t_f = 15$~min.}
 \label{tab:load_disturbance}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
-\begin{tabular}{lcccccc}
+\begin{tabular}{lccccccc}
 \toprule
-Method & IAE & ITAE (K$\cdot$min$^2$) & TV (L/min) & Peak Dev (K) & Max Valve (L/min) & \(T(t_f) - T_{sp}\) (K) \\
+Method & IAE & ITAE (K$\cdot$min$^2$) & TV (L/min) & TV/ceiling (\%) & Peak Dev (K) & Max Valve (L/min) & \(T(t_f) - T_{sp}\) (K) \\
 \midrule
-Ziegler-Nichols & 2.38 & 19.48 & 1116.7 & 2.51 & 177.9 & -0.07 \\
-Cohen-Coon & 2.39 & 19.43 & 1117.0 & 2.49 & 178.2 & -0.06 \\
-Tyreus-Luyben & 4.16 & 36.46 & 1077.6 & 2.54 & 166.2 & +0.02 \\
-AMIGO & 3.01 & 24.64 & 991.1 & 2.53 & 167.5 & +0.01 \\
-2-DOF AMIGO & 3.01 & 24.64 & 991.1 & 2.53 & 167.5 & +0.01 \\
-Skogestad SIMC & 7.05 & 62.23 & 692.8 & 3.07 & 163.7 & +0.04 \\
-Optimal ITAE ($M_s \leq 1.6$) & 3.23 & 27.04 & 1011.1 & 2.51 & 165.4 & +0.00 \\
-2-DOF Optimal ITAE & 3.23 & 27.04 & 1011.1 & 2.51 & 165.4 & +0.00 \\
+Ziegler-Nichols & 2.04 & 17.07 & 129.3 & 11 & 2.49 & 178.3 & +0.00 \\
+Cohen-Coon & 1.98 & 16.54 & 124.2 & 10 & 2.49 & 180.0 & -0.00 \\
+Tyreus-Luyben & 3.02 & 25.64 & 72.7 & 6 & 2.49 & 164.8 & +0.00 \\
+AMIGO & 2.42 & 19.96 & 88.3 & 7 & 2.49 & 171.0 & -0.00 \\
+2-DOF AMIGO & 2.42 & 19.96 & 88.3 & 7 & 2.49 & 171.0 & -0.00 \\
+Skogestad SIMC & 5.70 & 48.36 & 62.4 & 5 & 2.86 & 162.4 & +0.01 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 2.43 & 20.09 & 76.0 & 6 & 2.49 & 166.4 & +0.00 \\
+2-DOF Optimal ITAE & 2.43 & 20.09 & 76.0 & 6 & 2.49 & 166.4 & +0.00 \\
 \bottomrule
 \end{tabular}%
 }

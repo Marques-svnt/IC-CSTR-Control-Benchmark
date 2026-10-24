@@ -1,7 +1,7 @@
 \begin{highlights}
-\item Implementation study of PID loops with amplitude- and slew-rate-limited valves
-\item Textbook clamping latches a reverse-acting loop at full cooling (377.9 K)
-\item Rate-aware directional clamping keeps all eight tunings stable
-\item Noise-to-valve gain follows |Kp|(1+N), not the linearized sensitivity peak
-\item Optimal-ITAE PID stays best on out-of-sample setpoint steps up to -5 K
+\item Sign-blind amplitude clamping latches reverse-acting loops at full cooling
+\item A slew-rate trigger, not sign awareness, restores the loop with no extra parameter
+\item Back-calculation degrades 38-fold when its time constant is scaled by 0.1 or 10
+\item Valve noise gain follows |Kp|(1+N), not the exact-loop sensitivity peak
+\item Exact-loop Ms bound buys 11% ITAE at 76% higher high-frequency gain
 \end{highlights}

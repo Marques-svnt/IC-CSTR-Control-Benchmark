@@ -1,0 +1,5 @@
+Factor,Range,"\(u_{\mathrm{req}}\), low (L/min)","\(u_{\mathrm{req}}\), high (L/min)"
+$E_a/R$,"[0.97, 1.03]",124.0,90.8
+$UA$,"[0.65, 1.05]",275.1,105.3
+$C_{Af}$,"[0.85, 1.15]",60.3,208.1
+$\theta_{\mathrm{sensor}}$,"[0, 0.1]",--,--

@@ -67,7 +67,14 @@ Local stability does not guarantee global controllability. With the valve fully 
     T_{j,\min}(T) = \frac{u_{\max} T_{jf} + (UA/\rho_j C_{pj})\,T}{u_{\max} + UA/\rho_j C_{pj}} > T_{jf},
     \label{eq:tj_min_bound}
 \end{equation}
-so the heat that the reactor can reject is bounded by $Q_{r,\max}(T) = q \rho C_p (T - T_f) + UA\,(T - T_{j,\min}(T))$. Whenever a disturbance or a loss of heat-transfer capacity raises the required heat removal above $Q_{r,\max}$, no control law acting through this valve can hold the temperature; this bound is the physical controllability limit against which the PID loops are evaluated.
+so the heat that the reactor can reject is bounded by $Q_{r,\max}(T) = q \rho C_p (T - T_f) + UA\,(T - T_{j,\min}(T))$. Whenever a disturbance or a loss of heat-transfer capacity raises the required heat removal above $Q_{r,\max}$, no control law acting through this valve can hold the temperature; this bound is the physical controllability limit against which the PID loops are evaluated. The same balances solved backwards give the steady coolant flow that holds a temperature $T$,
+\begin{equation}
+    C_A^\star = \frac{(q/V)\,C_{Af}}{q/V + k(T)}, \quad
+    T_j^\star = T - \frac{V\rho C_p}{UA}\!\left[\frac{q}{V}(T_f - T) + \frac{(-\Delta H)}{\rho C_p}\,k(T)\,C_A^\star\right], \quad
+    u_{\mathrm{req}}(T) = \frac{UA\,(T - T_j^\star)}{\rho_j C_{pj}\,(T_j^\star - T_{jf})},
+    \label{eq:u_req}
+\end{equation}
+with $k(T) = k_0\exp(-E/(R\,T))$. The setpoint is attainable at steady state only if $u_{\mathrm{req}} \le u_{\max}$; Section~\ref{subsec:sobol_results} uses $u_{\mathrm{req}}$ as the heat-removal demand of a perturbed plant.
 
 \subsection{Valve amplitude and slew-rate limits}
 \label{subsec:actuator_limits}

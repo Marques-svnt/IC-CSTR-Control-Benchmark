@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Uncertainty box of the Sobol analysis expressed as heat-removal demand: coolant flow needed at the $-2$~K setpoint when one factor sits at a bound and the others are nominal (nominal: $110.9$~L/min; valve stop $300$~L/min). Ranges of $E_a/R$ and $UA$ are relative to nominal.}
+\label{tab:sobol_ranges}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Factor & Range & \(u_{\mathrm{req}}\), low (L/min) & \(u_{\mathrm{req}}\), high (L/min) \\
+\midrule
+$E_a/R$ & [0.97, 1.03] & 124.0 & 90.8 \\
+$UA$ & [0.65, 1.05] & 275.1 & 105.3 \\
+$C_{Af}$ & [0.85, 1.15] & 60.3 & 208.1 \\
+$\theta_{\mathrm{sensor}}$ & [0, 0.1] & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

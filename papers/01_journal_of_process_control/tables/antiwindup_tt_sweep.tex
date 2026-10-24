@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{IAE (K$\cdot$min) of back-calculation with the tracking time constant scaled by $0.1$, $1$ (Eq.~\eqref{eq:back_calculation}) and $10$, against the directional rule (``dir.'', Eq.~\eqref{eq:clamping_antiwindup}), on three setpoint steps.}
+\label{tab:antiwindup_tt_sweep}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccccccccccc}
+\toprule
+Method & \(T_t\) (min) & -2 K, $\times 0.1$ & -2 K, $\times 1$ & -2 K, $\times 10$ & -2 K, dir. & -5 K, $\times 0.1$ & -5 K, $\times 1$ & -5 K, $\times 10$ & -5 K, dir. & +5 K, $\times 0.1$ & +5 K, $\times 1$ & +5 K, $\times 10$ & +5 K, dir. \\
+\midrule
+Ziegler-Nichols & 0.093 & 18.56 & 0.97 & 37.36 & 0.94 & 48.56 & 3.63 & 36.14 & 3.33 & 48.54 & 3.65 & 70.12 & 3.65 \\
+Cohen-Coon & 0.085 & 18.56 & 0.87 & 30.95 & 1.02 & 48.56 & 3.39 & 32.02 & 3.44 & 48.54 & 3.28 & 57.84 & 4.39 \\
+Tyreus-Luyben & 0.209 & 1.81 & 1.26 & 1.09 & 0.92 & 4.98 & 4.42 & 4.37 & 3.55 & 4.75 & 4.07 & 4.91 & 3.25 \\
+AMIGO & 0.121 & 1.16 & 0.92 & 1.25 & 0.93 & 3.92 & 3.32 & 6.28 & 3.32 & 3.51 & 2.88 & 15.89 & 2.87 \\
+Skogestad SIMC & 0.141 & 2.22 & 1.47 & 1.11 & 1.29 & 6.17 & 4.94 & 3.57 & 4.41 & 5.46 & 4.23 & 3.22 & 3.69 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 0.122 & 1.36 & 0.99 & 1.15 & 0.83 & 4.27 & 3.53 & 5.02 & 3.26 & 4.06 & 3.29 & 7.72 & 3.01 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

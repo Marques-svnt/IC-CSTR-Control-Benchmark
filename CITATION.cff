@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "IC-CSTR-Control-Benchmark: PID, anti-windup and NMPC benchmark for an exothermic CSTR"
+type: software
+authors:
+  - family-names: "Marques de Andrade"
+    given-names: "Gabriel"
+    orcid: "https://orcid.org/0009-0008-8868-5100"
+    affiliation: "State University of Santa Cruz (UESC)"
+  - family-names: "Rodrigues Edwards"
+    given-names: "Elilton"
+    affiliation: "State University of Santa Cruz (UESC)"
+repository-code: "https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark"

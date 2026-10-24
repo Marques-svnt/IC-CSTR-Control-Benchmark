@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Derivative-filter coefficient $N$ ($\tau_f = T_d/N$) as a design variable for the empirical rules, $-2$~K step, unfiltered measurement; $K_{\mathrm{hf}} = |K_p|(1+N)$ equals $\|CS\|_\infty$ to within $0.3$~L/min/K in every row. Noise columns: mean $\pm$ $95\%$ half-width over 30 realizations; TV in L/min, IAE in K$\cdot$min.}
+\label{tab:n_design}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+Method & \(N\) & \(K_{\mathrm{hf}}\) (L/min/K) & IAE (noise-free) & \(M_p\) (\%) & IAE ($\sigma=0.01$) & TV ($\sigma=0.01$) & IAE ($\sigma=0.05$) & TV ($\sigma=0.05$) \\
+\midrule
+Ziegler-Nichols & 3 & 178 & 0.942 & 23.3 & 0.99 $\pm$ 0.01 & 523 $\pm$ 4 & 1.27 $\pm$ 0.03 & 726 $\pm$ 3 \\
+Ziegler-Nichols & 5 & 267 & 0.941 & 22.9 & 0.99 $\pm$ 0.01 & 553 $\pm$ 4 & 1.33 $\pm$ 0.03 & 736 $\pm$ 4 \\
+Ziegler-Nichols & 10 & 490 & 0.940 & 22.6 & 1.00 $\pm$ 0.01 & 581 $\pm$ 4 & 1.39 $\pm$ 0.03 & 743 $\pm$ 3 \\
+Cohen-Coon & 3 & 203 & 1.010 & 31.4 & 1.07 $\pm$ 0.01 & 537 $\pm$ 4 & 1.43 $\pm$ 0.04 & 732 $\pm$ 3 \\
+Cohen-Coon & 5 & 305 & 1.011 & 31.1 & 1.07 $\pm$ 0.01 & 558 $\pm$ 4 & 1.46 $\pm$ 0.03 & 738 $\pm$ 3 \\
+Cohen-Coon & 10 & 559 & 1.017 & 31.0 & 1.08 $\pm$ 0.01 & 578 $\pm$ 4 & 1.50 $\pm$ 0.04 & 744 $\pm$ 3 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

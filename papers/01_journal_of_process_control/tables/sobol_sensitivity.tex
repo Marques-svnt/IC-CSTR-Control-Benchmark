@@ -1,33 +1,41 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Global Sobol indices (Saltelli sampling, $N=512$, $3072$ closed-loop runs per controller) of IAE and TV for a $-2$~K setpoint step under simultaneous uncertainty $E_a/R \in [0.97, 1.03]$, $UA \in [0.65, 1.05]\,UA_{\mathrm{nom}}$, $C_{Af} \in [0.85, 1.15]$~mol/L and sensor dead time $\theta_{\mathrm{sensor}} \in [0, 0.1]$~min.}
+\caption{Global Sobol indices (Saltelli sampling, $N=512$, $3072$ closed-loop runs per controller) of IAE and TV for a $-2$~K setpoint step at $t = 0.5$~min under simultaneous uncertainty $E_a/R \in [0.97, 1.03]$, $UA \in [0.65, 1.05]\,UA_{\mathrm{nom}}$, $C_{Af} \in [0.85, 1.15]$~mol/L and sensor dead time $\theta_{\mathrm{sensor}} \in [0, 0.1]$~min. Every run starts from the nominal equilibrium. Entries are index $\pm$ half-width of the $95\%$ bootstrap interval (SALib, 100 resamples).}
 \label{tab:sobol_sensitivity}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lccccc}
 \toprule
 Controller & Parameter & $S_1$ (IAE) & $S_T$ (IAE) & $S_1$ (TV) & $S_T$ (TV) \\
 \midrule
-Ziegler-Nichols & $E_a/R$ & 0.006 & 0.113 & 0.234 & 0.350 \\
-Ziegler-Nichols & $UA$ & 0.168 & 0.559 & 0.060 & 0.193 \\
-Ziegler-Nichols & $C_{Af}$ & 0.354 & 0.703 & 0.111 & 0.365 \\
-Ziegler-Nichols & $\theta_{\mathrm{sensor}}$ & 0.013 & 0.017 & 0.331 & 0.519 \\
-Tyreus-Luyben & $E_a/R$ & 0.009 & 0.083 & 0.292 & 0.705 \\
-Tyreus-Luyben & $UA$ & 0.183 & 0.523 & 0.041 & 0.475 \\
-Tyreus-Luyben & $C_{Af}$ & 0.414 & 0.708 & 0.041 & 0.404 \\
-Tyreus-Luyben & $\theta_{\mathrm{sensor}}$ & 0.006 & 0.007 & 0.070 & 0.320 \\
-AMIGO & $E_a/R$ & 0.008 & 0.067 & 0.174 & 0.451 \\
-AMIGO & $UA$ & 0.198 & 0.527 & 0.081 & 0.396 \\
-AMIGO & $C_{Af}$ & 0.410 & 0.696 & 0.334 & 0.623 \\
-AMIGO & $\theta_{\mathrm{sensor}}$ & 0.003 & 0.001 & 0.111 & 0.291 \\
-Skogestad SIMC & $E_a/R$ & 0.018 & 0.063 & 0.021 & 0.057 \\
-Skogestad SIMC & $UA$ & 0.205 & 0.485 & 0.211 & 0.449 \\
-Skogestad SIMC & $C_{Af}$ & 0.454 & 0.695 & 0.580 & 0.813 \\
-Skogestad SIMC & $\theta_{\mathrm{sensor}}$ & 0.000 & 0.000 & 0.002 & 0.001 \\
-2-DOF Optimal ITAE & $E_a/R$ & 0.008 & 0.083 & 0.246 & 0.634 \\
-2-DOF Optimal ITAE & $UA$ & 0.186 & 0.525 & 0.007 & 0.415 \\
-2-DOF Optimal ITAE & $C_{Af}$ & 0.409 & 0.707 & 0.100 & 0.554 \\
-2-DOF Optimal ITAE & $\theta_{\mathrm{sensor}}$ & 0.005 & 0.005 & 0.087 & 0.257 \\
+Ziegler-Nichols & $E_a/R$ & 0.006 $\pm$ 0.027 & 0.113 $\pm$ 0.032 & 0.234 $\pm$ 0.067 & 0.350 $\pm$ 0.061 \\
+Ziegler-Nichols & $UA$ & 0.168 $\pm$ 0.097 & 0.559 $\pm$ 0.121 & 0.060 $\pm$ 0.054 & 0.193 $\pm$ 0.038 \\
+Ziegler-Nichols & $C_{Af}$ & 0.354 $\pm$ 0.120 & 0.703 $\pm$ 0.165 & 0.111 $\pm$ 0.076 & 0.365 $\pm$ 0.053 \\
+Ziegler-Nichols & $\theta_{\mathrm{sensor}}$ & 0.013 $\pm$ 0.012 & 0.017 $\pm$ 0.007 & 0.331 $\pm$ 0.073 & 0.519 $\pm$ 0.073 \\
+Cohen-Coon & $E_a/R$ & 0.014 $\pm$ 0.032 & 0.138 $\pm$ 0.036 & 0.243 $\pm$ 0.075 & 0.389 $\pm$ 0.065 \\
+Cohen-Coon & $UA$ & 0.148 $\pm$ 0.098 & 0.567 $\pm$ 0.122 & 0.098 $\pm$ 0.067 & 0.256 $\pm$ 0.045 \\
+Cohen-Coon & $C_{Af}$ & 0.324 $\pm$ 0.118 & 0.707 $\pm$ 0.164 & 0.168 $\pm$ 0.082 & 0.424 $\pm$ 0.062 \\
+Cohen-Coon & $\theta_{\mathrm{sensor}}$ & 0.016 $\pm$ 0.017 & 0.021 $\pm$ 0.007 & 0.215 $\pm$ 0.076 & 0.417 $\pm$ 0.065 \\
+Tyreus-Luyben & $E_a/R$ & 0.009 $\pm$ 0.024 & 0.083 $\pm$ 0.023 & 0.292 $\pm$ 0.124 & 0.705 $\pm$ 0.180 \\
+Tyreus-Luyben & $UA$ & 0.183 $\pm$ 0.093 & 0.523 $\pm$ 0.113 & 0.041 $\pm$ 0.100 & 0.475 $\pm$ 0.161 \\
+Tyreus-Luyben & $C_{Af}$ & 0.414 $\pm$ 0.118 & 0.708 $\pm$ 0.162 & 0.041 $\pm$ 0.096 & 0.404 $\pm$ 0.117 \\
+Tyreus-Luyben & $\theta_{\mathrm{sensor}}$ & 0.006 $\pm$ 0.008 & 0.007 $\pm$ 0.004 & 0.070 $\pm$ 0.047 & 0.320 $\pm$ 0.124 \\
+AMIGO & $E_a/R$ & 0.008 $\pm$ 0.024 & 0.067 $\pm$ 0.018 & 0.174 $\pm$ 0.082 & 0.451 $\pm$ 0.138 \\
+AMIGO & $UA$ & 0.198 $\pm$ 0.096 & 0.527 $\pm$ 0.115 & 0.081 $\pm$ 0.091 & 0.396 $\pm$ 0.100 \\
+AMIGO & $C_{Af}$ & 0.410 $\pm$ 0.120 & 0.696 $\pm$ 0.163 & 0.334 $\pm$ 0.153 & 0.623 $\pm$ 0.108 \\
+AMIGO & $\theta_{\mathrm{sensor}}$ & 0.003 $\pm$ 0.004 & 0.001 $\pm$ 0.000 & 0.111 $\pm$ 0.102 & 0.291 $\pm$ 0.135 \\
+Skogestad SIMC & $E_a/R$ & 0.018 $\pm$ 0.025 & 0.063 $\pm$ 0.016 & 0.021 $\pm$ 0.027 & 0.057 $\pm$ 0.011 \\
+Skogestad SIMC & $UA$ & 0.205 $\pm$ 0.086 & 0.485 $\pm$ 0.099 & 0.211 $\pm$ 0.077 & 0.449 $\pm$ 0.073 \\
+Skogestad SIMC & $C_{Af}$ & 0.454 $\pm$ 0.115 & 0.695 $\pm$ 0.151 & 0.580 $\pm$ 0.093 & 0.813 $\pm$ 0.121 \\
+Skogestad SIMC & $\theta_{\mathrm{sensor}}$ & 0.000 $\pm$ 0.001 & 0.000 $\pm$ 0.000 & 0.002 $\pm$ 0.002 & 0.001 $\pm$ 0.000 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & $E_a/R$ & 0.008 $\pm$ 0.024 & 0.079 $\pm$ 0.022 & 0.243 $\pm$ 0.099 & 0.717 $\pm$ 0.195 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & $UA$ & 0.189 $\pm$ 0.094 & 0.530 $\pm$ 0.115 & 0.021 $\pm$ 0.073 & 0.414 $\pm$ 0.134 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & $C_{Af}$ & 0.407 $\pm$ 0.119 & 0.704 $\pm$ 0.163 & 0.081 $\pm$ 0.105 & 0.469 $\pm$ 0.126 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & $\theta_{\mathrm{sensor}}$ & 0.005 $\pm$ 0.006 & 0.004 $\pm$ 0.003 & 0.093 $\pm$ 0.067 & 0.344 $\pm$ 0.136 \\
+2-DOF Optimal ITAE & $E_a/R$ & 0.008 $\pm$ 0.024 & 0.083 $\pm$ 0.023 & 0.246 $\pm$ 0.110 & 0.634 $\pm$ 0.173 \\
+2-DOF Optimal ITAE & $UA$ & 0.186 $\pm$ 0.093 & 0.525 $\pm$ 0.113 & 0.007 $\pm$ 0.087 & 0.415 $\pm$ 0.133 \\
+2-DOF Optimal ITAE & $C_{Af}$ & 0.409 $\pm$ 0.119 & 0.707 $\pm$ 0.162 & 0.100 $\pm$ 0.103 & 0.554 $\pm$ 0.134 \\
+2-DOF Optimal ITAE & $\theta_{\mathrm{sensor}}$ & 0.005 $\pm$ 0.007 & 0.005 $\pm$ 0.003 & 0.087 $\pm$ 0.057 & 0.257 $\pm$ 0.098 \\
 \bottomrule
 \end{tabular}%
 }
