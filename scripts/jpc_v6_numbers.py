@@ -89,6 +89,18 @@ def booktabs(
     )
 
 
+def signblind_numbers() -> None:
+    """Sign-blind latch location over S_max (smax_signblind_diagnostics)."""
+    tab = rows("smax_signblind_diagnostics")
+    low = [r for r in tab if float(r["t_lower_min"]) > float(r["t_upper_min"])]
+    if [(r["Method"], float(r["S_max"])) for r in low] != [("Ziegler-Nichols", 240.0)]:
+        raise ValueError(f"text names ZN at 240 as the only lower-stop latch: {low}")
+    r = low[0]
+    define("sbZNlowtime", float(r["t_lower_min"]), "smax_signblind_diagnostics", "{:.2f}")
+    define("sbZNlowerr", float(r["final_error_K"]), "smax_signblind_diagnostics", "{:+.1f}")
+    define("sbZNlowrate", float(r["error_rate_end_K_per_min"]), "smax_signblind_diagnostics", "{:.2f}")
+
+
 def ablation_numbers() -> None:
     """Nominal-step ablation, latch mechanism, Proposition 1 and the scenarios table."""
     for name in ("Ziegler-Nichols", "Cohen-Coon"):
@@ -282,6 +294,12 @@ def back_calculation_detail() -> None:
     freex = {SHORT[r["Method"]]: float(r["free, exact"]) for r in tab}
     define("ttfreexZN", freex["ZN"], "antiwindup_tt_summary (free choice, exact factor)", "{:.3f}")
     define("ttfreexCC", freex["CC"], "antiwindup_tt_summary (free choice, exact factor)", "{:.3f}")
+    dif = [(abs(num(r[c]) - num(r["cv: \\(\\pm 5\\)~K"])), SHORT[r["Method"]])
+           for r in tab for c in ("free: \\(\\pm 5\\)~K", "exact: \\(\\pm 5\\)~K")]
+    top = max(dif)
+    define("ttfreediffmax", top[0], "antiwindup_tt_summary (largest |free - cv| of the +-5 K worst ratio)")
+    define("ttfreediffloop", top[1], "antiwindup_tt_summary")
+    define("ttfreediffrest", max(d for d, n in dif if n != top[1]), "antiwindup_tt_summary (other loops)")
     define("ttfreexgain", max(num(r["cv: \\(\\pm 5\\)~K"]) - num(r["exact: \\(\\pm 5\\)~K"]) for r in tab),
            "antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)")
     define("ttfreeSIMCovTi", free["SIMC"] / ti_simc, "antiwindup_tt_summary (free T_t^cv / T_i)", "{:.0f}")
@@ -479,6 +497,16 @@ def rate_demand_check_numbers() -> None:
         vals = [num(r[ratio]) for r in lo if r["Method"] == name]
         define(f"chklo{SHORT[name]}min", min(vals), "rate_demand_check (rho < 1)")
         define(f"chklo{SHORT[name]}max", max(vals), "rate_demand_check (rho < 1)")
+    loops = [SHORT[m] for m in SIX if any(r["Method"] == m for r in hi)]
+    define("chkhiloops", f"{len(loops)}", "rate_demand_check (loops with a rho >= 1 case)")
+    define("chkhilooplist", ", ".join(loops[:-1]) + " and " + loops[-1], "rate_demand_check")
+    near = sorted((r for r in hi if num(r["\\(\\rho\\)"]) < 2.0), key=lambda r: (SIX.index(r["Method"]), num(r["\\(\\rho\\)"])))
+    by = {}
+    for r in near:
+        by.setdefault(SHORT[r["Method"]], []).append(r["\\(\\rho\\)"])
+    define("chknear", f"{len(near)}", "rate_demand_check (rho >= 1 cases with rho < 2)")
+    define("chknearlist", "; ".join(f"{k} $\\rho = " + "$ and $".join(v) + "$" for k, v in by.items()),
+           "rate_demand_check (cases near the threshold, rho < 2)")
     if {r["Method"] for r in lo} != {"AMIGO", "Skogestad SIMC"}:
         raise ValueError("text names AMIGO and SIMC as the rho < 1 cases of the check")
 
@@ -645,6 +673,7 @@ def load_table() -> list[list[str]]:
 def main() -> None:
     """Writes numbers.tex, the condensed tables and the provenance CSV."""
     ablation_numbers()
+    signblind_numbers()
     proposition_numbers()
     latch_check_numbers()
     back_calculation_numbers()

@@ -35,6 +35,9 @@ macro,value,source
 \vZNloadnone,26.65,antiwindup_scenarios
 \vCCloadsign,72.02,antiwindup_scenarios
 \vCCloadnone,26.14,antiwindup_scenarios
+\vsbZNlowtime,5.38,smax_signblind_diagnostics
+\vsbZNlowerr,+54.2,smax_signblind_diagnostics
+\vsbZNlowrate,0.72,smax_signblind_diagnostics
 \vTinf,377.94,CSTRPlant.find_steady_state(q_j=300)
 \vZNIstar,945,u_max - u_bias + |Kp|(T_sp - T_inf); Kp from benchmark_table
 \vCCIstar,1050,u_max - u_bias + |Kp|(T_sp - T_inf); Kp from benchmark_table
@@ -73,6 +76,9 @@ macro,value,source
 \vttfreeCC,0.020,antiwindup_tt_summary
 \vttfreexZN,0.009,"antiwindup_tt_summary (free choice, exact factor)"
 \vttfreexCC,0.008,"antiwindup_tt_summary (free choice, exact factor)"
+\vttfreediffmax,0.08,antiwindup_tt_summary (largest |free - cv| of the +-5 K worst ratio)
+\vttfreediffloop,SIMC,antiwindup_tt_summary
+\vttfreediffrest,0.01,antiwindup_tt_summary (other loops)
 \vttfreexgain,0.01,"antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)"
 \vttfreeSIMCovTi,10,antiwindup_tt_summary (free T_t^cv / T_i)
 \vSIMCcvtwo,1.15,antiwindup_tt_sweep
@@ -223,6 +229,10 @@ macro,value,source
 \vchkloAMIGOmax,1.75,rate_demand_check (rho < 1)
 \vchkloSIMCmin,0.81,rate_demand_check (rho < 1)
 \vchkloSIMCmax,0.87,rate_demand_check (rho < 1)
+\vchkhiloops,5,rate_demand_check (loops with a rho >= 1 case)
+\vchkhilooplist,"ZN, CC, TL, AMIGO and Optimal ITAE",rate_demand_check
+\vchknear,3,rate_demand_check (rho >= 1 cases with rho < 2)
+\vchknearlist,AMIGO $\rho = 1.16$; Optimal ITAE $\rho = 1.62$ and $1.68$,"rate_demand_check (cases near the threshold, rho < 2)"
 \vnzbclomin,0.90,noise_policies (IAE BC / IAE directional)
 \vnzbclomax,1.09,noise_policies (IAE BC / IAE directional)
 \vnzbclomaxpct,9,noise_policies

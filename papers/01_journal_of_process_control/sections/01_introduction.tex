@@ -10,7 +10,7 @@ Anti-windup for PID loops is a mature topic with four families of solutions (Tab
 \centering
 \caption{Anti-windup families and what each assumes about the loop. The last row is the scheme adopted in this study; it is the sign-of-increment form of conditional integration \cite{peng1996nonlinear, hippe2006windup} evaluated on the slew-limited valve position, not a new algorithm.}\label{tab:aw_families}
 \footnotesize
-\begin{tabular}{p{3.6cm}p{4.4cm}p{2.6cm}p{2.2cm}p{2.6cm}}
+\begin{tabular}{p{3.6cm}p{4.2cm}p{2.6cm}p{2.2cm}p{2.5cm}}
 \toprule
 Scheme & Integrator logic & Loop sign & Rate limit & Extra parameter \\
 \midrule
@@ -30,7 +30,7 @@ The study uses a three-state CSTR model with an explicit jacket balance and a co
     \item A proposition that explains why sign-blind amplitude clamping latches a reverse-acting loop at full cooling, valid for any reverse-acting loop around an open-loop-stable plant under the hypotheses of Proposition~\ref{prop:latch}; that the reactor reaches these hypotheses is shown by simulation, not proved.
     \item A seven-policy ablation of the integrator logic (no anti-windup, back-calculation, sign-blind amplitude clamping, and the $2\times 2$ factorial of trigger---amplitude or amplitude plus slew rate---and sign awareness---unconditional or directional) over three setpoint steps, a load profile, a valve deadband and a second operating point, which attributes the recovery to the slew-rate trigger.
     \item A regime map over slew limits of $20$ to $320$~L/min$^2$ that shows for which loops and valve speeds the slew-rate trigger matters.
-    \item A comparison of the directional rule with back-calculation using one tracking constant per loop, chosen by a declared criterion, and with the usual defaults.
+    \item A comparison, without measurement noise, of the directional rule with back-calculation using one tracking constant per loop, chosen by a declared criterion, and with the usual defaults; Section~\ref{subsec:measurement_path} shows how sensor noise changes it.
     \item An account of the measurement path, in which the noise-to-valve gain is set by the high-frequency controller gain $|K_p|(1+N)$ rather than by a sensitivity peak.
     \item A pseudocode of the integrator update and a five-item checklist for reporting the anti-windup logic of a comparison of controllers on a constrained loop (Section~\ref{subsec:checklist}).
 \end{enumerate}

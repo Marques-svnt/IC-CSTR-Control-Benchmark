@@ -361,6 +361,23 @@ def run_smax_map(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     exp02.save_grouped(fig, figures_dir / "fig_smax_map")
 
 
+def run_signblind_diagnostics(plant, ss, gains: dict) -> None:
+    """Where the sign-blind latch sits over S_max: time at each stop and final error (CSV only)."""
+    out = []
+    for name in ("Ziegler-Nichols", "Cohen-Coon"):
+        for smax in SMAX_GRID:
+            lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
+            res = _step_run(plant, ss, gains[name], AW.CLAMPING_NAIVE, limits=lim)
+            u, err = res.u_applied, res.states[:, 1] - (ss.T - 2.0)
+            out.append({"Method": name, "S_max": smax,
+                        "t_upper_min": float(np.sum(u >= lim.u_max - 1e-9)) * SIM_DT,
+                        "t_lower_min": float(np.sum(u <= lim.u_min + 1e-9)) * SIM_DT,
+                        "final_error_K": float(err[-1]), "error_rate_end_K_per_min":
+                        float(err[-1] - err[-26]) / (25 * SIM_DT)})
+    pd.DataFrame(out).to_csv(exp02.RESULTS_DIR / "smax_signblind_diagnostics.csv", index=False,
+                             float_format="%.4f")
+
+
 def run_amigo_regime_diagnostics(plant, ss, gains: dict) -> None:
     """Amplitude-only clamping of AMIGO against S_max: IAE, largest valve opening and discrepancy.
 
@@ -1382,6 +1399,7 @@ def remediate_jpc() -> Path:
     run_tt_curve(plant, ss, gains, tables_dir, figures_dir)
     run_smax_map(plant, ss, gains, tables_dir, figures_dir)
     run_amigo_regime_diagnostics(plant, ss, gains)
+    run_signblind_diagnostics(plant, ss, gains)
     plot_mechanism(plant, ss, gains, figures_dir)
     run_latch_check(plant, ss, gains)
     run_rate_demand_check(plant, ss, gains, tables_dir)

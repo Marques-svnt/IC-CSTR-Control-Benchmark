@@ -93,7 +93,7 @@ Six fixed-gain controllers span the range of aggressiveness for a lag-dominant l
     \item \textbf{Cohen--Coon (CC)} \cite{cohen1953theoretical}: $K_p = \tau/(K\theta)\,(4/3 + r/4)$, $T_i = \theta(32 + 6r)/(13 + 8r)$, $T_d = 4\theta/(11 + 2r)$.
     \item \textbf{Tyreus--Luyben (TL)} \cite{tyreus1992tuning, luyben2007chemical}: $K_p = K_u/2.2$, $T_i = 2.2P_u$, $T_d = P_u/6.3$, with the ultimate gain and period of the FOPTD loop obtained exactly (Brent's method).
     \item \textbf{AMIGO} \cite{astrom2004revisiting, astrom2006pid}: $K_p = (0.2 + 0.45\,\tau/\theta)/K$, $T_i = \theta\,(0.4\theta + 0.8\tau)/(\theta + 0.1\tau)$, $T_d = 0.5\theta\tau/(0.3\theta + \tau)$.
-    \item \textbf{SIMC} \cite{skogestad2003simple, grimholt2018optimal}: $K_p = \tau/(K(\tau_c + \theta))$, $T_i = \min(\tau, 4(\tau_c + \theta))$, $T_d = 0.33\theta$, with $\tau_c = 0.40$~min.
+    \item \textbf{SIMC} \cite{skogestad2003simple, grimholt2018optimal}: with $\tau_c = 0.40$~min, $K_p = \tau/(K(\tau_c + \theta))$, $T_i = \min(\tau, 4(\tau_c + \theta))$ and $T_d = 0.33\theta$.
     \item \textbf{Optimal ITAE}: the PID gains that minimize the ITAE of a $-2$~K step on the nonlinear plant and the benchmark valve subject to $M_s \le 1.6$ on the identified FOPTD loop \cite{garpinger2014performance}; the design and its cost are reported in Supplementary Table~\suppref{tab:constraint_cost}.
 \end{enumerate}
 The resulting gains are listed in Table~\ref{tab:testbed}. All six loops are reverse-acting ($K_p < 0$).
