@@ -136,6 +136,20 @@ The filter spreads the tunings out. At $\sigma = 0.01$~K the travel falls by a f
 
 \input{tables/noise_policies}
 
+\paragraph{Tracking constant under noise and mechanism.} Table~\ref{tab:noise_ttcv} re-chooses $T_t^{\mathrm{cv}}$ by the criterion of Table~\ref{tab:antiwindup_tt_summary} with $\sigma = 0.05$~K. The constant moves up for \vnzttchanged{} and stays for the other loops; with the new constant the worst ratio of back-calculation to the directional rule on $-2$~K falls from $\vnzttbeforemax$ to $\vnzttaftermax$ and on $\pm 5$~K is at most $\vnzttfiveaftermax$, so the gap narrows but does not close. Table~\ref{tab:noise_mechanism} tests the mechanism: the share of samples in which a limit cuts the command is the same under both rules, so noise does not make back-calculation saturate more often; what differs is what the integrator does with each cut. The directional rule freezes it, whereas back-calculation with a small $T_t$ adds $(\Delta t/T_t)(u_{\text{act},k-1} - u_{\text{raw},k-1})$ at every cut, $\vmechtrackmin$ to $\vmechtrackmax$~L/min per sample for ZN and CC, and its integrator departs from the noise-free path $\vmechrmsratiomin$ to $\vmechrmsratiomax$ times more.
+
+\input{tables/noise_ttcv}
+
+\input{tables/noise_mechanism}
+
+\paragraph{Steps of both signs and the measurement filter.} Table~\ref{tab:noise_policies_ext} repeats Table~\ref{tab:noise_policies} on the $\pm 5$~K steps and with the filter $\tau_m = 0.05$~min. Without the filter, at $\sigma = 0.05$~K, back-calculation with the noise-free $T_t^{\mathrm{cv}}$ is up to $\vextrawmax$ times the IAE of the directional rule; with the filter the worst ratio over steps, noise levels and loops is $\vextfiltmax$. No anti-windup remains at least $\vextempnonemin$ times worse than the directional rule for ZN and CC in every combination.
+
+\input{tables/noise_policies_ext}
+
+\paragraph{Rate demand under noise.} Table~\ref{tab:rho_noise} recomputes $\rho$ and $R$ under noise. On the raw measurement at $\sigma = 0.05$~K the largest command increment is set by the noise, $\rho$ of SIMC reaches $\vrhonzrawSIMCmax$ and $\vrhonzrawwrong$ of the $\vrhonzcases$ cases have $\rho \ge 1$ with $R < 1$; with the measurement filter the SIMC demand stays at most $\vrhonzfiltSIMCmax$ and no case is misclassified, as without noise. In practice $\rho$ should be computed on the filtered loop or from a noise-free model run.
+
+\input{tables/rho_noise}
+
 \section{Load disturbances: replicated runs}\label{supp:load}
 \subsection{Unmeasured load disturbances}
 \label{supp:loadfull}

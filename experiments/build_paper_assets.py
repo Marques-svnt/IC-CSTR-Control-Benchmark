@@ -483,6 +483,204 @@ def run_noise_policies(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) ->
     )
 
 
+NOISE_SIGMA_BC = 0.05  # K, the level at which back-calculation lost ground in noise_policies
+
+
+def _noisy(name, g, method, step, sigma, tau, seed, limits=None):
+    """One noisy run (seeds of the noise campaign, 100 + k): name, IAE, TV, Mp."""
+    m = _step_run(plant_global(), ss_global(), g, method, step, limits=limits, noise_std=sigma,
+                  seed=100 + seed, meas_filter_tau=tau).metrics
+    return name, m.iae, m.tv, m.overshoot_pct
+
+
+def plant_global():
+    """Nominal plant for joblib workers (cheap to rebuild, keeps the job tuples picklable)."""
+    return exp02.CSTRPlant()
+
+
+def ss_global():
+    """Nominal steady state for joblib workers."""
+    return exp02.CSTRPlant().find_steady_state(q_j=100.0)
+
+
+def _mean_iae(jobs) -> dict:
+    """Mean IAE per job key over seeds; jobs are (key, name, g, method, step, sigma, tau, seed)."""
+    out = Parallel(n_jobs=-1)(delayed(_noisy)(*j[1:]) for j in jobs)
+    acc: dict = {}
+    for j, o in zip(jobs, out):
+        acc.setdefault(j[0], []).append(o[1])
+    return {k: (float(np.mean(v)), _ci95(np.array(v))) for k, v in acc.items()}
+
+
+def run_noise_ttcv(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
+    """B1: T_t^cv re-chosen under sensor noise (sigma = 0.05 K, 30 seeds), same criterion.
+
+    Inside [T_d, T_i] on the -2 K step (mean IAE over seeds), judged on +-5 K under the same
+    noise against BC with the noise-free T_t^cv and the directional rule.
+    """
+    sig, loops = NOISE_SIGMA_BC, _one_dof(gains)
+    jobs = []
+    for name, g in loops.items():
+        grid = _tt_grid(g)
+        for t in grid[(grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)]:
+            jobs += [((name, float(t)), name, replace(g, tt=float(t)), AW.BACK_CALCULATION, -2.0, sig, 0.0, k)
+                     for k in range(N_SEEDS)]
+    cv_curve = _mean_iae(jobs)
+    tt_noise = {n: min((t for (m, t) in cv_curve if m == n), key=lambda t: cv_curve[(n, t)][0])
+                for n in loops}
+    pols = {"BC ($T_t^{\\mathrm{cv}}$)": lambda n, g: (replace(g, tt=tt_cv[n]), AW.BACK_CALCULATION),
+            "BC ($T_t^{\\mathrm{cv,noise}}$)": lambda n, g: (replace(g, tt=tt_noise[n]), AW.BACK_CALCULATION),
+            "Directional": lambda n, g: (g, AW.CLAMPING)}
+    jobs = [((n, lab, st), n, *f(n, g)[:1], f(n, g)[1], st, sig, 0.0, k)
+            for n, g in loops.items() for lab, f in pols.items() for st in TT_STEPS for k in range(N_SEEDS)]
+    res = _mean_iae(jobs)
+    rows = []
+    for n in loops:
+        for i, st in enumerate(TT_STEPS):
+            row = {"Method": n if i == 0 else "",
+                   "\\(T_t^{\\mathrm{cv}}\\), \\(T_t^{\\mathrm{cv,noise}}\\) (min)":
+                   f"{tt_cv[n]:.3f}, {tt_noise[n]:.3f}" if i == 0 else "",
+                   "Step": f"${st:+g}$ K"}
+            row |= {f"IAE {lab}": f"{res[(n, lab, st)][0]:.2f} $\\pm$ {res[(n, lab, st)][1]:.2f}" for lab in pols}
+            rows.append(row)
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "noise_ttcv.tex",
+        caption=(
+            f"Tracking constant re-chosen under sensor noise ($\\sigma = {sig:g}$~K, {N_SEEDS} "
+            "realizations, seeds of the noise campaign, unfiltered measurement): "
+            "$T_t^{\\mathrm{cv,noise}}$ minimizes the mean IAE of the $-2$~K step inside $[T_d, T_i]$; "
+            "IAE (K$\\cdot$min, mean $\\pm$ $95\\%$ half-width) under the same noise for back-calculation "
+            "with the noise-free and the noise-chosen constant and for the directional rule."
+        ),
+        label="tab:noise_ttcv",
+    )
+
+
+def run_noise_mechanism(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
+    """B2: why back-calculation loses ground under noise (sigma = 0.05 K, -2 K step, 30 seeds).
+
+    Per policy: share of samples with u_act != u_raw, RMS deviation of the integrator from its
+    noise-free trajectory, and (BC only) mean |dt/T_t (u_act - u_raw)| per sample.
+    """
+    pols = (("BC ($T_t^{\\mathrm{cv}}$)", AW.BACK_CALCULATION, True), ("Directional", AW.CLAMPING, False))
+
+    def one(name, lab, method, cv, sigma, seed):
+        g = replace(gains[name], tt=tt_cv[name]) if cv else gains[name]
+        tap = _Tap(exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T))
+        res = exp02.ClosedLoopSimulator().run(plant, tap, ss, (0.0, 10.0), SIM_DT,
+                                              setpoint_func=lambda t: ss.T - 2.0,
+                                              noise_std=sigma, seed=100 + seed)
+        i_state = np.array([r[0] for r in tap.rows])
+        cut = np.abs(res.u_unconstrained - res.u_applied) > 1e-9
+        track = np.abs(res.u_applied[:-1] - res.u_unconstrained[:-1]) * SIM_DT / g.tt if cv else np.zeros(1)
+        return name, lab, sigma, i_state, float(cut.mean()), float(track.mean())
+
+    jobs = [(n, lab, m, cv, sg, k) for n in _one_dof(gains) for lab, m, cv in pols
+            for sg in (0.0, NOISE_SIGMA_BC) for k in (range(N_SEEDS) if sg else [0])]
+    out = Parallel(n_jobs=-1)(delayed(one)(*j) for j in jobs)
+    rows = []
+    for n in _one_dof(gains):
+        row = {"Method": n}
+        for lab, _, cv in pols:
+            ref = next(o[3] for o in out if o[:3] == (n, lab, 0.0))
+            sel = [o for o in out if o[:3] == (n, lab, NOISE_SIGMA_BC)]
+            row[f"cut share {lab}"] = f"{np.mean([o[4] for o in sel]):.2f}"
+            row[f"RMS \\(I - I_0\\) {lab}"] = f"{np.mean([np.sqrt(np.mean((o[3] - ref) ** 2)) for o in sel]):.1f}"
+            if cv:
+                row["mean tracking step (L/min)"] = f"{np.mean([o[5] for o in sel]):.2f}"
+        rows.append(row)
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "noise_mechanism.tex",
+        caption=(
+            f"Mechanism under sensor noise ($\\sigma = {NOISE_SIGMA_BC:g}$~K, $-2$~K step, {N_SEEDS} "
+            "realizations): share of samples in which a limit cuts the command ($u_{\\text{act}} \\ne "
+            "u_{\\text{raw}}$), RMS deviation (L/min) of the integrator from its noise-free trajectory, and "
+            "mean magnitude of the back-calculation increment $(\\Delta t/T_t)|u_{\\text{act},k-1} - "
+            "u_{\\text{raw},k-1}|$ with $T_t^{\\mathrm{cv}}$."
+        ),
+        label="tab:noise_mechanism",
+    )
+
+
+def run_rho_noise(plant, ss, gains: dict, tables_dir: Path) -> None:
+    """B3: rate demand rho and the trigger ratio R under noise, raw and filtered measurement.
+
+    Six loops x three steps at S_max = 80 L/min^2; sigma in {0.01, 0.05} K, tau_m in {0, 0.05}
+    min; rho and R are means over the seeds. The noise-free values come from the same code.
+    """
+    lim = exp02.BENCHMARK_LIMITS
+    free_lim = replace(lim, max_slew_rate=np.inf)
+    combos = [(0.0, 0.0)] + [(sg, tau) for sg in (0.01, 0.05) for tau in (0.0, MEASUREMENT_TAU_F)]
+
+    def one(name, step, sigma, tau, seed):
+        g = gains[name]
+        kw = dict(noise_std=sigma, seed=100 + seed, meas_filter_tau=tau)
+        free = _step_run(plant, ss, g, AW.CLAMPING, step, limits=free_lim, **kw)
+        amp = _step_run(plant, ss, g, AW.CLAMPING_POS_DIRECTIONAL, step, **kw).metrics.iae
+        rate = _step_run(plant, ss, g, AW.CLAMPING, step, **kw).metrics.iae
+        rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (lim.max_slew_rate * SIM_DT)
+        return name, step, sigma, tau, rho, amp / rate
+
+    jobs = [(n, st, sg, tau, k) for n in _one_dof(gains) for st in TT_STEPS for sg, tau in combos
+            for k in (range(N_SEEDS) if sg else [0])]
+    out = Parallel(n_jobs=-1)(delayed(one)(*j) for j in jobs)
+    rows, grid = [], []
+    for n in _one_dof(gains):
+        for i, st in enumerate(TT_STEPS):
+            row = {"Method": n if i == 0 else "", "Step": f"${st:+g}$ K"}
+            for sg, tau in combos:
+                sel = [o for o in out if o[:4] == (n, st, sg, tau)]
+                rho, r = float(np.mean([o[4] for o in sel])), float(np.mean([o[5] for o in sel]))
+                tag = "noise-free" if not sg else f"$\\sigma={sg:g}$, $\\tau_m={tau:g}$"
+                row[tag] = f"{rho:.2f} / {r:.2f}"
+                grid.append({"Method": n, "step_K": st, "sigma": sg, "tau_m": tau, "rho": rho, "R": r})
+            rows.append(row)
+    pd.DataFrame(grid).to_csv(exp02.RESULTS_DIR / "rho_noise_grid.csv", index=False, float_format="%.4f")
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "rho_noise.tex",
+        caption=(
+            f"Rate demand under sensor noise, $S_{{\\max}} = 80$~L/min$^2$, {N_SEEDS} realizations: each cell "
+            "is $\\rho$ / $R = \\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}$ (means over seeds), "
+            "with the raw ($\\tau_m = 0$) or filtered ($\\tau_m = 0.05$~min) measurement; $\\rho$ is computed "
+            "from the command of the same loop with the slew limit removed, as in Table~\\ref{tab:rate_demand}."
+        ),
+        label="tab:rho_noise",
+    )
+
+
+def run_noise_policies_ext(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
+    """B4: Table noise_policies on -5 and +5 K and with the measurement filter (tau_m = 0.05 min)."""
+    pols = (("None", AW.NONE, False), ("BC", AW.BACK_CALCULATION, True), ("Dir", AW.CLAMPING, False))
+    combos = [(sg, tau) for tau in (0.0, MEASUREMENT_TAU_F) for sg in (0.01, 0.05)]
+    jobs = [((n, lab, st, sg, tau), n, replace(g, tt=tt_cv[n]) if cv else g, m, st, sg, tau, k)
+            for n, g in _one_dof(gains).items() for lab, m, cv in pols for st in TT_STEPS
+            for sg, tau in combos for k in range(N_SEEDS)]
+    res = _mean_iae(jobs)
+    pd.DataFrame([{"Method": k[0], "policy": k[1], "step_K": k[2], "sigma": k[3], "tau_m": k[4],
+                   "IAE_mean": v[0], "IAE_ci95": v[1]} for k, v in res.items()]).to_csv(
+        exp02.RESULTS_DIR / "noise_policies_ext_full.csv", index=False, float_format="%.4f")
+    rows = []
+    for n in _one_dof(gains):
+        for i, st in enumerate(TT_STEPS):
+            row = {"Method": n if i == 0 else "", "Step": f"${st:+g}$ K"}
+            for sg, tau in combos:
+                bc, dr, no = (res[(n, lab, st, sg, tau)][0] for lab in ("BC", "Dir", "None"))
+                row[f"$\\sigma={sg:g}$, $\\tau_m={tau:g}$"] = f"{bc / dr:.2f} / {no / dr:.2f}"
+            rows.append(row)
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "noise_policies_ext.tex",
+        caption=(
+            f"Table~\\ref{{tab:noise_policies}} extended to the $\\pm 5$~K steps and to the filtered "
+            f"measurement ($\\tau_m = 0.05$~min), {N_SEEDS} realizations: each cell is "
+            "$\\mathrm{IAE}_{\\mathrm{BC}}/\\mathrm{IAE}_{\\mathrm{dir}}$ / "
+            "$\\mathrm{IAE}_{\\mathrm{none}}/\\mathrm{IAE}_{\\mathrm{dir}}$ (means over seeds; BC with the "
+            "noise-free $T_t^{\\mathrm{cv}}$). Means and intervals are in "
+            "\\texttt{results/jpc/noise\\_policies\\_ext\\_full.csv}."
+        ),
+        label="tab:noise_policies_ext",
+    )
+
+
 def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
     """The rho >= 1 rule, defined on the nominal grid, checked on conditions it was not built on.
 
@@ -1404,6 +1602,10 @@ def remediate_jpc() -> Path:
     run_latch_check(plant, ss, gains)
     run_rate_demand_check(plant, ss, gains, tables_dir)
     run_noise_policies(plant, ss, gains, tt_cv, tables_dir)
+    run_noise_ttcv(plant, ss, gains, tt_cv, tables_dir)
+    run_noise_mechanism(plant, ss, gains, tt_cv, tables_dir)
+    run_rho_noise(plant, ss, gains, tables_dir)
+    run_noise_policies_ext(plant, ss, gains, tt_cv, tables_dir)
     run_predictive_clamping(plant, ss, gains, tables_dir)
     run_exact_backcalc(plant, ss, gains, tables_dir)
     run_second_operating_point(SECOND_OP_Q_J, tables_dir)

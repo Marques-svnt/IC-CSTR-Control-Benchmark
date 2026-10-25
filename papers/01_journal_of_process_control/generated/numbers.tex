@@ -244,6 +244,25 @@
 \newcommand{\vnzSIMCdir}{1.44}  % noise_policies (sigma 0.05)
 \newcommand{\vnzSIMCnone}{1.13}  % noise_policies (sigma 0.05)
 \newcommand{\vnzempnonemin}{57}  % noise_policies (IAE none / IAE directional, ZN and CC)
+\newcommand{\vnzttchanged}{ZN, CC and AMIGO}  % noise_ttcv (loops whose T_t changes under noise)
+\newcommand{\vnzttbeforemax}{1.51}  % noise_ttcv (-2 K, BC/dir, noise-free T_t)
+\newcommand{\vnzttaftermax}{1.29}  % noise_ttcv (-2 K, BC/dir, noise T_t)
+\newcommand{\vnzttfiveaftermax}{1.19}  % noise_ttcv (+-5 K, BC/dir, noise T_t)
+\newcommand{\vmechcutmin}{0.87}  % noise_mechanism (ZN, CC)
+\newcommand{\vmechrmsratiomin}{5}  % noise_mechanism (ZN, CC)
+\newcommand{\vmechrmsratiomax}{7}  % noise_mechanism (ZN, CC)
+\newcommand{\vmechtrackmin}{2.9}  % noise_mechanism (ZN, CC)
+\newcommand{\vmechtrackmax}{4.0}  % noise_mechanism (ZN, CC)
+\newcommand{\vrhonzfreewrong}{0}  % rho_noise_grid (rho >= 1 but the trigger makes the loop worse)
+\newcommand{\vrhonzfreeSIMCmax}{0.52}  % rho_noise_grid
+\newcommand{\vrhonzrawwrong}{3}  % rho_noise_grid (rho >= 1 but the trigger makes the loop worse)
+\newcommand{\vrhonzrawSIMCmax}{2.92}  % rho_noise_grid
+\newcommand{\vrhonzfiltwrong}{0}  % rho_noise_grid (rho >= 1 but the trigger makes the loop worse)
+\newcommand{\vrhonzfiltSIMCmax}{0.84}  % rho_noise_grid
+\newcommand{\vrhonzcases}{18}  % rho_noise_grid
+\newcommand{\vextrawmax}{1.50}  % noise_policies_ext_full (BC/dir, 0.05 K, raw)
+\newcommand{\vextfiltmax}{1.15}  % noise_policies_ext_full (BC/dir, filtered)
+\newcommand{\vextempnonemin}{19}  % noise_policies_ext_full (none/dir, ZN and CC)
 \newcommand{\vpcZNmaxpct}{5.9}  % predictive_clamping (largest |dIAE| over 3 steps)
 \newcommand{\vpcZNfiveold}{3.65}  % predictive_clamping
 \newcommand{\vpcZNfivenew}{3.44}  % predictive_clamping

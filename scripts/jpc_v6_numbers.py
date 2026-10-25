@@ -533,6 +533,50 @@ def noise_policy_numbers() -> None:
             define("nzempnonemin", min(emp), "noise_policies (IAE none / IAE directional, ZN and CC)", "{:.0f}")
 
 
+def noise_round_numbers() -> None:
+    """Block B of v9: T_t re-chosen under noise, mechanism, rho under noise, extended policies."""
+    join = lambda xs: xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]  # noqa: E731
+    tab = rows("noise_ttcv")
+    ttcol = "\\(T_t^{\\mathrm{cv}}\\), \\(T_t^{\\mathrm{cv,noise}}\\) (min)"
+    bc, bcn, dr = "IAE BC ($T_t^{\\mathrm{cv}}$)", "IAE BC ($T_t^{\\mathrm{cv,noise}}$)", "IAE Directional"
+    changed = [SHORT[r["Method"]] for r in tab if r[ttcol] and len(set(r[ttcol].split(", "))) == 2]
+    define("nzttchanged", join(changed), "noise_ttcv (loops whose T_t changes under noise)")
+    two = [r for r in tab if r["Step"] == "$-2$ K" and SHORT[r["Method"]] in changed]
+    define("nzttbeforemax", max(num(r[bc]) / num(r[dr]) for r in two), "noise_ttcv (-2 K, BC/dir, noise-free T_t)")
+    define("nzttaftermax", max(num(r[bcn]) / num(r[dr]) for r in two), "noise_ttcv (-2 K, BC/dir, noise T_t)")
+    five = [r for r in tab if r["Step"] != "$-2$ K" and SHORT[r["Method"]] in changed]
+    define("nzttfiveaftermax", max(num(r[bcn]) / num(r[dr]) for r in five), "noise_ttcv (+-5 K, BC/dir, noise T_t)")
+    mech = rows("noise_mechanism")
+    emp = [r for r in mech if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
+    rb, rd = "RMS \\(I - I_0\\) BC ($T_t^{\\mathrm{cv}}$)", "RMS \\(I - I_0\\) Directional"
+    define("mechcutmin", min(num(r["cut share Directional"]) for r in emp), "noise_mechanism (ZN, CC)")
+    define("mechrmsratiomin", min(num(r[rb]) / num(r[rd]) for r in emp), "noise_mechanism (ZN, CC)", "{:.0f}")
+    define("mechrmsratiomax", max(num(r[rb]) / num(r[rd]) for r in emp), "noise_mechanism (ZN, CC)", "{:.0f}")
+    define("mechtrackmin", min(num(r["mean tracking step (L/min)"]) for r in emp), "noise_mechanism (ZN, CC)", "{:.1f}")
+    define("mechtrackmax", max(num(r["mean tracking step (L/min)"]) for r in emp), "noise_mechanism (ZN, CC)", "{:.1f}")
+    if any(r["cut share Directional"] != r["cut share BC ($T_t^{\\mathrm{cv}}$)"] for r in emp):
+        raise ValueError("text states that both policies are cut in the same share of samples")
+    grid = rows("rho_noise_grid")
+    for r in grid:
+        for k in ("sigma", "tau_m", "rho", "R"):
+            r[k] = float(r[k])
+    for sg, tau, tag in ((0.0, 0.0, "free"), (0.05, 0.0, "raw"), (0.05, 0.05, "filt")):
+        sel = [r for r in grid if r["sigma"] == sg and r["tau_m"] == tau]
+        define(f"rhonz{tag}wrong", f"{sum(r['rho'] >= 1.0 and r['R'] < 1.0 for r in sel)}",
+               "rho_noise_grid (rho >= 1 but the trigger makes the loop worse)")
+        define(f"rhonz{tag}SIMCmax", max(r["rho"] for r in sel if r["Method"] == "Skogestad SIMC"), "rho_noise_grid")
+    define("rhonzcases", f"{sum(r['sigma'] == 0.0 for r in grid)}", "rho_noise_grid")
+    ext = rows("noise_policies_ext_full")
+    iae = {(r["Method"], r["policy"], float(r["step_K"]), float(r["sigma"]), float(r["tau_m"])): float(r["IAE_mean"])
+           for r in ext}
+    keys = {k[:1] + k[2:] for k in iae}
+    ratio = {k: iae[(k[0], "BC", *k[1:])] / iae[(k[0], "Dir", *k[1:])] for k in keys}
+    define("extrawmax", max(v for k, v in ratio.items() if k[2] == 0.05 and k[3] == 0.0), "noise_policies_ext_full (BC/dir, 0.05 K, raw)")
+    define("extfiltmax", max(v for k, v in ratio.items() if k[3] > 0.0), "noise_policies_ext_full (BC/dir, filtered)")
+    none = [iae[(k[0], "None", *k[1:])] / iae[(k[0], "Dir", *k[1:])] for k in keys if k[0] in ("Ziegler-Nichols", "Cohen-Coon")]
+    define("extempnonemin", min(none), "noise_policies_ext_full (none/dir, ZN and CC)", "{:.0f}")
+
+
 def predictive_and_exact_numbers() -> None:
     """Freeze test at k (predictor-corrector) and exact back-calculation factor (Tables S)."""
     pc = rows("predictive_clamping")
@@ -685,6 +729,7 @@ def main() -> None:
     rate_trigger_numbers()
     rate_demand_check_numbers()
     noise_policy_numbers()
+    noise_round_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
     load_cols, load_body = load_table()

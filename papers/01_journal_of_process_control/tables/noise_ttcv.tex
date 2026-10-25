@@ -1,0 +1,32 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Tracking constant re-chosen under sensor noise ($\sigma = 0.05$~K, 30 realizations, seeds of the noise campaign, unfiltered measurement): $T_t^{\mathrm{cv,noise}}$ minimizes the mean IAE of the $-2$~K step inside $[T_d, T_i]$; IAE (K$\cdot$min, mean $\pm$ $95\%$ half-width) under the same noise for back-calculation with the noise-free and the noise-chosen constant and for the directional rule.}
+\label{tab:noise_ttcv}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Method & \(T_t^{\mathrm{cv}}\), \(T_t^{\mathrm{cv,noise}}\) (min) & Step & IAE BC ($T_t^{\mathrm{cv}}$) & IAE BC ($T_t^{\mathrm{cv,noise}}$) & IAE Directional \\
+\midrule
+Ziegler-Nichols & 0.047, 0.093 & $-2$ K & 2.16 $\pm$ 0.07 & 1.84 $\pm$ 0.05 & 1.43 $\pm$ 0.03 \\
+ &  & $-5$ K & 4.74 $\pm$ 0.09 & 4.53 $\pm$ 0.05 & 3.82 $\pm$ 0.03 \\
+ &  & $+5$ K & 4.61 $\pm$ 0.11 & 4.64 $\pm$ 0.09 & 4.39 $\pm$ 0.08 \\
+Cohen-Coon & 0.033, 0.089 & $-2$ K & 2.24 $\pm$ 0.07 & 1.63 $\pm$ 0.04 & 1.54 $\pm$ 0.04 \\
+ &  & $-5$ K & 4.74 $\pm$ 0.09 & 4.16 $\pm$ 0.05 & 3.98 $\pm$ 0.03 \\
+ &  & $+5$ K & 4.64 $\pm$ 0.10 & 4.08 $\pm$ 0.06 & 5.08 $\pm$ 0.10 \\
+Tyreus-Luyben & 0.554, 0.554 & $-2$ K & 1.11 $\pm$ 0.01 & 1.11 $\pm$ 0.01 & 1.21 $\pm$ 0.02 \\
+ &  & $-5$ K & 3.47 $\pm$ 0.01 & 3.47 $\pm$ 0.01 & 3.97 $\pm$ 0.02 \\
+ &  & $+5$ K & 3.32 $\pm$ 0.02 & 3.32 $\pm$ 0.02 & 3.75 $\pm$ 0.04 \\
+AMIGO & 0.121, 0.247 & $-2$ K & 1.36 $\pm$ 0.03 & 1.25 $\pm$ 0.02 & 1.05 $\pm$ 0.01 \\
+ &  & $-5$ K & 3.77 $\pm$ 0.03 & 3.71 $\pm$ 0.02 & 3.42 $\pm$ 0.01 \\
+ &  & $+5$ K & 3.40 $\pm$ 0.04 & 3.49 $\pm$ 0.03 & 3.05 $\pm$ 0.01 \\
+Skogestad SIMC & 0.643, 0.643 & $-2$ K & 1.22 $\pm$ 0.01 & 1.22 $\pm$ 0.01 & 1.44 $\pm$ 0.02 \\
+ &  & $-5$ K & 3.84 $\pm$ 0.01 & 3.84 $\pm$ 0.01 & 4.80 $\pm$ 0.04 \\
+ &  & $+5$ K & 3.23 $\pm$ 0.01 & 3.23 $\pm$ 0.01 & 3.92 $\pm$ 0.03 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 0.300, 0.300 & $-2$ K & 1.09 $\pm$ 0.01 & 1.09 $\pm$ 0.01 & 1.03 $\pm$ 0.01 \\
+ &  & $-5$ K & 3.39 $\pm$ 0.01 & 3.39 $\pm$ 0.01 & 3.50 $\pm$ 0.01 \\
+ &  & $+5$ K & 3.24 $\pm$ 0.02 & 3.24 $\pm$ 0.02 & 3.38 $\pm$ 0.04 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
