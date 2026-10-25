@@ -1,0 +1,283 @@
+macro,value,source
+\vZNnone,91.11,antiwindup_ablation
+\vZNbc,0.97,antiwindup_ablation
+\vZNbccv,0.88,antiwindup_ablation
+\vZNsign,104.12,antiwindup_ablation
+\vZNamp,22.10,antiwindup_ablation
+\vZNrateunc,0.93,antiwindup_ablation
+\vZNdir,0.94,antiwindup_ablation
+\vZNsignMp,842.5,antiwindup_ablation
+\vZNatmax,3.86,antiwindup_mechanism
+\vZNdiscrep,4474,antiwindup_mechanism
+\vCCnone,87.37,antiwindup_ablation
+\vCCbc,0.87,antiwindup_ablation
+\vCCbccv,0.82,antiwindup_ablation
+\vCCsign,102.67,antiwindup_ablation
+\vCCamp,20.60,antiwindup_ablation
+\vCCrateunc,1.10,antiwindup_ablation
+\vCCdir,1.02,antiwindup_ablation
+\vCCsignMp,842.5,antiwindup_ablation
+\vCCatmax,4.06,antiwindup_mechanism
+\vCCdiscrep,3540,antiwindup_mechanism
+\vlatcherr,-16.72,antiwindup_mechanism
+\vlatchgap,16.72,antiwindup_mechanism (|T(t_f) - T_sp|)
+\vlatchTmin,377.8,antiwindup_mechanism
+\vZNnominal,0.940,benchmark_table
+\vscenampmin,13.62,antiwindup_scenarios
+\vscenampmax,31.17,antiwindup_scenarios
+\vscendirmin,2.87,antiwindup_scenarios
+\vscendirmax,4.39,antiwindup_scenarios
+\vZNfivesign,205.97,antiwindup_scenarios
+\vZNfivenone,81.26,antiwindup_scenarios
+\vCCfivesign,224.77,antiwindup_scenarios
+\vCCfivenone,78.56,antiwindup_scenarios
+\vZNloadsign,77.21,antiwindup_scenarios
+\vZNloadnone,26.65,antiwindup_scenarios
+\vCCloadsign,72.02,antiwindup_scenarios
+\vCCloadnone,26.14,antiwindup_scenarios
+\vTinf,377.94,CSTRPlant.find_steady_state(q_j=300)
+\vZNIstar,945,u_max - u_bias + |Kp|(T_sp - T_inf); Kp from benchmark_table
+\vCCIstar,1050,u_max - u_bias + |Kp|(T_sp - T_inf); Kp from benchmark_table
+\vZNtkzero,6.16,latch_check
+\vZNIkzero,4506,latch_check
+\vZNDbar,1754,latch_check (D bound from Eq. 10 and the band)
+\vZNdelta,0.13,latch_check
+\vZNlatchmargin,1801,latch_check
+\vCCtkzero,5.96,latch_check
+\vCCIkzero,3546,latch_check
+\vCCDbar,1419,latch_check (D bound from Eq. 10 and the band)
+\vCCdelta,0.13,latch_check
+\vCClatchmargin,1070,latch_check
+\vttmmmax,1.02,antiwindup_tt_summary
+\vttmmmin,0.90,antiwindup_tt_summary
+\vttmmmaxpct,2,antiwindup_tt_summary
+\vttmmminpct,10,antiwindup_tt_summary
+\vttsqrtmax,1.37,antiwindup_tt_summary
+\vttsqrtmin,0.98,antiwindup_tt_summary
+\vttsqrtmaxpct,37,antiwindup_tt_summary
+\vttsqrtminpct,2,antiwindup_tt_summary
+\vtttimax,1.97,antiwindup_tt_summary
+\vtttimin,0.90,antiwindup_tt_summary
+\vtttimaxpct,97,antiwindup_tt_summary
+\vtttiminpct,10,antiwindup_tt_summary
+\vttcvmax,1.02,antiwindup_tt_summary
+\vttcvmin,0.86,antiwindup_tt_summary
+\vttcvmaxpct,2,antiwindup_tt_summary
+\vttcvminpct,14,antiwindup_tt_summary
+\vttoutside,"ZN, CC and SIMC","antiwindup_tt_summary (unrestricted T_t^cv outside [T_d, T_i])"
+\vttfreemaxgain,0.00,antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)
+\vttfreemaxloss,0.08,antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)
+\vttcvlower,ZN and CC,antiwindup_tt_summary (T_t^cv = T_d)
+\vttcvupper,SIMC,antiwindup_tt_summary (T_t^cv = T_i)
+\vttfreeZN,0.020,antiwindup_tt_summary
+\vttfreeCC,0.020,antiwindup_tt_summary
+\vttfreexZN,0.009,"antiwindup_tt_summary (free choice, exact factor)"
+\vttfreexCC,0.008,"antiwindup_tt_summary (free choice, exact factor)"
+\vttfreexgain,0.01,"antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)"
+\vttfreeSIMCovTi,10,antiwindup_tt_summary (free T_t^cv / T_i)
+\vSIMCcvtwo,1.15,antiwindup_tt_sweep
+\vSIMCtitwo,1.15,antiwindup_tt_sweep
+\vSIMCcvm,3.80,antiwindup_tt_sweep
+\vSIMCtim,3.80,antiwindup_tt_sweep
+\vSIMCcvp,3.17,antiwindup_tt_sweep
+\vSIMCtip,3.17,antiwindup_tt_sweep
+\vempTVlower,5,antiwindup_tt_tvmp (ZN and CC cases with lower TV under BC)
+\vempMplower,5,antiwindup_tt_tvmp (ZN and CC cases with lower overshoot under BC)
+\vempcases,6,antiwindup_tt_tvmp
+\vCCfiveTVdir,241.9,antiwindup_tt_tvmp
+\vCCfiveTVbc,101.2,antiwindup_tt_tvmp
+\vCCfiveMpdir,40.8,antiwindup_tt_tvmp
+\vCCfiveMpbc,11.3,antiwindup_tt_tvmp
+\vrestcases,9,"antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE)"
+\vrestTVhigher,6,"antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher TV under BC)"
+\vrestMphigher,6,"antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher overshoot under BC)"
+\vSIMCfiveTVdir,30.7,antiwindup_tt_tvmp
+\vSIMCfiveTVbc,42.5,antiwindup_tt_tvmp
+\vOPTfiveMpdir,8.7,antiwindup_tt_tvmp
+\vOPTfiveMpbc,12.5,antiwindup_tt_tvmp
+\vTLfiveMpdir,11.1,antiwindup_tt_tvmp
+\vTLfiveMpbc,13.0,antiwindup_tt_tvmp
+\vSIMCtvincmin,20,antiwindup_tt_tvmp
+\vSIMCtvincmax,38,antiwindup_tt_tvmp
+\vmapZNmin,7.9,smax_regime_map
+\vmapZNmax,38.3,smax_regime_map
+\vmapZNtwenty,7.9,smax_regime_map
+\vmapZNeighty,23.5,smax_regime_map
+\vmapZNlast,36.3,smax_regime_map
+\vmapCCmin,7.4,smax_regime_map
+\vmapCCmax,37.7,smax_regime_map
+\vmapCCtwenty,7.4,smax_regime_map
+\vmapCCeighty,20.3,smax_regime_map
+\vmapCClast,37.7,smax_regime_map
+\vmapTLmin,1.2,smax_regime_map
+\vmapTLmax,2.1,smax_regime_map
+\vmapTLtwenty,2.1,smax_regime_map
+\vmapTLeighty,1.4,smax_regime_map
+\vmapTLlast,1.2,smax_regime_map
+\vmapAMIGOmin,1.1,smax_regime_map
+\vmapAMIGOmax,14.7,smax_regime_map
+\vmapAMIGOtwenty,11.5,smax_regime_map
+\vmapAMIGOeighty,1.7,smax_regime_map
+\vmapAMIGOlast,1.1,smax_regime_map
+\vmapSIMCmin,0.8,smax_regime_map
+\vmapSIMCmax,1.0,smax_regime_map
+\vmapSIMCtwenty,1.0,smax_regime_map
+\vmapSIMCeighty,0.8,smax_regime_map
+\vmapSIMClast,0.9,smax_regime_map
+\vmapOptimalITAEmin,1.3,smax_regime_map
+\vmapOptimalITAEmax,9.6,smax_regime_map
+\vmapOptimalITAEtwenty,9.3,smax_regime_map
+\vmapOptimalITAEeighty,1.8,smax_regime_map
+\vmapOptimalITAElast,1.3,smax_regime_map
+\vlatchfromZN,60,smax_regime_map (final error -16.7 K)
+\vlatchfromCC,60,smax_regime_map (final error -16.7 K)
+\vretunedfirst,11.3,smax_retuned
+\vretunedlast,1.3,smax_retuned
+\vdbAMIGOdirthree,1.22,antiwindup_deadband
+\vdbZNsignthree,105.66,antiwindup_deadband
+\vdbZNampthree,23.44,antiwindup_deadband
+\vdbZNdirthree,1.28,antiwindup_deadband
+\vdbCCsignthree,102.78,antiwindup_deadband
+\vdbCCampthree,22.12,antiwindup_deadband
+\vdbCCdirthree,1.36,antiwindup_deadband
+\vdbAMIGOdirsix,1.54,antiwindup_deadband
+\vdbZNsignsix,106.99,antiwindup_deadband
+\vdbZNampsix,24.82,antiwindup_deadband
+\vdbZNdirsix,1.65,antiwindup_deadband
+\vdbCCsignsix,104.69,antiwindup_deadband
+\vdbCCampsix,23.01,antiwindup_deadband
+\vdbCCdirsix,1.76,antiwindup_deadband
+\vdbsixworstpct,10,antiwindup_deadband
+\vdbampratiomin,13,"antiwindup_deadband (amp-only / rate, ZN and CC)"
+\vdbsixworstpctcv,19,antiwindup_deadband (rate rule vs BC T_t^cv)
+\vopZNnone,55.58,antiwindup_second_op
+\vopZNsign,61.48,antiwindup_second_op
+\vopZNamp,16.13,antiwindup_second_op
+\vopZNdir,1.00,antiwindup_second_op
+\vopCCnone,54.19,antiwindup_second_op
+\vopCCsign,59.68,antiwindup_second_op
+\vopCCamp,15.42,antiwindup_second_op
+\vopCCdir,1.05,antiwindup_second_op
+\vopAMIGOnone,2.16,antiwindup_second_op
+\vopAMIGOsign,2.16,antiwindup_second_op
+\vopAMIGOamp,2.16,antiwindup_second_op
+\vopAMIGOdir,1.07,antiwindup_second_op
+\vopSIMCnone,1.16,antiwindup_second_op
+\vopSIMCsign,1.16,antiwindup_second_op
+\vopSIMCamp,1.16,antiwindup_second_op
+\vopSIMCdir,1.42,antiwindup_second_op
+\vSlinZN,1.57,exact_robustness_table
+\vCSZN,490,exact_robustness_table
+\vMsFZN,4.14,benchmark_table
+\vSlinCC,1.75,exact_robustness_table
+\vCSCC,559,exact_robustness_table
+\vMsFCC,4.54,benchmark_table
+\vSlinTL,1.15,exact_robustness_table
+\vCSTL,309,exact_robustness_table
+\vMsFTL,2.32,benchmark_table
+\vSlinAMIGO,1.26,exact_robustness_table
+\vCSAMIGO,196,exact_robustness_table
+\vMsFAMIGO,1.45,benchmark_table
+\vSlinSIMC,1.11,exact_robustness_table
+\vCSSIMC,77,exact_robustness_table
+\vMsFSIMC,1.13,benchmark_table
+\vSlinOptimalITAE,1.31,exact_robustness_table
+\vCSOptimalITAE,259,exact_robustness_table
+\vMsFOptimalITAE,1.60,benchmark_table
+\vfiltfactmin,1.8,noise_chattering_table
+\vfiltfactmax,3.3,noise_chattering_table
+\vNcut,64,n_design_sweep
+\vSIMCnone,1.09,antiwindup_ablation
+\vSIMCfivemnone,3.78,antiwindup_scenarios
+\vSIMCfivepnone,3.59,antiwindup_scenarios
+\vdbSIMCnonesix,1.55,antiwindup_deadband
+\vSIMCdir,1.29,antiwindup_ablation
+\vSIMCfivemdir,4.41,antiwindup_scenarios
+\vSIMCfivepdir,3.69,antiwindup_scenarios
+\vdbSIMCdirsix,1.92,antiwindup_deadband
+\vSIMCratiotwenty,1.05,"rate_demand_grid (IAE_amp/IAE_rate, -2 K)"
+\vSIMCratioff,0.86,"rate_demand_grid (IAE_amp/IAE_rate, -2 K)"
+\vSIMCratioeighty,0.85,"rate_demand_grid (IAE_amp/IAE_rate, -2 K)"
+\vSIMCratiolast,0.94,"rate_demand_grid (IAE_amp/IAE_rate, -2 K)"
+\vTrlSIMC,0.14,"rate_demand_grid (time slew-limited, -2 K, S_max = 80)"
+\vTrlothersmin,0.28,rate_demand_grid
+\vTrlothersmax,1.10,rate_demand_grid
+\vrhoSIMCmaxeighty,0.52,rate_demand_grid
+\vrhoothersmineighty,0.83,rate_demand_grid
+\vncases,162,rate_demand_grid (6 loops x 3 steps x 9 S_max)
+\vnrhohi,124,rate_demand_grid (cases with rho >= 1)
+\vnrhohihelp,123,"rate_demand_grid (rho >= 1, ratio > 1)"
+\vrhohiratiomin,0.99,rate_demand_grid (worst ratio with rho >= 1)
+\vrholoratiomin,0.81,rate_demand_grid (ratio range with rho < 1)
+\vrholoratiomax,1.73,rate_demand_grid (ratio range with rho < 1)
+\vnrholohurt,19,"rate_demand_grid (rho < 1, ratio < 1: all SIMC)"
+\vrhohelplow,0.21,rate_demand_grid (lowest rho of a helped case)
+\vrhohelplowratio,1.14,rate_demand_grid
+\vrhohelplowloop,AMIGO,rate_demand_grid
+\vrhohelplowsmax,320,rate_demand_grid
+\vchkcases,17,rate_demand_check
+\vchkrhohi,12,rate_demand_check (rho >= 1)
+\vchkrhohihelp,12,"rate_demand_check (rho >= 1, ratio > 1)"
+\vchkrholo,5,rate_demand_check (rho < 1)
+\vchkloAMIGOmin,1.75,rate_demand_check (rho < 1)
+\vchkloAMIGOmax,1.75,rate_demand_check (rho < 1)
+\vchkloSIMCmin,0.81,rate_demand_check (rho < 1)
+\vchkloSIMCmax,0.87,rate_demand_check (rho < 1)
+\vnzbclomin,0.90,noise_policies (IAE BC / IAE directional)
+\vnzbclomax,1.09,noise_policies (IAE BC / IAE directional)
+\vnzbclomaxpct,9,noise_policies
+\vnzbchimin,0.85,noise_policies (IAE BC / IAE directional)
+\vnzbchimax,1.51,noise_policies (IAE BC / IAE directional)
+\vnzbchimaxpct,51,noise_policies
+\vnzbcworse,"ZN, CC, AMIGO and Optimal ITAE","noise_policies (BC worse than the rule, sigma 0.05)"
+\vnzbcbetter,TL and SIMC,"noise_policies (BC better than the rule, sigma 0.05)"
+\vnzSIMCdir,1.44,noise_policies (sigma 0.05)
+\vnzSIMCnone,1.13,noise_policies (sigma 0.05)
+\vnzempnonemin,57,"noise_policies (IAE none / IAE directional, ZN and CC)"
+\vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
+\vpcZNfiveold,3.65,predictive_clamping
+\vpcZNfivenew,3.44,predictive_clamping
+\vpcCCmaxpct,7.1,predictive_clamping (largest |dIAE| over 3 steps)
+\vpcCCfiveold,4.39,predictive_clamping
+\vpcCCfivenew,4.08,predictive_clamping
+\vpcnommaxpct,1.4,predictive_clamping (largest |dIAE| on the nominal -2 K step)
+\vpcrestmaxpct,1.4,"predictive_clamping (largest |dIAE| of TL, AMIGO, SIMC, Optimal ITAE)"
+\vpcttcvmin,0.87,antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)
+\vpcttcvmax,1.01,antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)
+\vexZNratio,2.14,exact_backcalc
+\vexZNeuler,18.56,exact_backcalc
+\vexZNexact,0.87,exact_backcalc
+\vexZNTVeuler,802,exact_backcalc
+\vexCCratio,2.36,exact_backcalc
+\vexCCeuler,18.56,exact_backcalc
+\vexCCexact,0.82,exact_backcalc
+\vexCCTVeuler,802,exact_backcalc
+\vshapIAEeamin,0.03,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEeamax,0.20,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEuamin,0.33,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEuamax,0.39,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEcafmin,0.43,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEcafmax,0.61,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEthmin,0.00,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEthmax,0.04,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAErtwomin,0.92,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAErtwomax,0.97,"sobol_shapley (mean over seeds, IAE)"
+\vshapTVZNth,0.51,sobol_shapley (TV)
+\vshapTVCCth,0.37,sobol_shapley (TV)
+\vshapTVCCea,0.30,sobol_shapley (TV)
+\vshapTVgroupeamin,0.45,"sobol_shapley (TV, TL and optimal tunings)"
+\vshapTVgroupeamax,0.53,"sobol_shapley (TV, TL and optimal tunings)"
+\vshapTVSIMCcaf,0.71,sobol_shapley (TV)
+\vshapTVrtwomin,0.77,sobol_shapley (TV)
+\vshapTVrtwomax,0.97,sobol_shapley (TV)
+\vshaphwmax,0.006,sobol_shapley_halfwidth (largest 95 % half-width over seeds)
+\vloadZN,2.04,disturbance_rejection_table
+\vloadCC,1.98,disturbance_rejection_table
+\vloadTL,3.02,disturbance_rejection_table
+\vloadAMIGO,2.42,disturbance_rejection_table
+\vloadSIMC,5.70,disturbance_rejection_table
+\vloadOptimalITAE,2.43,disturbance_rejection_table
+\vloadpeakmin,2.49,disturbance_rejection_table
+\vloadpeakmax,2.86,disturbance_rejection_table
+\vloadvalvemin,162.4,disturbance_rejection_table
+\vloadvalvemax,180.0,disturbance_rejection_table
