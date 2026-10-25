@@ -1,4 +1,6 @@
-# REPORT — Artigo 1 (JPC), v7
+# REPORT — Artigo 1 (JPC), v7 → v10
+
+A versão vigente é a v10 (seção 9). Seções anteriores que contradizem a v10 estão marcadas como superadas.
 
 Branch `jpc-v7`, criado a partir de `phase4/verification` (43aba62). Sem push e sem tag.
 
@@ -45,7 +47,7 @@ Divergências entre o pedido e os CSV (prevaleceu o CSV):
 
 ## 4. Decisões em pontos ambíguos
 
-1. **Nome do script.** Mantive `scripts/jpc_v6_numbers.py`, porque renomear exigiria editar o data statement (regra 2). As tabelas condensadas passaram a `v7_*.tex`, e a lista de macros a `results/jpc/v7_numbers.csv`; `v6_numbers.csv` ficou como base do diff. Resolver quando o data statement entrar no escopo.
+1. **Nome do script.** *(Superado na v10: renomeado para `scripts/jpc_numbers.py`, seção 9.1, R10.)* Mantive `scripts/jpc_v6_numbers.py`, porque renomear exigiria editar o data statement (regra 2). As tabelas condensadas passaram a `v7_*.tex`, e a lista de macros a `results/jpc/v7_numbers.csv`; `v6_numbers.csv` ficou como base do diff. Resolver quando o data statement entrar no escopo.
 2. **Referências ao Suplementar.** Usei `\suppref{label}`, gerado de `supplementary.aux` por `scripts/jpc_supp_refs.py`. Um rótulo inexistente interrompe a compilação. Ordem de build: supp → `jpc_supp_refs.py` → main.
 3. **T1, critério.** Nenhuma métrica de demanda testada separa o SIMC: pico de demanda, tempo em limite de taxa, discrepância integrada, overshoot sem gatilho. Reportei a regra unilateral ρ ≥ 1 e disse que ela não separa.
 4. **T10(d).** Usei 30 sementes da floresta e da partição de CV, em vez de bootstrap, que vaza duplicatas entre folds. O intervalo mede a estabilidade do estimador, não a incerteza amostral do Sobol; legenda e texto dizem isso.
@@ -77,7 +79,7 @@ Superados: os riscos e pendências vigentes estão na seção 8.5.
 | 9 ±0,00 | feito | Tabela do Shapley só com médias; a maior meia-largura (0,006) vai para a legenda e para `sobol_shapley_halfwidth.csv`. As médias são idênticas às da rodada anterior. |
 | 10 S2 | feito | Uma tabela (custo do projeto ITAE) e um parágrafo. O resto (tabela nominal com 2-DOF, margens, Fig. S1, erro de modelo, fora da amostra, locus, pesos conjuntos) foi para `repository/S2_tuning_extended.tex`. |
 | 11 Segundo processo / stiction | **não feito** | É um estudo novo, fora do alcance desta rodada; fica declarado nas limitações e na carta. |
-| 12 | parcial | Pacote Overleaf atualizado e testado numa pasta limpa (main e Suplementar compilam). [16] e [18] confirmadas no IEEE Xplore; [20] confirmada na MDPI. [19]: a ScienceDirect continua bloqueando o acesso automatizado, **confira à mão**. Script não renomeado (data statement). |
+| 12 | parcial | Pacote Overleaf atualizado e testado numa pasta limpa (main e Suplementar compilam). [16] e [18] confirmadas no IEEE Xplore; [20] confirmada na MDPI. [19]: a ScienceDirect continua bloqueando o acesso automatizado, **confira à mão**. Script não renomeado (data statement; superado na v10: renomeado, seção 9.1). |
 
 Para manter 12 páginas:
 - A antiga Tabela 8 (razões em S_max) saiu do texto principal. O mesmo conteúdo está na primeira linha de cada laço da Tabela S `smax_map`, citada no texto. As tabelas seguintes do texto principal foram renumeradas.
@@ -201,6 +203,8 @@ Verificação final da rodada:
 
 ### 8.4 Evidência de cada frase do Bloco 0
 
+*Superada em parte pela seção 9: a frase da auditoria saiu do resumo e foi recodificada (9.2), e a frase sobre Euler e folga foi reescrita com os percentuais da Tabela S15 (9.1, O3c).*
+
 | Frase (onde) | Evidência |
 |---|---|
 | "in a short audit of 12 articles … none a slew-rate limit or the action of the loop … 2 of the 7 with integral action the anti-windup logic … 2 the sampling interval and the discretization" (Introdução e resumo) | Tabela S `literature_audit`; macros `\vlitcounted`, `\vlitactuatormodel`, `\vlitratelimit`, `\vlitloopsign`, `\vlitantiwindup`, `\vlitantiwindupapp`, `\vlitdtandmethod` |
@@ -216,6 +220,8 @@ Verificação final da rodada:
 
 ### 8.5 Riscos e pendências para o autor
 
+*Superada pela seção 9.6 (pendências vigentes).*
+
 - **[19] (A4):** volume e páginas 58(7) 388–393 vêm do Crossref e do OpenAlex. Os autores (I. Tejado, B. M. Vinagre) vêm dos registros ORCID, porque os metadados do DOI separam errado os nomes.
   - Tentativas nesta rodada: página e PDF na ScienceDirect (bloqueio/403), doi.org → linkinghub (bloqueio), repositório da UEx (403), OpenAlex (sem texto completo em repositório), Semantic Scholar (429).
   - **Confira no PDF da editora antes de submeter.**
@@ -228,6 +234,8 @@ Verificação final da rodada:
 - **Pacote Overleaf:** atualizado e testado nesta rodada (seção 8.6).
 
 ### 8.6 Verificação final da rodada 9
+
+*Superada pela seção 9.5 (verificação da v10).*
 
 1. **PDF:**
    - Texto principal em **12 páginas** ("Page 12 of 12"; 13 no PDF com a página de highlights).
@@ -250,3 +258,158 @@ Verificação final da rodada:
    - posição medida: congelamento espúrio sem banda e não com banda;
    - variantes do D2: ordem `rate_sat`, ordem inválida, `d_measurement`.
 6. **Overleaf:** `ready-to-overleaf/` e `ready_to_overleaf.zip` atualizados; main e Suplementar compilam numa pasta limpa (12 + 1 e 25 páginas, sem referências indefinidas).
+
+## 9. Rodada 10 (v9 → v10, versão final para o orientador), branch `jpc-v9`
+
+Regra desta rodada: nenhuma simulação nova e nenhum número de resultado novo. Todas as tabelas foram re-renderizadas a partir dos CSV existentes (`scripts/jpc_numbers.py`; a S15 por `exp02.export_latex_table` sobre `results/jpc/order_variants.csv`).
+
+### 9.1 Itens
+
+| Item | Estado | Onde | Observação |
+|---|---|---|---|
+| O1a | feito | `cover_letter_v10.md` | "are under review elsewhere" → "are in preparation for submission"; títulos e revistas mantidos; frase de não sobreposição mantida. Manuscrito sem nenhuma menção aos irmãos (grep). |
+| O1b | feito | carta; símbolo em main, Suplementar, tabelas, CSV, scripts, REPORT | Carta: "selected on the design step and judged on ±5 K steps". O manuscrito nunca dizia "cross-validation" para T_t; as ocorrências que restam são a validação cruzada real da floresta do Shapley. Símbolo T_t^cv → **T_t^sel** por substituição scriptada (`mathrm{cv` → `mathrm{sel`, cabeçalho `cv: ±5 K` → `sel: ±5 K`, `Tt^cv`/`BC^cv` → `Tt^sel`/`BC^sel`) em 43 arquivos; v6/v8_numbers.csv (bases históricas) e cartas antigas não foram tocados. Identificadores internos (`tt_cv`, `BC_CV`, macros `\vttcv…`, rótulo `tab:noise_ttcv`) **mantidos**: não aparecem no PDF e renomeá-los não muda nada para o leitor. |
+| O1c | feito | carta, item 5 | Reflete a recodificação: 66 candidatos, 12 lidos, 14 só resumo, um codificador; "none of the 7 whose control law is not purely predictive states the action of the loop". |
+| O1d | feito | carta | (1) "a measured valve position" saiu da lista da ablação (só regra de taxa e BC rodaram com posição medida, S17); (2) item 4 com os percentuais da S15 e a menção à tabela de robustez; (3) "released" → repositório público + DOI Zenodo a atribuir (como no data statement); (4) título do item 3 reescrito. |
+| O2a | feito | `repository/literature_audit.csv`, Tabela S36, Introdução, Suplementar S8 | Ação do laço = "not applicable" nos 5 artigos puramente preditivos (1.12, 2.9, 2.20, 3.6, 3.13). Contagens em 9.2. **Divergência com o pedido:** os 7 restantes **não são todos PID** (backstepping adaptativo, sliding mode, PSO, PID×MPC, FOPID); o texto diz "the 7 whose control law is not purely predictive", não "com PID". |
+| O2b | feito | resumo | Auditoria fora do resumo; 1ª frase abre com o problema (laço reverso, limites de amplitude e taxa, anti-windup, discretização, ordem de avaliação). Na Introdução, com "not systematic and coded by one reader", 66, 12, 14. |
+| O2c | feito | `repository/audit_coding.csv` | Um artigo por linha: id, DOI, ano, periódico, tipo e classe de controlador, 7 itens, `second_coder` vazio. Periódicos do Crossref; o 1.8 (sem DOI) do OpenAlex. A classe do 2.3 é "mixed" (PID e MPC). `jpc_numbers.py` agora falha se o arquivo divergir de `literature_audit.csv`. Citado na legenda da S36 e no texto da S8. **Não** declarei segundo codificador. |
+| O3a | feito | Seção 4.6 | "Actuator model, implementation and operating points": 4.6.1 Actuator model: deadband and stiction; 4.6.2 Order of evaluation and discretization; 4.6.3 Operating points. Cada uma abre com a pergunta (em itálico) e fecha com "In short, …". Mesmos números e tabelas. A posição da folga foi para 4.6.1 (é especificação do atuador). Contribuição 1 continua citando 4.3–4.7, que existem e dizem o afirmado. |
+| O3b | feito | Introdução, contribuição 1, S15, conclusão 1, carta | Dois grupos: (i) escolhas do controlador; (ii) especificação do modelo do atuador, declaradas como propriedades da planta/atuador. Na S15 a coluna chama-se `group` com valores **controller/actuator**, e não "(i)/(ii)", porque a S15 já numera as variantes (i)–(iv); usar (i)/(ii) nas duas colunas confundiria. Variantes (i), (iii), (iv) = controller; (ii) = actuator. |
+| O3c | feito | highlight 3, resumo, contribuição 1, conclusão 1 | A S15 sustenta: a folga antes da taxa muda o IAE em até 44,2 % e muda a ordem de laços e de políticas; Euler no filtro, 24,2 % sem ruído, idem; nenhum troca o "vencedor" global, e as trocas de política são 9 de 11 entre regra e BCs. Highlight: "Backlash placement and filter discretization shift IAE by up to 44.2% and 24.2%" (79 caracteres; percentuais por macro). |
+| O3d | feito | 4.6.2 | "With Δt/τ_m = 0.4 the explicit Euler filter is a poor discretization, so a difference of this size is an expected warning, not a finding". Resultado mantido. |
+| O4 | feito | Tabela 8 (texto principal, Seção 4.9) + parágrafo de recomendação | 6 conclusões × 7 condições; células "holds / in part / fails / not tested" com a tabela/seção; notas a–k explicam cada "in part"/"fails". Sem número de resultado na tabela. |
+| O5 | feito | `references.bib` | [19] confirmada no Crossref: IFAC-PapersOnLine 58(7) 388–393, DOI 10.1016/j.ifacol.2024.08.093 (já estava completa). Acrescentados, confirmados no Crossref: DOI de [1] Åström e Rundqwist 1989 (10.23919/ACC.1989.4790464, pp. 1693–1698 conferem); número 5 e DOI de [11] Cohen e Coon (10.1115/1.4015451); DOI de [10] Ziegler e Nichols (10.1115/1.4019264). Pendências em 9.6. |
+| R6 | feito | conclusão 2 | Frase das seis condições dividida em duas, e a frase do S_max em duas; conteúdo igual. |
+| R7 | feito | início do Suplementar | Índice "conclusão → tabelas/seções". Sem número de tabela, para não renumerar S1–S36. |
+| R8 | parcial | — | Sem caixas estouradas novas; a de 9,6 pt da Tabela 8 foi corrigida na hora. A de 123,6 pt continua: é uma hbox **vazia** (`[] []`) emitida pelo `cas-dc` 2.4 no `\maketitle` (aparece num documento mínimo). Tentei `\hfuzz` local: não pega, porque a caixa é detectada no shipout; reverti. Só some editando a classe, o que não fiz. Os 5 avisos "Citation multiply defined" do Suplementar já existiam na v9 (compilei a v9 numa pasta limpa: mesmos 5); vêm do `xr`; a numeração das citações do Suplementar está correta (conferido no PDF). |
+| R9 | feito | este arquivo | Cabeçalho, 4.1, 7 (item 12), 8.4, 8.5, 8.6 marcados como superados; seção 9 nova. |
+| R10 | feito | `scripts/jpc_numbers.py` | `git mv` + troca em main.tex (data statement), 04_results, README, pyproject, `check_text_numbers.py`, `check_main_supp_consistency.py`. Grep sem ocorrências nos arquivos ativos; sobram só em documentos históricos (CHANGELOG, respostas antigas, diff_v5_v6, parecer_r6, seções antigas deste REPORT). Macros idênticas após o rerun. |
+| R11 | feito | 9.7 | — |
+
+**Commits da rodada 10** (branch `jpc-v9`, sem push):
+
+| Commit | Itens |
+|---|---|
+| 48543af | O1b (símbolo T_t^sel, substituição scriptada) |
+| 466fb7b | O2a, O2c (recodificação e `audit_coding.csv`) |
+| a4487e0 | O3b (coluna `group` da S15) |
+| d8a1625 | O2b, O3a–d, O4, R6, R7 e as movidas para o Suplementar (os itens tocam os mesmos parágrafos) |
+| 1866b84 | O5 |
+| d7baf37 | R10 |
+| 3b5caa1 | O1a, O1c, O1d (carta) |
+| 1eee45b | pacote Overleaf e arquivos gerados |
+| (este) | R8, R9, R11 (REPORT) |
+
+Nos arquivos com mudanças de mais de um item, cada commit recebeu a versão intermediária só com a mudança do seu item (por exemplo, o commit O1b contém só a renomeação; o nome do script só muda no commit R10).
+
+**Movido para o Suplementar (para manter 12 páginas):**
+- Seção 4.9 da v9 (perturbações de carga): o conteúdo já estava na S5 com mais detalhe; no texto principal ficou uma frase de ponteiro na Seção 4.1.
+- Fig. 3 da v9 (IAE × T_t): agora Fig. S2, citada na Seção 4.4 como "Supplementary Fig. S2". As figuras do Suplementar foram renumeradas (smax S2→S3, ruído S3→S4, cargas S4→S5, Sobol S5→S6); as referências são geradas.
+- Nada foi cortado.
+
+**Outras correções de texto feitas no caminho:**
+- Suplementar, parágrafo da zona morta: "Stiction was not modelled." contradizia a S16; trocado por um ponteiro ao parágrafo de stiction.
+- Legendas da S3 e da S27 apontavam para a Seção 4.9 removida; agora apontam para a S5.1 (também no gerador).
+- Parágrafo de síntese da 4.9: a primeira versão dizia que "o latch vale em toda condição do reator"; corrigi para "o clamping cego fica muito pior… (o latch só foi checado onde marcado)", como a Tabela 8 sustenta, e acrescentei a exceção do ρ em 250 L/min.
+
+### 9.2 Auditoria: contagens antigas e novas
+
+| Item | v9 (sim/não/n.a./n.v.) | v10 (sim/não/n.a./n.v.) |
+|---|---|---|
+| Limites do atuador (amplitude) | 11/1/0/0 | 11/1/0/0 |
+| Limite de taxa | 0/12/0/0 | 0/12/0/0 |
+| Folga ou zona morta | 0/12/0/0 | 0/12/0/0 |
+| Lógica anti-windup | 2/5/5/0 | 2/5/5/0 |
+| **Ação do laço** | **0/12/0/0** | **0/7/5/0** |
+| Δt e método de discretização | 2/10/0/0 | 2/10/0/0 |
+| Ruído ou filtro de medição | 1/9/0/2 | 1/9/0/2 |
+
+Frases que dependiam disso:
+- v9, resumo: "none stated a slew-rate limit or the action of the loop". Removida (auditoria fora do resumo).
+- v9, Introdução: "none a slew-rate limit or the action of the loop" (sobre 12). Agora: limite de taxa sobre 12; ação do laço e anti-windup sobre os 7 não puramente preditivos.
+- Carta, item 5: idem.
+
+### 9.3 Decisões em pontos ambíguos
+
+1. **"n = 7 com PID":** a codificação não confirma. Só 3 dos 7 têm PID (1.10, 2.3, 3.25). Escrevi "whose control law is not purely predictive".
+2. **Rótulos dos grupos na S15:** controller/actuator (ver O3b).
+3. **Robustez, "matches":** li "BC(T_t^sel) iguala a regra" como "não fica pior além do que já fica no caso nominal". Com zona morta, BC^sel fica no máximo ~2 % pior (Optimal ITAE, −2 K) e melhor nos demais: marquei "holds". Com posição medida, há pares laço–degrau em que BC fica alguns por cento pior que a regra com banda: marquei "in part".
+4. **Latch sob ruído e em outros pontos:** a tabela distingue "clamping cego muito pior" (medido) de "latch" (não checado): "in part", com nota.
+5. **Highlight 3:** usei as macros (44.2, 24.2) em vez de arredondar para 44/24, para não digitar número.
+
+### 9.4 Evidência das frases novas
+
+| Frase nova | Evidência |
+|---|---|
+| Introdução: 66 / 12 / 14 / 11 / 2 / 7 / 2 | macros `\vlitcandidates`, `\vlitcounted`, `\vlitabstract`, `\vlitactuatormodel`, `\vlitdtandmethod`, `\vlitloopsignapp`, `\vlitantiwindup` (S36) |
+| Resumo, highlight 3, conclusão 1: 44,2 % e 24,2 % | S15; `\vorderTwodIAE`, `\vorderFourdIAE` |
+| 4.6.2: Δt/τ_m = 0,4 | Δt = 0,02 min, τ_m = 0,05 min (parâmetros declarados; `check_text_numbers.py` lista 0.4 como constante, não resultado) |
+| Tabela 8, cada célula | tabela/seção citada na própria célula (conferidas uma a uma em 9.5, item 5) |
+
+### 9.5 Autoverificação
+
+**1. Números das tabelas, antes × depois** (`snap.py`: todo número de `tables/*.tex` por arquivo, mais todas as macros de `generated/numbers.tex`; 3511 → 3522 linhas):
+```
+657a658,667
+> conclusion_robustness.tex  -2 1 | -5 1 | 1 1 | 1.72 1 | 150 3 | 2 1 | 250 4 | 3 1 | 3.5 1 | 7 1
+1046c1056  < literature_audit.tex 0 15   > literature_audit.tex 0 14
+1050c1060  < literature_audit.tex 12 3   > literature_audit.tex 12 2
+1053c1063  < literature_audit.tex 5 2    > literature_audit.tex 5 3   > literature_audit.tex 7 1
+3457c3468  < macro litloopsignna 0        > macro litloopsignna 5
+3458c3469  < macro litloopsignapp 12      > macro litloopsignapp 7
+```
+Justificativa: (a) `conclusion_robustness.tex` é nova e qualitativa; os "números" são larguras de coluna (1.72, 3.5), pontos de operação (150, 250), degraus (−2, −5), "Proposition 1", "two of the three" etc.; nenhum resultado. (b) `literature_audit.tex` e as macros `litloopsign*`: recodificação deliberada do O2a. Nenhum outro número mudou. Depois só da renomeação T_t^cv → T_t^sel, o diff foi **vazio**.
+
+**2. grep** (`under review|cross-validation|cross-validated|systematic|none of the|T_t^cv|mathrm{cv`) em main, highlights, Suplementar, seções, tabelas, generated, carta v10, CSV da auditoria, `jpc_numbers.py`, `build_paper_assets.py`:
+- `supplementary.tex:256`, `tables/sobol_shapley.tex`, `build_paper_assets.py:1764/2039–2042`: "cross-validated"/"cross-validation" da floresta aleatória do Shapley. **Correto** (é validação cruzada de fato).
+- `01_introduction.tex:3`, `supplementary.tex:286`, `tables/literature_audit.tex`, `jpc_numbers.py:982`, carta linha 16: "not systematic"/"not a systematic review". **Correto.**
+- carta linha 29: "reuses none of their tables or figures". **Correto.**
+- `under review`, `T_t^cv`, `mathrm{cv`: **nenhuma ocorrência.**
+
+**3. Contagens:**
+- Resumo: **247 palavras** com um contador mais estrito (cada expressão matemática = 1 palavra, "K·min" conta à parte; o mesmo contador dá 236 para a v9, que o REPORT 8.6 dava como 232).
+- Highlights: 83, 77, **79**, 80, 73 caracteres (com espaços, macros expandidas).
+- Texto principal: **12 páginas** ("Page 12 of 12"; 13 no PDF com a página de highlights). Suplementar: **26 páginas** (25 na v9; +índice e +Fig. S2).
+
+**4. Compilação** (main → Suplementar → `jpc_supp_refs.py` → main → Suplementar; também numa pasta limpa a partir de `ready_to_overleaf.zip`):
+- "??" no texto dos dois PDFs: 0. Referências indefinidas: 0. Citações faltando: 0.
+- Caixas estouradas: só a do template (123,6 pt, vazia; ver R8). Suplementar sem caixas estouradas.
+- Avisos remanescentes: 5 "Citation multiply defined" no Suplementar, pré-existentes (ver R8).
+- Desk-check Elsevier: passou. `ruff check .`: limpo. `pytest`: **168 passed, 1 xfailed** (o xfail do TL, pré-existente).
+- `check_main_supp_consistency.py`: 13 itens sem divergência. `check_text_numbers.py`: só 0,525 fora dos CSV no Suplementar.
+
+**5. Referências cruzadas, uma a uma:**
+- Seção 1.2, contribuição 1 → Seções 4.3–4.7: 4.3 ablação (cego, gatilho), 4.4 BC e T_t (Euler × exato no rastreamento via S6), 4.5 mapa de regime, 4.6 atuador/ordem/pontos, 4.7 trocador. Conferem.
+- Contribuição 6 → Seção 3.4 (checklist). Confere.
+- Introdução → Suplementar S8 (auditoria). Confere.
+- Tabela 8:
+  - linha "latch": T4 e S2 (mecanismo); S15 linhas ruidosas (SB ≥ 22× a regra, ZN e CC); S12 ("still latches"); S16 ("latch remains"); S13 e S14 (SB pior que nenhum anti-windup); §4.7 e S34 (sem latch).
+  - linha "gatilho": T4; S15; S12; S16; S13, S14 (+5 K); T7 (ZN, CC).
+  - linha "não universal": T4 e §4.5 (SIMC); S21 (SIMC a 0,05 K); T6 (zona morta, SIMC); S16 (depende do degrau); S13 (SIMC) e S14 (TL em −2 K); T7 (TL).
+  - linha "BC^sel": T5; S21–S24; S12; S16 (0,37–1,61); S17; S13, S14; T7 (0,84–1,01).
+  - linha "ρ": S11; S25; S10; S10 e S14; §4.7 e S35.
+  - linha "ordem": S15 (linhas sem e com ruído; (ii) com folga).
+  - Todas existem e dizem o que a célula afirma.
+
+### 9.6 Pendências do usuário
+
+1. **[19]:** volume, número, páginas e DOI conferem no Crossref. Continua pendente conferir os **nomes dos autores no PDF da editora**: o Crossref separa "Inés Tejado Blas" e "M. Vinagre"; o `.bib` usa I. Tejado e B. M. Vinagre (ORCID).
+2. **[10] Ziegler e Nichols:** o Crossref dá pp. 759–765 para o artigo; o `.bib` mantém 759–768, que inclui discussão e réplica. Decida qual usar.
+3. **Referências sem DOI** (livros e anais antigos, sem DOI confirmado): [5] Åström e Hägglund 2006, [6] Seborg et al. 2010, [9] Bequette 2003, [13] Luyben 2007, [21] Shinskey 1996, [23] Åström e Hägglund 1995. Volume e páginas não faltam em nenhum artigo de periódico.
+4. **[31] Zenodo:** DOI placeholder; atribuir no depósito.
+5. **Segunda codificação da auditoria:** coluna `second_coder` de `repository/audit_coding.csv` vazia, para o orientador.
+6. **Periódico do artigo 1.8** da auditoria: veio do OpenAlex (sem DOI); conferir.
+7. **Caixa de 123,6 pt:** do template; só some editando `cas-dc.cls`.
+
+### 9.7 Notas para o orientador
+
+- **Auditoria:** curta, não sistemática, um codificador; 12 artigos lidos de 66 candidatos. Falta uma segunda codificação independente (`audit_coding.csv`, coluna `second_coder`).
+- **Segunda planta:** o trocador de calor foi construído para este estudo, não é benchmark publicado; nele o latch não aparece e a heurística ρ não transfere.
+- **Sem dados reais:** tudo é simulação; não há dados de planta nem de bancada, nem posição de válvula medida em hardware.
+- **Patamar 3 fora de escopo:** compensadores dinâmicos (LMI), controladores com ganho escalonado ou baseados em modelo, e pontos de operação na região instável não foram testados.
+- **A conclusão mais frágil** é a equivalência BC × regra direcional: vale sem ruído e se perde com ruído e com stiction (Tabela 8).
+- **Decisões do orientador:**
+  1. quem faz a segunda codificação da auditoria (e se ela entra antes da submissão);
+  2. periódico-alvo (JPC) e o plano B, se o editor achar o escopo estreito;
+  3. as pendências de referências da seção 9.6, que exigem acesso ao PDF da editora.
