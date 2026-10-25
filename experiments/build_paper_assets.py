@@ -794,7 +794,8 @@ def run_order_variants(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) ->
                     b = {lab: mean[(n, lab, base_v, sg, st)][0] for lab, _, _ in D2_POLICIES}
                     w = {lab: mean[(n, lab, var_v, sg, st)][0] for lab, _, _ in D2_POLICIES}
                     pol_fl += [f"{_short_name(n)}, {st:+g} K: {f}" for f in _flips(b, w)]
-            rows.append({"Variant": label, "\\(\\sigma\\) (K)": f"{sg:g}",
+            rows.append({"Variant": label, "group": "actuator" if "backlash" in label else "controller",
+                         "\\(\\sigma\\) (K)": f"{sg:g}",
                          "max \\(|\\Delta\\)IAE\\(|\\) (\\%)": f"{100 * max(d_iae):.1f}",
                          "loop ranking": "changes" if loop_fl else "same",
                          "policy ranking": "changes" if pol_fl else "same"})
@@ -812,7 +813,9 @@ def run_order_variants(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) ->
             "(i) base: saturation then slew limit; (ii) base: backlash ($6$~L/min) after the slew "
             "limit; (iii)--(iv) base: filter ($\\tau_m = 0.05$~min, exact) before all three terms; "
             f"noisy rows: {N_SEEDS} realizations. The anti-windup sees the controller's "
-            "$u_{\\text{act}}$ in every variant. Every swapped pair is listed in "
+            "$u_{\\text{act}}$ in every variant. Group: controller, a choice of the controller "
+            "implementation; actuator, a property of the actuator model, not of the controller. "
+            "Every swapped pair is listed in "
             "\\texttt{results/jpc/order\\_variants\\_flips.csv}."
         ),
         label="tab:order_variants",
