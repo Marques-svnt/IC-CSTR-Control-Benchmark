@@ -242,6 +242,25 @@ def back_calculation_detail() -> None:
     gain = [num(r[col_r]) - num(r[col_f]) for r in tab if r["in range"] == "no"]
     define("ttfreemaxgain", max(gain), "antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)")
     define("ttfreemaxloss", -min(gain), "antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)")
+    lower, upper = [], []
+    for r in tab:
+        td, ti = (float(x) for x in r["\\([T_d, T_i]\\)"].strip("[]").split(","))
+        cv = float(r["\\(T_t^{\\mathrm{cv}}\\)"])
+        lower += [SHORT[r["Method"]]] if cv == td else []
+        upper += [SHORT[r["Method"]]] if cv == ti else []
+    join = lambda xs: " and ".join(xs) if len(xs) < 3 else ", ".join(xs[:-1]) + " and " + xs[-1]  # noqa: E731
+    define("ttcvlower", join(lower), "antiwindup_tt_summary (T_t^cv = T_d)")
+    define("ttcvupper", join(upper), "antiwindup_tt_summary (T_t^cv = T_i)")
+    free = {SHORT[r["Method"]]: float(r["free \\(T_t^{\\mathrm{cv}}\\)"]) for r in tab}
+    define("ttfreeZN", free["ZN"], "antiwindup_tt_summary", "{:.3f}")
+    define("ttfreeCC", free["CC"], "antiwindup_tt_summary", "{:.3f}")
+    simc = next(r for r in tab if r["Method"] == "Skogestad SIMC")
+    ti_simc = float(simc["\\([T_d, T_i]\\)"].strip("[]").split(",")[1])
+    define("ttfreeSIMCovTi", free["SIMC"] / ti_simc, "antiwindup_tt_summary (free T_t^cv / T_i)", "{:.0f}")
+    for step, s in (("$-2$ K", "two"), ("$-5$ K", "m"), ("$+5$ K", "p")):
+        m = {"Method": "Skogestad SIMC", "Step": step}
+        define(f"SIMCcv{s}", num(cell("antiwindup_tt_sweep", "IAE $T_t^{\\mathrm{cv}}$", **m)), "antiwindup_tt_sweep")
+        define(f"SIMCti{s}", num(cell("antiwindup_tt_sweep", "IAE $T_t=T_i$", **m)), "antiwindup_tt_sweep")
     tv = rows("antiwindup_tt_tvmp")
     emp = [r for r in tv if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
     define("empTVlower", f"{sum(num(r['TV BC (L/min)']) < num(r['TV dir. (L/min)']) for r in emp)}",

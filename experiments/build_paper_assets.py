@@ -484,7 +484,9 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
             "the $-2$~K design step, judged on $\\pm 5$~K; free: the same choice without the range "
             "restriction; $T_t^{\\mathrm{mm}}$: minimax over the $-2$, $-5$ and $+5$~K steps inside "
             "$[T_d, T_i]$; last two columns: worst ratio over the three steps with the defaults "
-            "$T_t = \\sqrt{T_iT_d}$ and $T_t = T_i$."
+            "$T_t = \\sqrt{T_iT_d}$ and $T_t = T_i$. A $T_t^{\\mathrm{cv}}$ equal to $T_d$ or $T_i$ is a "
+            "boundary solution of the restricted choice; ``in range'' tells whether the free choice "
+            "stays inside $[T_d, T_i]$."
         ),
         label="tab:antiwindup_tt_summary",
     )
