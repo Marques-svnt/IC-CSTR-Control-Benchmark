@@ -163,6 +163,19 @@ class PIDController:
         self._y_ss = self._y_ss_fixed
         logger.debug("PIDController reiniciado com PV inicial = %.2f", initial_measurement)
 
+    def set_feedback_position(self, position: float, band: float = 0.0) -> None:
+        """Feeds a measured valve position to the anti-windup in place of the internal u_act.
+
+        Used at the next sample as u_act,k-1 by the clamping rules and by back-calculation; the
+        limits count as cutting the command only if |u_raw,k-1 - position| > band.
+
+        Args:
+            position: Measured valve position [L/min].
+            band: Detection band [L/min]; 0 treats any residual as a cut.
+        """
+        self._last_u_applied = float(position)
+        self._is_saturated = abs(self._last_u_unconstrained - float(position)) > band
+
     def compute(
         self,
         setpoint: float,

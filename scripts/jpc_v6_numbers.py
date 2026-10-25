@@ -686,6 +686,32 @@ def stiction_numbers() -> None:
     define("stickSIMCmax", max(simc), "stiction_full (SIMC Rate/Amp = Rate/None)")
 
 
+def measured_position_numbers() -> None:
+    """C4: anti-windup with a measured valve position (measured_position_full)."""
+    d = rows("measured_position_full")
+    for r in d:
+        for k in ("IAE", "spurious_freeze", "step_K"):
+            r[k] = float(r[k])
+    get = {(r["Method"], r["case"], r["step_K"]): r for r in d}
+    base, meas = "Rate, $u_{\\text{act}}$", "Rate, $u_{\\text{meas}}$"
+    band = "Rate, $u_{\\text{meas}}$, $\\varepsilon_u$"
+    bca, bcm = "BC$^{\\mathrm{cv}}$, $u_{\\text{act}}$", "BC$^{\\mathrm{cv}}$, $u_{\\text{meas}}$"
+    keys = {(r["Method"], r["step_K"]) for r in d}
+    sp = [get[(n, meas, s)]["spurious_freeze"] for n, s in keys]
+    define("posspurmin", 100 * min(sp), "measured_position_full (spurious freezes, no band)", "{:.0f}")
+    define("posspurmax", 100 * max(sp), "measured_position_full (spurious freezes, no band)", "{:.0f}")
+    define("posspurbandmax", 100 * max(get[(n, band, s)]["spurious_freeze"] for n, s in keys),
+           "measured_position_full (spurious freezes, band)", "{:.0f}")
+    worse = max(keys, key=lambda k: get[(k[0], meas, k[1])]["IAE"] / get[(k[0], base, k[1])]["IAE"])
+    define("posworstpct", 100 * (get[(worse[0], meas, worse[1])]["IAE"] / get[(worse[0], base, worse[1])]["IAE"] - 1),
+           "measured_position_full (largest IAE rise, no band)", "{:.0f}")
+    define("posworstloop", SHORT[worse[0]], "measured_position_full")
+    define("posbandpct", 100 * max(abs(get[(n, band, s)]["IAE"] / get[(n, base, s)]["IAE"] - 1) for n, s in keys),
+           "measured_position_full (largest |IAE change| with the band)", "{:.0f}")
+    define("posbcpct", 100 * max(get[(n, bcm, s)]["IAE"] / get[(n, bca, s)]["IAE"] - 1 for n, s in keys),
+           "measured_position_full (largest IAE rise of BC with u_meas)", "{:.0f}")
+
+
 def predictive_and_exact_numbers() -> None:
     """Freeze test at k (predictor-corrector) and exact back-calculation factor (Tables S)."""
     pc = rows("predictive_clamping")
@@ -842,6 +868,7 @@ def main() -> None:
     order_variant_numbers()
     hx_body = hx_numbers()
     stiction_numbers()
+    measured_position_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
     load_cols, load_body = load_table()

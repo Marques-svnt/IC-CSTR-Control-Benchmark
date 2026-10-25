@@ -271,3 +271,22 @@ class TestStictionValve:
         lim = ActuatorLimits(0.0, 300.0, 80.0)
         v = StictionValve(s_band=12.0, j_jump=6.0, u0=100.0, limits=lim)
         assert all(0.0 <= v.apply(u) <= 300.0 for u in us)
+
+
+class TestMeasuredPositionFeedback:
+    """Anti-windup fed with a measured valve position (v9, C4)."""
+
+    def test_measured_position_drives_the_freeze_decision(self) -> None:
+        """Without a band, any residual with the pushing sign freezes; a band suppresses small ones."""
+        gains = PIDGains(kp=-10.0, ti=0.5, td=0.0)
+        out = {}
+        for band in (0.0, 1.7):
+            pid = PIDController(gains=gains, anti_windup=AntiWindupMethod.CLAMPING, u_bias=100.0)
+            pid.reset(initial_measurement=400.0)
+            pid.compute(setpoint=400.0, measurement=400.1, dt=0.02)  # u_raw > 100, linear regime
+            pid.set_feedback_position(pid._last_u_unconstrained - 1.0, band=band)
+            i0 = pid._integral_state
+            pid.compute(setpoint=400.0, measurement=400.1, dt=0.02)  # increment opens the valve
+            out[band] = pid._integral_state - i0
+        assert out[0.0] == pytest.approx(0.0)  # spurious freeze on a 1 L/min residual
+        assert out[1.7] > 0.0

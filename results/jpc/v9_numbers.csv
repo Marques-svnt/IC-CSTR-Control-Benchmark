@@ -309,6 +309,13 @@ macro,value,source
 \vstickbcmax,1.61,stiction_full (BC^cv/Rate)
 \vstickSIMCmin,0.61,stiction_full (SIMC Rate/Amp = Rate/None)
 \vstickSIMCmax,3.50,stiction_full (SIMC Rate/Amp = Rate/None)
+\vposspurmin,49,"measured_position_full (spurious freezes, no band)"
+\vposspurmax,54,"measured_position_full (spurious freezes, no band)"
+\vposspurbandmax,16,"measured_position_full (spurious freezes, band)"
+\vposworstpct,77,"measured_position_full (largest IAE rise, no band)"
+\vposworstloop,SIMC,measured_position_full
+\vposbandpct,3,measured_position_full (largest |IAE change| with the band)
+\vposbcpct,10,measured_position_full (largest IAE rise of BC with u_meas)
 \vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
 \vpcZNfiveold,3.65,predictive_clamping
 \vpcZNfivenew,3.44,predictive_clamping

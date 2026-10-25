@@ -1054,6 +1054,88 @@ def run_stiction(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
     )
 
 
+TAU_V, SIGMA_V = 0.01, 0.3  # min, L/min: position-sensor lag and noise
+EPS_U = 3.0 * SIGMA_V + 80.0 * TAU_V  # L/min: detection band 3 sigma_v + S_max tau_v
+
+
+class _MeasuredPosition:
+    """Anti-windup fed with a measured valve position u_meas instead of the internal u_act.
+
+    u_meas,k = exp(-dt/tau_v) u_meas,k-1 + (1 - exp(-dt/tau_v)) u_act,k + eta_k. Records, per
+    sample, whether the integrator was frozen while the valve model did not cut the command
+    (spurious freeze) and the back-calculation increment in that linear regime.
+    """
+
+    def __init__(self, pid, band: float, seed: int) -> None:
+        self.pid, self.band, self.u_bias, self.seed = pid, band, pid.u_bias, seed
+
+    def reset(self, *args, **kwargs) -> None:
+        self.pid.reset(*args, **kwargs)
+        self.rng = np.random.default_rng(1000 + self.seed)
+        self.u_meas, self.prev_i, self.prev_linear = self.pid.u_bias, 0.0, True
+        self.spurious, self.linear, self.track = [], [], []
+
+    def compute(self, setpoint, measurement, dt):
+        u, diag = self.pid.compute(setpoint=setpoint, measurement=measurement, dt=dt)
+        moved = diag["i"] != self.prev_i
+        if self.prev_linear:
+            self.linear.append(1)
+            self.spurious.append(int(not moved))
+        self.prev_i, self.prev_linear = diag["i"], abs(diag["u_unconstrained"] - u) < 1e-9
+        a = np.exp(-dt / TAU_V)
+        self.u_meas = a * self.u_meas + (1.0 - a) * u + self.rng.normal(0.0, SIGMA_V)
+        self.track.append(abs(self.u_meas - diag["u_unconstrained"]) * dt / (self.pid.gains.tt or 1.0))
+        self.pid.set_feedback_position(self.u_meas, self.band)
+        return u, diag
+
+
+def run_measured_position(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
+    """C4: Eq. (11) and back-calculation with a measured position, with and without a band."""
+    cases = (("Rate, $u_{\\text{act}}$", AW.CLAMPING, False, None),
+             ("Rate, $u_{\\text{meas}}$", AW.CLAMPING, False, 0.0),
+             ("Rate, $u_{\\text{meas}}$, $\\varepsilon_u$", AW.CLAMPING, False, EPS_U),
+             ("BC$^{\\mathrm{cv}}$, $u_{\\text{act}}$", AW.BACK_CALCULATION, True, None),
+             ("BC$^{\\mathrm{cv}}$, $u_{\\text{meas}}$", AW.BACK_CALCULATION, True, 0.0))
+
+    def one(name, lab, method, cv, band, step, seed):
+        g = replace(gains[name], tt=tt_cv[name]) if cv else gains[name]
+        pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T)
+        ctrl = pid if band is None else _MeasuredPosition(pid, band, seed)
+        res = exp02.ClosedLoopSimulator().run(plant, ctrl, ss, (0.0, 10.0), SIM_DT,
+                                              setpoint_func=lambda t: ss.T + step)
+        spur = float(np.mean(ctrl.spurious)) if band is not None and ctrl.spurious else 0.0
+        track = float(np.mean(ctrl.track)) if band is not None and cv else 0.0
+        return name, lab, step, res.metrics.iae, spur, track
+
+    jobs = [(n, lab, m, cv, band, st, k) for n in _one_dof(gains) for lab, m, cv, band in cases
+            for st in TT_STEPS for k in (range(N_SEEDS) if band is not None else [0])]
+    out = Parallel(n_jobs=-1)(delayed(one)(*j) for j in jobs)
+    full, rows = [], []
+    for n in _one_dof(gains):
+        for i, st in enumerate(TT_STEPS):
+            row = {"Method": n if i == 0 else "", "Step": f"${st:+g}$ K"}
+            for lab, _, cv, band in cases:
+                sel = [o for o in out if o[:3] == (n, lab, st)]
+                iae, spur = float(np.mean([o[3] for o in sel])), float(np.mean([o[4] for o in sel]))
+                full.append({"Method": n, "case": lab, "step_K": st, "IAE": iae, "spurious_freeze": spur,
+                             "track_step": float(np.mean([o[5] for o in sel]))})
+                row[lab] = f"{iae:.2f}" + (f" ({100 * spur:.0f}\\%)" if band is not None and not cv else "")
+            rows.append(row)
+    pd.DataFrame(full).to_csv(exp02.RESULTS_DIR / "measured_position_full.csv", index=False, float_format="%.4f")
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "measured_position.tex",
+        caption=(
+            "Anti-windup fed with a measured valve position, $u_{\\text{meas},k} = e^{-\\Delta t/\\tau_v}"
+            "u_{\\text{meas},k-1} + (1 - e^{-\\Delta t/\\tau_v})u_{\\text{act},k} + \\eta_k$ with "
+            f"$\\tau_v = {TAU_V:g}$~min and $\\sigma_v = {SIGMA_V:g}$~L/min ({N_SEEDS} realizations), "
+            "instead of the internal $u_{\\text{act}}$: IAE (K$\\cdot$min) and, in parentheses, the share "
+            "of the samples in the linear regime in which the rate rule froze the integrator although "
+            f"no limit cut the command; $\\varepsilon_u = 3\\sigma_v + S_{{\\max}}\\tau_v = {EPS_U:.1f}$~L/min."
+        ),
+        label="tab:measured_position",
+    )
+
+
 def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
     """The rho >= 1 rule, defined on the nominal grid, checked on conditions it was not built on.
 
@@ -1981,6 +2063,7 @@ def remediate_jpc() -> Path:
     run_noise_policies_ext(plant, ss, gains, tt_cv, tables_dir)
     run_order_variants(plant, ss, gains, tt_cv, tables_dir)
     run_stiction(plant, ss, gains, tt_cv, tables_dir)
+    run_measured_position(plant, ss, gains, tt_cv, tables_dir)
     stage("second plant: heat exchanger")
     run_heat_exchanger(tables_dir)
     run_predictive_clamping(plant, ss, gains, tables_dir)

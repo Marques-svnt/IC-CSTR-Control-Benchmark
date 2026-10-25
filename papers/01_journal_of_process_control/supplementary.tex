@@ -116,6 +116,10 @@ with $u_{\text{act},k} = \operatorname{rate}(\operatorname{sat}(u_{\text{raw},k}
 
 \input{tables/stiction}
 
+\paragraph{Measured valve position.} In the main text the anti-windup uses $u_{\text{act}}$, the output of a copy of the amplitude and slew limits at the controller. Table~\ref{tab:measured_position} replaces it by a measured position, a first-order lag of $u_{\text{act}}$ ($\tau_v = 0.01$~min) plus Gaussian noise ($\sigma_v = 0.3$~L/min), fed back to Eq.~\eqref{eq:clamping_antiwindup} and to Eq.~\eqref{eq:back_calculation} at the next sample (\texttt{PIDController.set\_feedback\_position}). Because $u_{\text{raw},k-1} \ne u_{\text{meas},k-1}$ even when no limit acts, the rule without a band freezes the integrator in $\vposspurmin$ to $\vposspurmax\%$ of the samples of the linear regime, about half, as the sign of the residual follows the noise, and the slow loops lose most (\vposworstloop{}: $+\vposworstpct\%$ IAE). With the band $|u_{\text{raw},k-1} - u_{\text{meas},k-1}| > \varepsilon_u$ the spurious freezes fall to at most $\vposspurbandmax\%$ and the IAE stays within $\vposbandpct\%$ of the internal-$u_{\text{act}}$ rule. Back-calculation integrates the measurement noise through its tracking term but loses at most $\vposbcpct\%$ of IAE here.
+
+\input{tables/measured_position}
+
 \section{Sensor noise, measurement filter and derivative filter}\label{supp:noise}
 \subsection{Sensor noise and measurement filtering}
 \label{subsec:noise_results}
