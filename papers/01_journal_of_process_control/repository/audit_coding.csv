@@ -1,0 +1,13 @@
+id,doi,year,journal,controller_type,controller_class,actuator_model,rate_limit,backlash,anti_windup,loop_sign,dt_and_method,measurement_path,second_coder
+1.3,https://doi.org/10.1109/access.2020.2972621,2020,IEEE Access,adaptive neural-network backstepping,non-predictive,yes,no,no,no,no,no,no,
+1.8,,2025,International Journal of Intelligent Systems and Applications in Engineering,super-twisting sliding mode,non-predictive,yes,no,no,yes,no,no,no,
+1.10,https://doi.org/10.3390/electronics11244220,2022,Electronics,sliding mode and PID with integral-windup resetting,non-predictive,yes,no,no,yes,no,no,no,
+1.12,https://doi.org/10.1109/access.2021.3107282,2021,IEEE Access,fault-tolerant nonlinear MPC,predictive,yes,no,no,not applicable,not applicable,no,not verifiable,
+1.13,https://doi.org/10.5829/ije.2025.38.07a.05,2025,International Journal of Engineering,model-based controller vs sliding mode,non-predictive,yes,no,no,no,no,no,not verifiable,
+2.1,https://doi.org/10.51485/ajss.v9i3.226,2024,Algerian Journal of Signals and Systems,PSO-tuned feedback controllers,non-predictive,no,no,no,no,no,no,no,
+2.3,https://doi.org/10.3329/bjsir.v57i3.62017,2022,Bangladesh Journal of Scientific and Industrial Research,PID vs MPC,mixed,yes,no,no,no,no,no,no,
+2.9,https://doi.org/10.18280/jesa.570605,2024,Journal Europeen des Systemes Automatises,flatness-based constrained MPC,predictive,yes,no,no,not applicable,not applicable,yes,no,
+2.20,https://doi.org/10.3390/a18020079,2025,Algorithms,analytical DMC vs DMC,predictive,yes,no,no,not applicable,not applicable,no,yes,
+3.6,https://doi.org/10.1016/j.ces.2022.117908,2022,Chemical Engineering Science,quasi-infinite-horizon NMPC,predictive,yes,no,no,not applicable,not applicable,no,no,
+3.13,https://doi.org/10.3390/math8050711,2020,Mathematics,constrained linear MPC,predictive,yes,no,no,not applicable,not applicable,yes,no,
+3.25,https://doi.org/10.3390/pr11123275,2023,Processes,fuzzy gain-scheduled fractional-order PID,non-predictive,yes,no,no,no,no,no,no,

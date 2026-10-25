@@ -765,6 +765,12 @@ def literature_audit_numbers() -> list[list[str]]:
         define(f"lit{key.replace('_', '')}na", f"{n['not applicable']}", f"literature_audit ({key} = not applicable)")
         body.append([label, *(str(n[v]) for v in ("yes", "no", "not applicable", "not verifiable"))])
         define(f"lit{key.replace('_', '')}app", f"{len(vals) - n['not applicable']}", f"literature_audit ({key} applicable)")
+    with open(PAPER / "repository" / "audit_coding.csv", newline="", encoding="utf-8") as fh:
+        coding = {r["id"]: r for r in csv.DictReader(fh)}
+    if set(coding) != {r["rank"] for r in counted} or any(
+        coding[r["rank"]][k] != r[k] for r in counted for k, _ in items
+    ):
+        raise ValueError("audit_coding.csv disagrees with the counted rows of literature_audit.csv")
     return body
 
 
@@ -976,8 +982,9 @@ def main() -> None:
             "Short literature audit (not a systematic review): what the articles that compare control "
             "strategies on a CSTR or equivalent reactor with an actuator constraint state about the "
             "implementation, counted over the articles read in full. Protocol, search strings and the "
-            "list of every candidate are in \\texttt{repository/literature\\_audit.csv} and the "
-            "repository report; anti-windup is not applicable to predictive controllers.",
+            "list of every candidate are in \\texttt{repository/literature\\_audit.csv}, and the coding "
+            "of each counted article in \\texttt{repository/audit\\_coding.csv}. Anti-windup logic and "
+            "loop action are not applicable to the five predictive controllers. One coder.",
             "tab:literature_audit",
             env="table",
         ),
