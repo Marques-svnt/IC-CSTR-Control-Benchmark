@@ -192,7 +192,7 @@ As sementes aleatórias são fixas no código; a ordem abaixo regenera tudo o qu
 # 1. Tabelas, figuras e espelhos CSV (results/jpc/*.csv); cerca de 11 min
 .venv/bin/python experiments/build_paper_assets.py jpc-remediation
 # 2. Macros numéricas do texto (generated/numbers.tex) e tabelas condensadas, a partir dos CSV
-.venv/bin/python scripts/jpc_v6_numbers.py
+.venv/bin/python scripts/jpc_numbers.py
 # 3. PDFs (o suplementar referencia o main.aux, por isso vem depois)
 cd papers/01_journal_of_process_control && latexmk -pdf main.tex; latexmk -pdf supplementary.tex && ../../.venv/bin/python ../../scripts/jpc_supp_refs.py && latexmk -pdf main.tex && cd ../..
 # 4. Conferências: ordem das referências e números do texto contra os CSV

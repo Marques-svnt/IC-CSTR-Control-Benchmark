@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from jpc_v6_numbers import PAPER, SHORT, SIX, cell, num, rows  # noqa: E402
+from jpc_numbers import PAPER, SHORT, SIX, cell, num, rows  # noqa: E402
 
 FLOAT = r"[-+]?\d+(?:\.\d+)?"
 

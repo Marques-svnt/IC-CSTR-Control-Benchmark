@@ -68,7 +68,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "experiments/*" = ["E402", "E501"]
-"scripts/jpc_v6_numbers.py" = ["E501"]  # LaTeX captions and column keys copied from the CSV headers
+"scripts/jpc_numbers.py" = ["E501"]  # LaTeX captions and column keys copied from the CSV headers
 "tests/*" = ["D"]
 
 [tool.ruff.lint.pydocstyle]

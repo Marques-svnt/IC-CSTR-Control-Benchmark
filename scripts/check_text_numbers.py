@@ -56,7 +56,7 @@ def main() -> int:
     failures = 0
     committed = (PAPER / "generated" / "numbers.tex").read_text(encoding="utf-8")
     subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "jpc_v6_numbers.py")],
+        [sys.executable, str(ROOT / "scripts" / "jpc_numbers.py")],
         check=True,
         capture_output=True,
     )
