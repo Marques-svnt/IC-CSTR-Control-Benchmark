@@ -658,6 +658,34 @@ def hx_numbers() -> list[list[str]]:
     return body
 
 
+def stiction_numbers() -> None:
+    """C3: stiction (stiction_full)."""
+    d = rows("stiction_full")
+    for r in d:
+        for k in ("IAE", "step_K"):
+            r[k] = float(r[k])
+    iae = {(r["severity"], r["Method"], r["policy"], r["step_K"]): r["IAE"] for r in d}
+    work = ("Amp.", "Rate", "BC", "BC$^{\\mathrm{cv}}$")
+    for sev in ("moderate", "severe"):
+        sel = [r for r in d if r["severity"] == sev and r["policy"] in work]
+        define(f"stick{sev}hunt", 100.0 * sum(r["hunting"] == "True" for r in sel) / len(sel),
+               "stiction_full (share of hunting runs, policies other than SB)", "{:.0f}")
+    stuck = [r for r in d if r["severity"] != "none"]
+    emp = ("Ziegler-Nichols", "Cohen-Coon")
+    define("sticksbmin", min(iae[(r["severity"], r["Method"], "SB", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
+                             for r in stuck if r["Method"] in emp), "stiction_full (SB/Rate, ZN and CC)", "{:.0f}")
+    define("stickampmin", min(iae[(r["severity"], r["Method"], "Amp.", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
+                              for r in stuck if r["Method"] in emp), "stiction_full (Amp/Rate, ZN and CC)", "{:.1f}")
+    bc = [iae[(r["severity"], r["Method"], "BC$^{\\mathrm{cv}}$", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
+          for r in stuck]
+    define("stickbcmin", min(bc), "stiction_full (BC^cv/Rate)")
+    define("stickbcmax", max(bc), "stiction_full (BC^cv/Rate)")
+    simc = [iae[(s, "Skogestad SIMC", "Rate", st)] / iae[(s, "Skogestad SIMC", "Amp.", st)]
+            for s in ("moderate", "severe") for st in (-2.0, -5.0, 5.0)]
+    define("stickSIMCmin", min(simc), "stiction_full (SIMC Rate/Amp = Rate/None)")
+    define("stickSIMCmax", max(simc), "stiction_full (SIMC Rate/Amp = Rate/None)")
+
+
 def predictive_and_exact_numbers() -> None:
     """Freeze test at k (predictor-corrector) and exact back-calculation factor (Tables S)."""
     pc = rows("predictive_clamping")
@@ -813,6 +841,7 @@ def main() -> None:
     noise_round_numbers()
     order_variant_numbers()
     hx_body = hx_numbers()
+    stiction_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
     load_cols, load_body = load_table()

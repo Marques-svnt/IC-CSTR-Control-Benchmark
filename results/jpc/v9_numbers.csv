@@ -301,6 +301,14 @@ macro,value,source
 \vhxbadrhomax,25,hx_rate_demand_grid
 \vhxbadRmin,0.60,hx_rate_demand_grid
 \vhxncases,162,hx_rate_demand_grid
+\vstickmoderatehunt,86,"stiction_full (share of hunting runs, policies other than SB)"
+\vstickseverehunt,92,"stiction_full (share of hunting runs, policies other than SB)"
+\vsticksbmin,46,"stiction_full (SB/Rate, ZN and CC)"
+\vstickampmin,6.9,"stiction_full (Amp/Rate, ZN and CC)"
+\vstickbcmin,0.37,stiction_full (BC^cv/Rate)
+\vstickbcmax,1.61,stiction_full (BC^cv/Rate)
+\vstickSIMCmin,0.61,stiction_full (SIMC Rate/Amp = Rate/None)
+\vstickSIMCmax,3.50,stiction_full (SIMC Rate/Amp = Rate/None)
 \vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
 \vpcZNfiveold,3.65,predictive_clamping
 \vpcZNfivenew,3.44,predictive_clamping

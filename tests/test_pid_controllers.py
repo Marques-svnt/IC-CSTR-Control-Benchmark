@@ -8,7 +8,7 @@ from hypothesis import strategies as st
 
 from src.classical_control.closed_loop import ClosedLoopSimulator
 from src.classical_control.pid_controller import AntiWindupMethod, PIDController, PIDGains
-from src.sim_core.actuators import ActuatorLimits, ValveActuator
+from src.sim_core.actuators import ActuatorLimits, StictionValve, ValveActuator
 from src.sim_core.cstr_plant import CSTRPlant, CSTRState
 
 
@@ -244,3 +244,29 @@ class TestImplementationOrderVariants:
         assert da["p"] == pytest.approx(db["p"])
         assert db["d"] == pytest.approx(0.0)
         assert da["d"] != pytest.approx(0.0)
+
+
+class TestStictionValve:
+    """Two-parameter stiction model (Choudhury, Thornhill and Shah, 2005), v9 C3."""
+
+    def test_no_stiction_is_transparent(self) -> None:
+        """S = J = 0 passes the input through."""
+        v = StictionValve(s_band=0.0, j_jump=0.0, u0=100.0, limits=ActuatorLimits(0.0, 300.0, 80.0))
+        for u in (101.0, 103.0, 102.0, 102.0, 99.0):
+            assert v.apply(u) == pytest.approx(u)
+
+    def test_reversal_needs_s_and_slips_by_j(self) -> None:
+        """After a reversal the valve holds until |u - u_s| > S, then jumps to u -+ (S - J)/2."""
+        v = StictionValve(s_band=6.0, j_jump=3.0, u0=100.0, limits=ActuatorLimits(0.0, 300.0, 80.0))
+        for u in (102.0, 104.0, 106.0, 108.0):  # breaks away upwards, then moves
+            x = v.apply(u)
+        assert x == pytest.approx(108.0 - 1.5)
+        for u in (106.0, 104.0, 103.0):  # reversal at u_s = 108: stuck while |u - 108| <= 6
+            assert v.apply(u) == pytest.approx(106.5)
+        assert v.apply(101.0) == pytest.approx(101.0 + 1.5)  # |101 - 108| = 7 > 6
+
+    @given(us=st.lists(st.floats(0.0, 300.0), min_size=2, max_size=60))
+    def test_position_stays_within_the_stops(self, us: list) -> None:
+        """Whatever the input, the position stays inside [u_min, u_max]."""
+        v = StictionValve(s_band=12.0, j_jump=6.0, u0=100.0, limits=ActuatorLimits(0.0, 300.0, 80.0))
+        assert all(0.0 <= v.apply(u) <= 300.0 for u in us)

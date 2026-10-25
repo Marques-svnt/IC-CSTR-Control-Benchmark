@@ -207,3 +207,43 @@ if __name__ == "__main__":
 
     print("\nDemonstração do atuador concluída com sucesso no Spyder 6.")
     print("=" * 70)
+
+
+class StictionValve:
+    """Two-parameter stiction model of Choudhury, Thornhill and Shah (Control Eng. Pract., 2005).
+
+    Input: the valve command u (here the controller's u_act, after amplitude and slew limits);
+    output: the stem position x. S is the deadband plus stickband and J the slip jump, both in
+    the units of u. When the command reverses, the valve sticks until |u - u_s| > S; when the
+    command rests and then moves on in the same direction, until |u - u_s| > J; on breaking free
+    the position jumps to u - sign(u - u_s) (S - J)/2 and then follows u with that offset. The
+    valve starts at rest, treated as a reversal (band S). The position is kept inside the stops.
+    """
+
+    def __init__(self, s_band: float, j_jump: float, u0: float, limits: ActuatorLimits) -> None:
+        """Valve at rest at u0, stuck."""
+        self.s, self.j, self.limits = s_band, j_jump, limits
+        self.x = self.u_prev = self.u_s = float(u0)
+        self.direction, self.stuck, self.reversal = 0.0, True, True
+
+    def apply(self, u: float) -> float:
+        """Position for the new command u (one sample)."""
+        du = float(u) - self.u_prev
+        d = float((du > 0) - (du < 0))
+        if d == 0.0 and not self.stuck:
+            self.stuck, self.u_s, self.reversal = True, self.u_prev, False
+        elif d != 0.0 and self.direction != 0.0 and d != self.direction and not self.stuck:
+            self.stuck, self.u_s, self.reversal = True, self.u_prev, True
+        elif d != 0.0 and self.direction != 0.0 and d != self.direction and self.stuck:
+            self.u_s, self.reversal = self.u_prev, True  # reversal while stuck: new reference
+        if self.stuck:
+            if abs(u - self.u_s) > (self.s if self.reversal else self.j):
+                self.stuck = False
+                self.x = u - (1.0 if u > self.u_s else -1.0) * (self.s - self.j) / 2.0
+        elif d != 0.0:
+            self.x = u - d * (self.s - self.j) / 2.0
+        self.x = min(max(self.x, self.limits.u_min), self.limits.u_max)
+        if d != 0.0:
+            self.direction = d
+        self.u_prev = float(u)
+        return self.x

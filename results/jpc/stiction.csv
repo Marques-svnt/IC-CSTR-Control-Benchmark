@@ -1,0 +1,7 @@
+Method,"SB, none","Rate, none","BC$^{\mathrm{cv}}$, none","SB, moderate","Rate, moderate","BC$^{\mathrm{cv}}$, moderate","SB, severe","Rate, severe","BC$^{\mathrm{cv}}$, severe"
+Ziegler-Nichols,271.30,0.94,0.88,272.16,1.96*,1.93*,274.68,3.08*,3.05*
+Cohen-Coon,269.85,1.02,0.82,269.54,2.00*,1.79*,271.22,3.23*,2.83*
+Tyreus-Luyben,1.26,0.92,0.83,2.39*,2.02*,1.98*,3.62*,3.20*,3.20*
+AMIGO,1.60,0.93,0.92,3.52*,2.65*,2.67*,5.87*,4.43*,4.46*
+Skogestad SIMC,1.09,1.29,1.15,1.23,4.31*,2.76*,6.94*,6.55*,7.34*
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),1.51,0.83,0.83,3.17*,2.27*,2.28*,5.19*,3.74*,3.76*

@@ -983,6 +983,77 @@ def run_heat_exchanger(tables_dir: Path) -> None:
     )
 
 
+STICTION = {"none": (0.0, 0.0), "moderate": (6.0, 3.0), "severe": (12.0, 6.0)}  # S, J in L/min
+STICTION_T_END = 20.0  # min: long enough for a stick-slip limit cycle to show
+HUNT_PTP_K, HUNT_SLIPS = 0.05, 2  # hunting: last 10 min, T peak-to-peak and number of slips
+
+
+class _Stiction:
+    """Valve stiction after the amplitude and slew limits; the anti-windup still sees u_act."""
+
+    def __init__(self, pid, s_band: float, j_jump: float) -> None:
+        from src.sim_core.actuators import StictionValve
+
+        self.pid, self.u_bias, self.args = pid, pid.u_bias, (s_band, j_jump)
+        self.cls, self.slips = StictionValve, []
+        self.valve = StictionValve(*self.args, pid.u_bias, pid.limits)
+
+    def reset(self, *args, **kwargs) -> None:
+        self.pid.reset(*args, **kwargs)
+        self.valve = self.cls(*self.args, self.pid.u_bias, self.pid.limits)
+        self.slips = []
+
+    def compute(self, setpoint, measurement, dt):
+        u, diag = self.pid.compute(setpoint=setpoint, measurement=measurement, dt=dt)
+        was = self.valve.stuck
+        x = self.valve.apply(u)
+        self.slips.append(was and not self.valve.stuck)
+        return x, diag
+
+
+def run_stiction(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
+    """C3: the five policies of the robustness table with two-parameter valve stiction."""
+    sim, rows, full = exp02.ClosedLoopSimulator(), [], []
+    win = int(10.0 / SIM_DT)
+    for sev, (sb, jj) in STICTION.items():
+        for n, g in _one_dof(gains).items():
+            for lab, m, cv in D2_POLICIES:
+                for st in TT_STEPS:
+                    pid = exp02.PIDController(replace(g, tt=tt_cv[n]) if cv else g, exp02.BENCHMARK_LIMITS,
+                                              m, u_bias=100.0, y_ss=ss.T)
+                    ctrl = _Stiction(pid, sb, jj)
+                    res = sim.run(plant, ctrl, ss, (0.0, STICTION_T_END), SIM_DT,
+                                  setpoint_func=lambda t, d=st: ss.T + d)
+                    temp = res.states[-win:, 1]
+                    ptp, slips = float(temp.max() - temp.min()), int(sum(ctrl.slips[-win:]))
+                    full.append({"severity": sev, "Method": n, "policy": lab, "step_K": st,
+                                 "IAE": res.metrics.iae, "Mp_pct": res.metrics.overshoot_pct,
+                                 "TV": res.metrics.tv, "ptp_last10_K": ptp, "slips_last10": slips,
+                                 "hunting": bool(ptp > HUNT_PTP_K and slips >= HUNT_SLIPS)})
+    df = pd.DataFrame(full)
+    df.to_csv(exp02.RESULTS_DIR / "stiction_full.csv", index=False, float_format="%.4f")
+    for n in _one_dof(gains):
+        row = {"Method": n}
+        for sev in STICTION:
+            sel = df[(df.Method == n) & (df.severity == sev) & (df.step_K == -2.0)].set_index("policy")
+            row |= {f"{lab}, {sev}": f"{sel.loc[lab, 'IAE']:.2f}{'*' if sel.loc[lab, 'hunting'] else ''}"
+                    for lab in ("SB", "Rate", "BC$^{\\mathrm{cv}}$")}
+        rows.append(row)
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "stiction.tex",
+        caption=(
+            "Valve stiction (two-parameter model of Choudhury et al., applied after the amplitude and "
+            "slew limits; the anti-windup sees $u_{\\text{act}}$): IAE (K$\\cdot$min, $20$~min horizon) of "
+            "sign-blind clamping, the rate-aware rule and back-calculation with $T_t^{\\mathrm{cv}}$ on the "
+            "$-2$~K step without stiction, moderate ($S = 6$, $J = 3$~L/min) and severe ($S = 12$, "
+            "$J = 6$~L/min). *: hunting (peak-to-peak reactor temperature above $0.05$~K and at least two "
+            "valve slips in the last $10$~min). All five policies and the $\\pm 5$~K steps are in "
+            "\\texttt{results/jpc/stiction\\_full.csv}."
+        ),
+        label="tab:stiction",
+    )
+
+
 def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
     """The rho >= 1 rule, defined on the nominal grid, checked on conditions it was not built on.
 
@@ -1909,6 +1980,7 @@ def remediate_jpc() -> Path:
     run_rho_noise(plant, ss, gains, tables_dir)
     run_noise_policies_ext(plant, ss, gains, tt_cv, tables_dir)
     run_order_variants(plant, ss, gains, tt_cv, tables_dir)
+    run_stiction(plant, ss, gains, tt_cv, tables_dir)
     stage("second plant: heat exchanger")
     run_heat_exchanger(tables_dir)
     run_predictive_clamping(plant, ss, gains, tables_dir)

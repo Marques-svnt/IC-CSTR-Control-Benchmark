@@ -112,6 +112,10 @@ with $u_{\text{act},k} = \operatorname{rate}(\operatorname{sat}(u_{\text{raw},k}
 
 \input{tables/order_variants}
 
+\paragraph{Valve stiction.} The two-parameter model of Choudhury, Thornhill and Shah \cite{choudhury2005modelling} (\texttt{StictionValve} in \texttt{src/sim\_core/actuators.py}) acts on $u_{\text{act}}$, after the amplitude and slew limits, and the anti-windup still sees $u_{\text{act}}$, as for the deadband. $S$ (deadband plus stickband) and $J$ (slip jump) are $2\%$ and $1\%$ of the $300$~L/min span (moderate) or $4\%$ and $2\%$ (severe). The runs last $20$~min so that a limit cycle can show; hunting is declared, before looking at the results, when the reactor temperature varies by more than $0.05$~K peak to peak and the valve slips at least twice in the last $10$~min. Hunting appears in $\vstickmoderatehunt\%$ (moderate) and $\vstickseverehunt\%$ (severe) of the runs with the four working policies; sign-blind clamping hunts less only because it holds ZN and CC at the stop. The latch and the amplitude-only windup survive (at least $\vsticksbmin$ and $\vstickampmin$ times the IAE of the rate rule for ZN and CC), whereas the ratio of back-calculation with $T_t^{\mathrm{cv}}$ to the rate rule spreads from $\vstickbcmin$ to $\vstickbcmax$ and the rate rule changes the SIMC IAE by a factor of $\vstickSIMCmin$ to $\vstickSIMCmax$ against amplitude-only clamping, which for SIMC equals no anti-windup.
+
+\input{tables/stiction}
+
 \section{Sensor noise, measurement filter and derivative filter}\label{supp:noise}
 \subsection{Sensor noise and measurement filtering}
 \label{subsec:noise_results}
