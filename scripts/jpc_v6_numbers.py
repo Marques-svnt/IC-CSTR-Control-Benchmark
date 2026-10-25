@@ -37,6 +37,7 @@ SHORT = {
     OPT: "Optimal ITAE",
 }
 RATE = "Amp.+rate direct. (Eq.~\\ref{eq:clamping_antiwindup})"
+BC_SQRT, BC_CV = "BC ($\\sqrt{T_iT_d}$)", "BC ($T_t^{\\mathrm{cv}}$)"
 
 
 def rows(stem: str) -> list[dict[str, str]]:
@@ -72,9 +73,12 @@ def define(name: str, value: float | str, source: str, fmt: str = "{:.2f}") -> N
     MACROS.append((name, text, source))
 
 
-def booktabs(header: list[str], body: list[list[str]], caption: str, label: str) -> str:
-    """Starred booktabs float in the style of exp02.export_latex_table."""
-    lines = [" & ".join(header) + r" \\", r"\midrule"] + [" & ".join(r) + r" \\" for r in body]
+def booktabs(
+    header: list[str], body: list[list[str]], caption: str, label: str, group: str = ""
+) -> str:
+    """Starred booktabs float in the style of exp02.export_latex_table; `group` is an optional top row."""
+    top = [group + r" \\"] if group else []
+    lines = top + [" & ".join(header) + r" \\", r"\midrule"] + [" & ".join(r) + r" \\" for r in body]
     return (
         "\\begin{table*}[t]\n\\centering\n\\footnotesize\n"
         f"\\caption{{{caption}}}\n\\label{{{label}}}\n"
@@ -90,7 +94,8 @@ def ablation_numbers() -> None:
         s = SHORT[name]
         for col, tag in (
             ("None", "none"),
-            ("Back-calc.", "bc"),
+            (BC_SQRT, "bc"),
+            (BC_CV, "bccv"),
             ("Sign-blind amp.", "sign"),
             ("Amp. direct.", "amp"),
             ("Amp.+rate uncond.", "rateunc"),
@@ -313,7 +318,8 @@ def robustness_extension() -> list[list[str]]:
         ("Sign-blind amp.", "SB"),
         ("Amp. direct.", "Amp."),
         (RATE, "Rate"),
-        ("Back-calc.", "BC"),
+        (BC_SQRT, "BC"),
+        (BC_CV, "BC$^{\\mathrm{cv}}$"),
     )
     body = []
     for name in SIX:
@@ -345,10 +351,16 @@ def robustness_extension() -> list[list[str]]:
                 )
     ratios = [
         num(cell("antiwindup_deadband", RATE, **{"Deadband (L/min)": "6", "Method": n}))
-        / num(cell("antiwindup_deadband", "Back-calc.", **{"Deadband (L/min)": "6", "Method": n}))
+        / num(cell("antiwindup_deadband", BC_SQRT, **{"Deadband (L/min)": "6", "Method": n}))
         for n in SIX
     ]
     define("dbsixworstpct", 100.0 * (max(ratios) - 1.0), "antiwindup_deadband", "{:.0f}")
+    ratios_cv = [
+        num(cell("antiwindup_deadband", RATE, **{"Deadband (L/min)": "6", "Method": n}))
+        / num(cell("antiwindup_deadband", BC_CV, **{"Deadband (L/min)": "6", "Method": n}))
+        for n in SIX
+    ]
+    define("dbsixworstpctcv", 100.0 * (max(ratios_cv) - 1.0), "antiwindup_deadband (rate rule vs BC T_t^cv)", "{:.0f}")
     for name in ("Ziegler-Nichols", "Cohen-Coon", "AMIGO", "Skogestad SIMC"):
         s = SHORT[name]
         for col, tag in (
@@ -529,14 +541,19 @@ def main() -> None:
     )
     (tables / "v7_robustness_ext.tex").write_text(
         booktabs(
-            ["Tuning", *[f"{p}, DB 6" for p in pol], *[f"{p}, $q_j$ 150" for p in pol]],
+            ["Tuning", *pol, *pol],
             ext_body,
-            "IAE (K$\\cdot$min) of four integrator policies with a valve deadband of $6$~L/min (DB 6) and "
-            "at a second operating point $q_{j,ss} = 150$~L/min with re-identified FOPTD and re-tuned "
-            "analytical rules ($q_j$ 150; the optimal tuning was not re-optimized there). SB: sign-blind "
-            "amplitude clamping; Amp.: amplitude-only directional; Rate: amplitude-plus-rate directional "
-            "(Eq.~\\eqref{eq:clamping_antiwindup}); BC: back-calculation with $T_t = \\sqrt{T_iT_d}$.",
+            "IAE (K$\\cdot$min) of five integrator policies with a valve deadband of $6$~L/min and at a "
+            "second operating point $q_{j,ss} = 150$~L/min with re-identified FOPTD and re-tuned "
+            "analytical rules (the optimal tuning was not re-optimized there); valve $[0, 300]$~L/min, "
+            "$S_{\\max} = 80$~L/min$^2$. SB: sign-blind amplitude clamping; Amp.: amplitude-only "
+            "directional; Rate: amplitude-plus-rate directional (Eq.~\\eqref{eq:clamping_antiwindup}); "
+            "BC: back-calculation with $T_t = \\sqrt{T_iT_d}$; BC$^{\\mathrm{cv}}$: with the "
+            "$T_t^{\\mathrm{cv}}$ of Table~\\ref{tab:antiwindup_tt_summary}, re-chosen by the same criterion "
+            "at the second point.",
             "tab:robustness_ext",
+            group=f" & \\multicolumn{{{len(pol)}}}{{c}}{{Deadband $6$~L/min}} & "
+            f"\\multicolumn{{{len(pol)}}}{{c}}{{$q_{{j,ss}} = 150$~L/min}}",
         ),
         encoding="utf-8",
     )

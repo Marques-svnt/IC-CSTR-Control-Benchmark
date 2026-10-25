@@ -1,6 +1,7 @@
 macro,value,source
 \vZNnone,91.11,antiwindup_ablation
 \vZNbc,0.97,antiwindup_ablation
+\vZNbccv,0.88,antiwindup_ablation
 \vZNsign,104.12,antiwindup_ablation
 \vZNamp,22.10,antiwindup_ablation
 \vZNrateunc,0.93,antiwindup_ablation
@@ -10,6 +11,7 @@ macro,value,source
 \vZNdiscrep,4474,antiwindup_mechanism
 \vCCnone,87.37,antiwindup_ablation
 \vCCbc,0.87,antiwindup_ablation
+\vCCbccv,0.82,antiwindup_ablation
 \vCCsign,102.67,antiwindup_ablation
 \vCCamp,20.60,antiwindup_ablation
 \vCCrateunc,1.10,antiwindup_ablation
@@ -124,6 +126,7 @@ macro,value,source
 \vdbCCampsix,23.01,antiwindup_deadband
 \vdbCCdirsix,1.76,antiwindup_deadband
 \vdbsixworstpct,10,antiwindup_deadband
+\vdbsixworstpctcv,19,antiwindup_deadband (rate rule vs BC T_t^cv)
 \vopZNnone,55.58,antiwindup_second_op
 \vopZNsign,61.48,antiwindup_second_op
 \vopZNamp,16.13,antiwindup_second_op

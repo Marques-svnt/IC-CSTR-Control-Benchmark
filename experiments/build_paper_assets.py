@@ -67,9 +67,11 @@ def rerender_from_csv(stem: str, tables_dir: Path) -> None:
 
 
 AW = exp02.AntiWindupMethod
+BC_SQRT, BC_CV = "BC ($\\sqrt{T_iT_d}$)", "BC ($T_t^{\\mathrm{cv}}$)"
 ABLATION_VARIANTS = (
     ("None", AW.NONE),
-    ("Back-calc.", AW.BACK_CALCULATION),
+    (BC_SQRT, AW.BACK_CALCULATION),
+    (BC_CV, AW.BACK_CALCULATION),
     ("Sign-blind amp.", AW.CLAMPING_NAIVE),
     ("Amp. uncond.", AW.CLAMPING_POS_AGNOSTIC),
     ("Amp.+rate uncond.", AW.CLAMPING_RATE_AGNOSTIC),
@@ -82,7 +84,7 @@ OOS_STEPS = (-5.0, -2.0, -1.0, 1.0, 2.0, 5.0)  # K; -2 K is the ITAE design (in-
 
 
 def run_antiwindup_ablation(
-    plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", gains: dict, tables_dir: Path
+    plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", gains: dict, tt_cv: dict, tables_dir: Path
 ) -> None:
     """Nominal -2 K step: none / back-calculation / sign-blind amplitude clamping / 2x2 clamping factorial.
 
@@ -97,7 +99,10 @@ def run_antiwindup_ablation(
             continue  # ablation reported on the six distinct feedback loops (1-DOF)
         row = {"Method": name}
         for label, method in ABLATION_VARIANTS:
-            pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T)
+            pid = exp02.PIDController(
+                _variant_gains(label, g, tt_cv.get(name)), exp02.BENCHMARK_LIMITS, method,
+                u_bias=100.0, y_ss=ss.T,
+            )
             res = sim.run(plant, pid, ss, (0.0, 10.0), 0.02, setpoint_func=lambda t: ss.T - 2.0)
             m = res.metrics
             row[label] = f"{m.iae:.2f} / {m.overshoot_pct:.1f}"
@@ -118,8 +123,11 @@ def run_antiwindup_ablation(
         data=rows,
         output_path=tables_dir / "antiwindup_ablation.tex",
         caption=(
-            "Anti-windup ablation on the nominal $-2$~K step (same gains, valve and protocol as "
-            "Table~\\ref{tab:testbed}); each cell reports IAE (K$\\cdot$min) / overshoot (\\%). "
+            "Anti-windup ablation on the nominal $-2$~K step (same gains and protocol as "
+            "Table~\\ref{tab:testbed}; valve $[0, 300]$~L/min, $S_{\\max} = 80$~L/min$^2$); each cell "
+            "reports IAE (K$\\cdot$min) / overshoot (\\%). Back-calculation (BC) is shown with the "
+            "default $T_t = \\sqrt{T_iT_d}$ and with the per-loop $T_t^{\\mathrm{cv}}$ of "
+            "Table~\\ref{tab:antiwindup_tt_summary}. "
             "The last four columns are the $2\\times 2$ clamping factorial (trigger: amplitude only or "
             "amplitude + slew rate; sign awareness: unconditional or directional); the last column is "
             "Eq.~\\eqref{eq:clamping_antiwindup}. ``Sign-blind amp.'' freezes the integrator when "
@@ -236,7 +244,7 @@ def _ci95(v) -> float:
     return float(scipy_stats.t.ppf(0.975, n - 1) * np.std(v, ddof=1) / np.sqrt(n))
 
 
-def run_aw_scenarios(plant, ss, gains: dict, tables_dir: Path) -> None:
+def run_aw_scenarios(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
     """IAE of the seven integrator policies on the -5 K and +5 K steps and on the load profile.
 
     The load run is deterministic (no noise), so the table separates the policies without
@@ -250,16 +258,17 @@ def run_aw_scenarios(plant, ss, gains: dict, tables_dir: Path) -> None:
         for k, (name, g) in enumerate(_one_dof(gains).items()):
             row = {"Scenario": label if k == 0 else "", "Method": name}
             for vlabel, method in ABLATION_VARIANTS:
+                gv = _variant_gains(vlabel, g, tt_cv[name])
                 if step is None:
                     pid = exp02.PIDController(
-                        g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T
+                        gv, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T
                     )
                     res = sim.run(
                         plant, pid, ss, (0.0, 15.0), SIM_DT,
                         setpoint_func=lambda t: ss.T, disturbance_func=load,
                     )
                 else:
-                    res = _step_run(plant, ss, g, method, step)
+                    res = _step_run(plant, ss, gv, method, step)
                 row[vlabel] = f"{res.metrics.iae:.2f}"
             rows.append(row)
     exp02.export_latex_table(
@@ -268,7 +277,9 @@ def run_aw_scenarios(plant, ss, gains: dict, tables_dir: Path) -> None:
         caption=(
             "IAE (K$\\cdot$min) of the seven integrator policies of Table~\\ref{tab:antiwindup_ablation} "
             "on a $-5$~K step, a $+5$~K step ($10$~min) and the noise-free load profile of "
-            "Section~\\ref{subsec:load_results} ($15$~min)."
+            "Section~\\ref{subsec:load_results} ($15$~min); valve $[0, 300]$~L/min, "
+            "$S_{\\max} = 80$~L/min$^2$; BC with $T_t = \\sqrt{T_iT_d}$ and with the $T_t^{\\mathrm{cv}}$ of "
+            "Table~\\ref{tab:antiwindup_tt_summary}."
         ),
         label="tab:antiwindup_scenarios",
     )
@@ -419,11 +430,7 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     base = _one_dof(gains)
     rows, summary, curves, direct, tvmp = [], [], {}, {}, []
     for name, g in base.items():
-        grid = np.unique(np.concatenate([
-            # lower end: below ~dt/2 the discrete update (1 - dt/T_t) I diverges (no IAE)
-            np.geomspace(max(0.1 * g.td, 0.525 * SIM_DT), 10.0 * g.ti, 21),
-            [g.td, g.tt, g.ti, SIM_DT, 0.1 * g.tt],
-        ]))
+        grid = _tt_grid(g)
         for step in TT_STEPS:
             curves[(name, step)] = (grid, np.array([
                 _step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION, step).metrics.iae
@@ -537,6 +544,29 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     exp02.save_grouped(fig, figures_dir / "fig_tt_curve")
 
 
+def _tt_grid(g) -> np.ndarray:
+    """T_t values scanned for one loop: [0.525 dt, 10 T_i] plus T_d, sqrt(T_i T_d), T_i, dt, 0.1 T_t."""
+    return np.unique(np.concatenate([
+        # lower end: below ~dt/2 the discrete update (1 - dt/T_t) I diverges (no IAE)
+        np.geomspace(max(0.1 * g.td, 0.525 * SIM_DT), 10.0 * g.ti, 21),
+        [g.td, g.tt, g.ti, SIM_DT, 0.1 * g.tt],
+    ]))
+
+
+def _tt_cv(plant, ss, g, q_j: float = 100.0) -> float:
+    """T_t^cv: the grid value inside [T_d, T_i] with the lowest IAE of back-calculation on -2 K."""
+    grid = _tt_grid(g)
+    grid = grid[(grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)]
+    iae = [_step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION, q_j=q_j).metrics.iae
+           for t in grid]
+    return float(grid[int(np.argmin(iae))])
+
+
+def _variant_gains(label: str, g, tt_cv: float | None):
+    """Gains of one ablation column: back-calculation with T_t^cv swaps the tracking constant."""
+    return replace(g, tt=tt_cv) if label == BC_CV else g
+
+
 class _Tap:
     """Delegating controller that records the PID diagnostics (P, I, D, u_raw) at every sample."""
 
@@ -600,8 +630,9 @@ def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
     rows = []
     for name, g in analytical.items():
         row = {"Method": name, "\\(K_p\\)": f"{g.kp:.2f}"}
+        tt_cv = _tt_cv(plant, ss2, g, q_j=q_j)  # same criterion, re-chosen at this point
         for label, method in ABLATION_VARIANTS:
-            m = _step_run(plant, ss2, g, method, q_j=q_j).metrics
+            m = _step_run(plant, ss2, _variant_gains(label, g, tt_cv), method, q_j=q_j).metrics
             row[label] = f"{m.iae:.2f} / {m.overshoot_pct:.1f}"
         rows.append(row)
     exp02.export_latex_table(
@@ -611,7 +642,10 @@ def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
             f"Anti-windup ablation at a second operating point ($q_{{j,ss}} = {q_j:g}$~L/min, "
             f"$T_{{ss}} = {ss2.T:.2f}$~K; FOPTD $K = {foptd2.k_p:.4f}$~K/(L/min), "
             f"$\\tau = {foptd2.tau:.3f}$~min, $\\theta = {foptd2.theta:.4f}$~min, re-identified; "
-            "analytical rules re-tuned). $-2$~K step, same valve; IAE (K$\\cdot$min) / overshoot (\\%)."
+            "analytical rules re-tuned). $-2$~K step, same valve ($[0, 300]$~L/min, "
+            "$S_{\\max} = 80$~L/min$^2$); IAE (K$\\cdot$min) / overshoot (\\%). BC with "
+            "$T_t = \\sqrt{T_iT_d}$ and with $T_t^{\\mathrm{cv}}$ re-chosen at this point by the criterion of "
+            "Table~\\ref{tab:antiwindup_tt_summary}."
         ),
         label="tab:antiwindup_second_op",
     )
@@ -718,7 +752,7 @@ class _Deadband:
         return self.pos, diag
 
 
-def run_deadband_test(plant, ss, gains: dict, tables_dir: Path) -> None:
+def run_deadband_test(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
     """IAE of the seven policies on the -2 K step with a valve deadband of 0, 3 and 6 L/min."""
     sim = exp02.ClosedLoopSimulator()
     rows = []
@@ -726,7 +760,10 @@ def run_deadband_test(plant, ss, gains: dict, tables_dir: Path) -> None:
         for k, (name, g) in enumerate(_one_dof(gains).items()):
             row = {"Deadband (L/min)": f"{band:g}" if k == 0 else "", "Method": name}
             for label, method in ABLATION_VARIANTS:
-                pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T)
+                pid = exp02.PIDController(
+                    _variant_gains(label, g, tt_cv[name]), exp02.BENCHMARK_LIMITS, method,
+                    u_bias=100.0, y_ss=ss.T,
+                )
                 res = sim.run(
                     plant, _Deadband(pid, band), ss, (0.0, 10.0), SIM_DT,
                     setpoint_func=lambda t: ss.T - 2.0,
@@ -739,7 +776,9 @@ def run_deadband_test(plant, ss, gains: dict, tables_dir: Path) -> None:
         caption=(
             "IAE (K$\\cdot$min) of the seven integrator policies on the $-2$~K step with a valve "
             "deadband (backlash) of $0$, $3$ and $6$~L/min between the controller and the plant; "
-            "the anti-windup logic sees the command, not the backlash position. Stiction is not modelled."
+            "the anti-windup logic sees the command, not the backlash position. Valve $[0, 300]$~L/min, "
+            "$S_{\\max} = 80$~L/min$^2$; BC with $T_t = \\sqrt{T_iT_d}$ and with the $T_t^{\\mathrm{cv}}$ of "
+            "Table~\\ref{tab:antiwindup_tt_summary}. Stiction is not modelled."
         ),
         label="tab:antiwindup_deadband",
     )
@@ -1119,8 +1158,9 @@ def remediate_jpc() -> Path:
     stage("nominal benchmark + loop margins")
     run_benchmark(figures_dir, tables_dir, include_nmpc=False)
     stage("anti-windup ablation, scenarios, T_t sweep")
-    run_antiwindup_ablation(plant, ss, gains, tables_dir)
-    run_aw_scenarios(plant, ss, gains, tables_dir)
+    tt_cv = {n: _tt_cv(plant, ss, g) for n, g in _one_dof(gains).items()}
+    run_antiwindup_ablation(plant, ss, gains, tt_cv, tables_dir)
+    run_aw_scenarios(plant, ss, gains, tt_cv, tables_dir)
     run_tt_curve(plant, ss, gains, tables_dir, figures_dir)
     run_smax_map(plant, ss, gains, tables_dir, figures_dir)
     run_amigo_regime_diagnostics(plant, ss, gains)
@@ -1132,7 +1172,7 @@ def remediate_jpc() -> Path:
     for name, g in extra.items():
         logger.info("TUNING %s: %s", name, g)
     run_model_error_test(plant, ss, foptd, gains, extra, tables_dir)
-    run_deadband_test(plant, ss, gains, tables_dir)
+    run_deadband_test(plant, ss, gains, tt_cv, tables_dir)
     stage("S_max re-optimization")
     run_smax_retuned(plant, ss, foptd, gains, tables_dir)
     stage("out-of-sample steps")
@@ -1187,7 +1227,8 @@ def build_jpc() -> Path:
         plant, ss, 100.0, pids, exp02.BENCHMARK_LIMITS, figures_dir, tables_dir
     )
 
-    run_antiwindup_ablation(plant, ss, gains, tables_dir)
+    tt_cv = {n: _tt_cv(plant, ss, g) for n, g in _one_dof(gains).items()}
+    run_antiwindup_ablation(plant, ss, gains, tt_cv, tables_dir)
 
     # PID-only by construction: re-render tables, copy figures (real files, no symlinks)
     for stem in ("pareto_tradeoff_table", "sobol_sensitivity"):

@@ -1,31 +1,31 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{IAE (K$\cdot$min) of the seven integrator policies on the $-2$~K step with a valve deadband (backlash) of $0$, $3$ and $6$~L/min between the controller and the plant; the anti-windup logic sees the command, not the backlash position. Stiction is not modelled.}
+\caption{IAE (K$\cdot$min) of the seven integrator policies on the $-2$~K step with a valve deadband (backlash) of $0$, $3$ and $6$~L/min between the controller and the plant; the anti-windup logic sees the command, not the backlash position. Valve $[0, 300]$~L/min, $S_{\max} = 80$~L/min$^2$; BC with $T_t = \sqrt{T_iT_d}$ and with the $T_t^{\mathrm{cv}}$ of Table~\ref{tab:antiwindup_tt_summary}. Stiction is not modelled.}
 \label{tab:antiwindup_deadband}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
-\begin{tabular}{lcccccccc}
+\begin{tabular}{lccccccccc}
 \toprule
-Deadband (L/min) & Method & None & Back-calc. & Sign-blind amp. & Amp. uncond. & Amp.+rate uncond. & Amp. direct. & Amp.+rate direct. (Eq.~\ref{eq:clamping_antiwindup}) \\
+Deadband (L/min) & Method & None & BC ($\sqrt{T_iT_d}$) & BC ($T_t^{\mathrm{cv}}$) & Sign-blind amp. & Amp. uncond. & Amp.+rate uncond. & Amp. direct. & Amp.+rate direct. (Eq.~\ref{eq:clamping_antiwindup}) \\
 \midrule
-0 & Ziegler-Nichols & 91.11 & 0.97 & 104.12 & 22.10 & 0.93 & 22.10 & 0.94 \\
- & Cohen-Coon & 87.37 & 0.87 & 102.67 & 20.60 & 1.10 & 20.60 & 1.02 \\
- & Tyreus-Luyben & 1.26 & 1.26 & 1.26 & 1.26 & 1.07 & 1.26 & 0.92 \\
- & AMIGO & 1.60 & 0.92 & 1.60 & 1.60 & 0.93 & 1.60 & 0.93 \\
- & Skogestad SIMC & 1.09 & 1.47 & 1.09 & 1.09 & 1.29 & 1.09 & 1.29 \\
- & Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.51 & 0.99 & 1.51 & 1.51 & 0.83 & 1.51 & 0.83 \\
-3 & Ziegler-Nichols & 86.23 & 1.37 & 105.66 & 23.44 & 1.30 & 23.44 & 1.28 \\
- & Cohen-Coon & 89.97 & 1.22 & 102.78 & 22.12 & 1.46 & 22.12 & 1.36 \\
- & Tyreus-Luyben & 1.38 & 1.33 & 1.38 & 1.38 & 1.17 & 1.38 & 1.00 \\
- & AMIGO & 2.14 & 1.24 & 2.14 & 2.14 & 1.22 & 2.14 & 1.22 \\
- & Skogestad SIMC & 1.24 & 1.68 & 1.24 & 1.24 & 1.41 & 1.24 & 1.41 \\
- & Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.94 & 1.10 & 1.94 & 1.94 & 1.03 & 1.94 & 1.03 \\
-6 & Ziegler-Nichols & 79.44 & 1.83 & 106.99 & 24.82 & 1.77 & 24.82 & 1.65 \\
- & Cohen-Coon & 82.43 & 1.60 & 104.69 & 23.01 & 2.01 & 23.01 & 1.76 \\
- & Tyreus-Luyben & 1.50 & 1.40 & 1.50 & 1.50 & 1.21 & 1.50 & 1.06 \\
- & AMIGO & 2.71 & 1.54 & 2.71 & 2.71 & 1.54 & 2.71 & 1.54 \\
- & Skogestad SIMC & 1.55 & 1.75 & 1.55 & 1.55 & 1.92 & 1.55 & 1.92 \\
- & Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 2.58 & 1.22 & 2.58 & 2.58 & 1.39 & 2.58 & 1.23 \\
+0 & Ziegler-Nichols & 91.11 & 0.97 & 0.88 & 104.12 & 22.10 & 0.93 & 22.10 & 0.94 \\
+ & Cohen-Coon & 87.37 & 0.87 & 0.82 & 102.67 & 20.60 & 1.10 & 20.60 & 1.02 \\
+ & Tyreus-Luyben & 1.26 & 1.26 & 0.83 & 1.26 & 1.26 & 1.07 & 1.26 & 0.92 \\
+ & AMIGO & 1.60 & 0.92 & 0.92 & 1.60 & 1.60 & 0.93 & 1.60 & 0.93 \\
+ & Skogestad SIMC & 1.09 & 1.47 & 1.15 & 1.09 & 1.09 & 1.29 & 1.09 & 1.29 \\
+ & Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.51 & 0.99 & 0.83 & 1.51 & 1.51 & 0.83 & 1.51 & 0.83 \\
+3 & Ziegler-Nichols & 86.23 & 1.37 & 1.25 & 105.66 & 23.44 & 1.30 & 23.44 & 1.28 \\
+ & Cohen-Coon & 89.97 & 1.22 & 1.15 & 102.78 & 22.12 & 1.46 & 22.12 & 1.36 \\
+ & Tyreus-Luyben & 1.38 & 1.33 & 0.91 & 1.38 & 1.38 & 1.17 & 1.38 & 1.00 \\
+ & AMIGO & 2.14 & 1.24 & 1.24 & 2.14 & 2.14 & 1.22 & 2.14 & 1.22 \\
+ & Skogestad SIMC & 1.24 & 1.68 & 1.27 & 1.24 & 1.24 & 1.41 & 1.24 & 1.41 \\
+ & Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.94 & 1.10 & 1.04 & 1.94 & 1.94 & 1.03 & 1.94 & 1.03 \\
+6 & Ziegler-Nichols & 79.44 & 1.83 & 1.63 & 106.99 & 24.82 & 1.77 & 24.82 & 1.65 \\
+ & Cohen-Coon & 82.43 & 1.60 & 1.48 & 104.69 & 23.01 & 2.01 & 23.01 & 1.76 \\
+ & Tyreus-Luyben & 1.50 & 1.40 & 1.02 & 1.50 & 1.50 & 1.21 & 1.50 & 1.06 \\
+ & AMIGO & 2.71 & 1.54 & 1.54 & 2.71 & 2.71 & 1.54 & 2.71 & 1.54 \\
+ & Skogestad SIMC & 1.55 & 1.75 & 1.67 & 1.55 & 1.55 & 1.92 & 1.55 & 1.92 \\
+ & Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 2.58 & 1.22 & 1.26 & 2.58 & 2.58 & 1.39 & 2.58 & 1.23 \\
 \bottomrule
 \end{tabular}%
 }

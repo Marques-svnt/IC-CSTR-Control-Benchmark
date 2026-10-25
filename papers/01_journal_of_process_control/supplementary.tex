@@ -157,7 +157,7 @@ Full versions of the results condensed in Section~\ref{subsec:ablation} of the m
 
 \input{tables/rate_demand}
 
-\paragraph{Valve deadband.} A deadband (backlash) of $3$ and $6$~L/min between controller and plant (Table~\ref{tab:antiwindup_deadband}; the anti-windup logic sees the command, not the backlash position) raises every IAE (AMIGO with the rate-aware rule: $0.93$, $1.22$, $1.54$), but the ordering persists: sign-blind clamping still latches ZN and CC (IAE $105.66$ and $102.78$ at $3$~L/min), amplitude-only clamping leaves them at $23.44$ and $22.12$ against $1.28$ and $1.36$ with the rate-aware rule, and at $6$~L/min the rate-aware rule stays within $10\%$ of the best back-calculation (CC: $1.76$ against $1.60$; SIMC: $1.92$ against $1.75$). Stiction was not modelled.
+\paragraph{Valve deadband.} A deadband (backlash) of $3$ and $6$~L/min between controller and plant (Table~\ref{tab:antiwindup_deadband}; the anti-windup logic sees the command, not the backlash position) raises every IAE (AMIGO with the rate-aware rule: $0.93$, $1.22$, $1.54$), but the ordering persists: sign-blind clamping still latches ZN and CC (IAE $105.66$ and $102.78$ at $3$~L/min), amplitude-only clamping leaves them at $23.44$ and $22.12$ against $1.28$ and $1.36$ with the rate-aware rule, and at $6$~L/min the rate-aware rule stays within $\vdbsixworstpct\%$ of back-calculation with $T_t = \sqrt{T_iT_d}$ (CC: $1.76$ against $1.60$; SIMC: $1.92$ against $1.75$) but is up to $\vdbsixworstpctcv\%$ worse than back-calculation with $T_t^{\mathrm{cv}}$. Stiction was not modelled.
 
 \input{tables/antiwindup_deadband}
 
