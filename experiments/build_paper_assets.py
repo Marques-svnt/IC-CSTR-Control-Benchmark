@@ -1136,6 +1136,39 @@ def run_measured_position(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path)
     )
 
 
+C2_CANDIDATES = (40.0, 55.0, 70.0, 200.0, 250.0)  # L/min
+
+
+def select_c2_point(plant) -> float:
+    """C2: candidate operating points, stability, multiplicity, slack and FOPTD gain (CSV).
+
+    Criterion fixed before any policy is simulated: smallest slack (u_max - q)/u_max among the
+    open-loop-stable points with a unique steady state; within 0.05 of slack, the larger |K|.
+    """
+    u_max, out = exp02.BENCHMARK_LIMITS.u_max, []
+    temps = np.linspace(300.0, 520.0, 4401)
+    demand = np.array([plant.required_coolant_flow(t) for t in temps])
+    for q in C2_CANDIDATES:
+        ss_q = plant.find_steady_state(q_j=q)
+        a, _ = plant.linearize(ss_q, q)
+        slow = float(np.max(np.linalg.eigvals(a).real))
+        # steady states along T: sign changes of u_req(T) - q between physical neighbours only
+        # (u_req has a pole where T_j* = T_jc and is negative below it)
+        phys = (demand >= 0.0) & (demand < 1e4)
+        both = phys[:-1] & phys[1:]
+        roots = int(np.sum((np.diff(np.sign(demand - q)) != 0) & both))
+        k = exp02.identify_nominal_foptd(plant, ss_q, q).k_p
+        out.append({"q_j_ss": q, "T_ss_K": ss_q.T, "slack": (u_max - q) / u_max, "K": k,
+                    "lambda_slow": slow, "n_steady_states": roots,
+                    "eligible": bool(slow < 0.0 and roots == 1)})
+    df = pd.DataFrame(out)
+    df.to_csv(exp02.RESULTS_DIR / "c2_candidates.csv", index=False, float_format="%.4f")
+    ok = df[df.eligible]
+    best = ok.slack.min()
+    tie = ok[ok.slack <= best + 0.05]
+    return float(tie.loc[tie.K.abs().idxmax(), "q_j_ss"])
+
+
 def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
     """The rho >= 1 rule, defined on the nominal grid, checked on conditions it was not built on.
 

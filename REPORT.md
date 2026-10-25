@@ -145,3 +145,16 @@ Verificação final da rodada:
 - **Candidatos:** q_j,ss ∈ {40, 55, 70, 200, 250} L/min. Descarto, com registro, qualquer ponto instável em malha aberta ou com estados múltiplos.
 - **Critério, aplicado antes de simular as políticas:** menor folga até o batente superior, (u_max − q_j,ss)/u_max. Em caso de empate prático (diferença de folga < 0,05), vence o de maior |K| do FOPTD.
 - **Protocolo:** re-identificar o FOPTD e re-sintonizar as regras analíticas, sem reotimizar o ITAE. Depois, 7 políticas em −2 e ±5 K, mais ρ.
+
+**C2 — candidatos avaliados antes de simular as políticas** (`results/jpc/c2_candidates.csv`, função `select_c2_point`):
+
+| q_j,ss (L/min) | T_ss (K) | folga | K (K/(L/min)) | autovalor lento (min⁻¹) | estados estacionários |
+|---|---|---|---|---|---|
+| 40 | 415,16 | 0,867 | −0,449 | −1,160 | 1 |
+| 55 | 408,74 | 0,817 | −0,342 | −1,267 | 1 |
+| 70 | 403,80 | 0,767 | −0,272 | −1,368 | 1 |
+| 200 | 384,13 | 0,333 | −0,080 | −3,346 | 1 |
+| 250 | 380,61 | 0,167 | −0,060 | −2,472 | 1 |
+
+- Todos os candidatos são estáveis e têm estado estacionário único. A primeira contagem dava 2 estados em todos porque contava a troca de sinal no polo de u_req(T) (T_j* = T_jf, perto de 350 K). Corrigi para contar só raízes entre vizinhos fisicamente válidos (0 ≤ u_req < 10⁴).
+- Pelo critério registrado, o escolhido é **q_j,ss = 250 L/min**, sem empate: o segundo colocado tem folga 0,333.
