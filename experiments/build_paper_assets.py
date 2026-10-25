@@ -605,7 +605,7 @@ def plot_mechanism(plant, ss, gains: dict, figures_dir: Path) -> None:
         axes[2, col].set_xlabel("Time $t$ (min)")
     axes[0, 0].set_yscale("symlog", linthresh=300.0)
     axes[2, 0].set_yscale("symlog", linthresh=300.0)
-    axes[0, 0].set_ylabel("Valve command (L/min)")
+    axes[0, 0].set_ylabel("Valve (L/min)")
     axes[1, 0].set_ylabel(r"Error $e = T_{sp}-T$ (K)")
     axes[2, 0].set_ylabel(r"Integrator $I$ (L/min)")
     axes[0, 0].legend(fontsize=6.0, loc="upper left")
@@ -748,7 +748,8 @@ def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
             "analytical rules re-tuned). $-2$~K step, same valve ($[0, 300]$~L/min, "
             "$S_{\\max} = 80$~L/min$^2$); IAE (K$\\cdot$min) / overshoot (\\%). BC with "
             "$T_t = \\sqrt{T_iT_d}$ and with $T_t^{\\mathrm{cv}}$ re-chosen at this point by the criterion of "
-            "Table~\\ref{tab:antiwindup_tt_summary}."
+            "Table~\\ref{tab:antiwindup_tt_summary}. The Optimal ITAE gains were not re-optimized at "
+            "this point, so the table has no row for them."
         ),
         label="tab:antiwindup_second_op",
     )
@@ -916,7 +917,9 @@ def run_smax_retuned(plant, ss, foptd, gains: dict, tables_dir: Path) -> None:
     )
 
 
-def _shapley_effects(x: np.ndarray, y: np.ndarray, seed: int = 0) -> tuple[np.ndarray, float]:
+def _shapley_effects(
+    x: np.ndarray, y: np.ndarray, seed: int = 0, n_jobs: int = -1
+) -> tuple[np.ndarray, float]:
     """Shapley effects of dependent inputs from given data (random-forest conditional means).
 
     v(S) = cross-validated R^2 of E[Y | X_S] (an estimate of Var(E[Y|X_S])/Var(Y), biased low),
@@ -926,7 +929,7 @@ def _shapley_effects(x: np.ndarray, y: np.ndarray, seed: int = 0) -> tuple[np.nd
     from math import factorial
 
     from sklearn.ensemble import RandomForestRegressor
-    from sklearn.model_selection import cross_val_predict
+    from sklearn.model_selection import KFold, cross_val_predict
 
     d = x.shape[1]
     var = float(np.var(y))
@@ -934,9 +937,10 @@ def _shapley_effects(x: np.ndarray, y: np.ndarray, seed: int = 0) -> tuple[np.nd
     for r in range(1, d + 1):
         for sub in combinations(range(d), r):
             model = RandomForestRegressor(
-                n_estimators=60, min_samples_leaf=5, random_state=seed, n_jobs=-1
+                n_estimators=60, min_samples_leaf=5, random_state=seed, n_jobs=n_jobs
             )
-            pred = cross_val_predict(model, x[:, sub], y, cv=5)
+            folds = KFold(5, shuffle=True, random_state=seed)
+            pred = cross_val_predict(model, x[:, sub], y, cv=folds)
             v[sub] = max(0.0, 1.0 - float(np.mean((y - pred) ** 2)) / var)
     phi = np.zeros(d)
     for i in range(d):
@@ -1172,10 +1176,16 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
     rows_shap = []
     for name, (_, outs) in raw.items():
         for m in ("IAE", "TV"):
-            phi, r2 = _shapley_effects(samples[feasible], np.array([o[m] for o in outs])[feasible])
+            y_f = np.array([o[m] for o in outs])[feasible]
+            reps = Parallel(n_jobs=-1)(  # estimator variability: forest seed and fold split
+                delayed(_shapley_effects)(samples[feasible], y_f, seed, 1) for seed in range(N_SEEDS)
+            )
+            phi = np.array([r[0] for r in reps])
+            r2 = np.array([r[1] for r in reps])
             row = {"Method": name, "Metric": m}
-            row |= {exp02.SOBOL_LABELS[nm]: f"{phi[i]:.2f}" for i, nm in enumerate(names)}
-            row["\\(R^2\\) (all four)"] = f"{r2:.2f}"
+            row |= {exp02.SOBOL_LABELS[nm]: f"{phi[:, i].mean():.2f} $\\pm$ {_ci95(phi[:, i]):.2f}"
+                    for i, nm in enumerate(names)}
+            row["\\(R^2\\) (all four)"] = f"{r2.mean():.2f} $\\pm$ {_ci95(r2):.2f}"
             rows_shap.append(row)
     exp02.export_latex_table(
         data=rows_shap,
@@ -1185,7 +1195,9 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
             "($u_{\\mathrm{req}} \\le u_{\\max}$), where the truncated box makes the inputs "
             "dependent: shares of the explained variance (sum to one), from cross-validated "
             "random-forest conditional means; the last column is the cross-validated $R^2$ of the "
-            "model with all four factors. Single run, no interval."
+            f"model with all four factors. Mean $\\pm$ half-width of the $95\\%$ $t$-interval over {N_SEEDS} "
+            "seeds of the forest and of the cross-validation split; the interval measures the "
+            "variability of the estimator, not that of the Sobol sample."
         ),
         label="tab:sobol_shapley",
     )

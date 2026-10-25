@@ -584,7 +584,7 @@ def main() -> None:
         booktabs(
             [
                 "Tuning",
-                "\\(K_p\\)",
+                "\\(K_p\\) ((L/min)/K)",
                 "\\(T_i\\) (min)",
                 "\\(T_d\\) (min)",
                 "IAE",
@@ -592,13 +592,13 @@ def main() -> None:
                 "\\(M_p\\) (\\%)",
                 "\\(M_s^{\\mathrm{FOPTD}}\\)",
                 "\\(\\|S\\|_\\infty^{\\mathrm{lin}}\\)",
-                "\\(\\|CS\\|_\\infty^{\\mathrm{lin}}\\) (L/min/K)",
+                "\\(\\|CS\\|_\\infty^{\\mathrm{lin}}\\) ((L/min)/K)",
             ],
             tb_body,
             "Test-bed loops: gains, nominal $-2$~K step with the directional rule (IAE in K$\\cdot$min), "
             "sensitivity peak on the identified FOPTD and on the exact linearization with the half-sample "
             "hold, and the peak of the noise-to-valve gain $CS = C/(1+L)$, which equals "
-            "$|K_p|(1+N)$ to within $0.3$~L/min/K.",
+            "$|K_p|(1+N)$ to within $0.3$~(L/min)/K. Units: $K_p$ and $\\|CS\\|_\\infty$ in (L/min)/K.",
             "tab:testbed",
         ),
         encoding="utf-8",
