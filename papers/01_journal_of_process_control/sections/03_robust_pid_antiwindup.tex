@@ -63,13 +63,13 @@ with the default $T_t = \sqrt{T_i T_d}$ ($T_t = T_i$ if $T_d = 0$); because the 
 
 \subsection{Checklist for reporting the anti-windup logic}
 \label{subsec:checklist}
-A comparison of controllers on a valve-limited loop is only interpretable if it states the following five items; each one changed a conclusion in this study.
+A comparison of controllers on a valve-limited loop is only interpretable if it states the following five items; each one changed a conclusion in this study (the order of evaluation in Section~\ref{subsec:robustness_ext}).
 \begin{enumerate}
     \item \textbf{Loop sign.} Is the loop reverse-acting ($K_p<0$ in the convention used), and was the clamping condition written for that sign?
-    \item \textbf{Trigger.} Does the logic react to the amplitude limit only, or also to the slew-rate limit (i.e.\ does it use the post-rate-limit valve position)?
+    \item \textbf{Trigger and order.} Does the logic react to the amplitude limit only, or also to the slew-rate limit (i.e.\ does it use the post-rate-limit valve position), and in which order are amplitude, slew and backlash evaluated?
     \item \textbf{Sign awareness.} Is the integrator frozen unconditionally, or only if the increment pushes further into the limit?
     \item \textbf{Tracking constant.} If back-calculation is used, what is $T_t$, is it inside $[T_d, T_i]$ and larger than $\Delta t$, and how sensitive is the result to it?
-    \item \textbf{Measurement path.} Which derivative-filter coefficient $N$ and which measurement filter $\tau_m$ were used, and are the errors evaluated on the true or on the measured signal?
+    \item \textbf{Measurement path.} Which derivative-filter coefficient $N$ and which measurement filter $\tau_m$ were used, how was the filter discretized, and are the errors evaluated on the true or on the measured signal?
 \end{enumerate}
 
 \subsection{Measurement filter}
