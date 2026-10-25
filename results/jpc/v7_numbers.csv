@@ -217,6 +217,7 @@ macro,value,source
 \vpcCCmaxpct,7.1,predictive_clamping (largest |dIAE| over 3 steps)
 \vpcCCfiveold,4.39,predictive_clamping
 \vpcCCfivenew,4.08,predictive_clamping
+\vpcnommaxpct,1.4,predictive_clamping (largest |dIAE| on the nominal -2 K step)
 \vpcrestmaxpct,1.4,"predictive_clamping (largest |dIAE| of TL, AMIGO, SIMC, Optimal ITAE)"
 \vpcttcvmin,0.87,antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)
 \vpcttcvmax,1.01,antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)

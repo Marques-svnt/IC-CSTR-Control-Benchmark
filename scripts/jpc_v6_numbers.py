@@ -74,17 +74,18 @@ def define(name: str, value: float | str, source: str, fmt: str = "{:.2f}") -> N
 
 
 def booktabs(
-    header: list[str], body: list[list[str]], caption: str, label: str, group: str = ""
+    header: list[str], body: list[list[str]], caption: str, label: str, group: str = "",
+    env: str = "table*",
 ) -> str:
     """Starred booktabs float in the style of exp02.export_latex_table; `group` is an optional top row."""
     top = [group + r" \\"] if group else []
     lines = top + [" & ".join(header) + r" \\", r"\midrule"] + [" & ".join(r) + r" \\" for r in body]
     return (
-        "\\begin{table*}[t]\n\\centering\n\\footnotesize\n"
+        f"\\begin{{{env}}}[t]\n\\centering\n\\footnotesize\n\\setlength{{\\tabcolsep}}{{3pt}}\n"
         f"\\caption{{{caption}}}\n\\label{{{label}}}\n"
         f"\\begin{{tabular}}{{l{'c' * (len(header) - 1)}}}\n\\toprule\n"
         + "\n".join(lines)
-        + "\n\\bottomrule\n\\end{tabular}\n\\end{table*}\n"
+        + f"\n\\bottomrule\n\\end{{tabular}}\n\\end{{{env}}}\n"
     )
 
 
@@ -467,6 +468,8 @@ def predictive_and_exact_numbers() -> None:
         for col, tag in (("IAE, \\(k-1\\)", "old"), ("IAE, \\(k\\)", "new")):
             define(f"pc{SHORT[name]}five{tag}", num(cell("predictive_clamping", col, Method=name, Step="$+5$ K")),
                    "predictive_clamping", "{:.2f}")
+    define("pcnommaxpct", max(abs(num(r[dpc])) for r in pc if r["Step"] == "$-2$ K"),
+           "predictive_clamping (largest |dIAE| on the nominal -2 K step)", "{:.1f}")
     define("pcrestmaxpct", max(v for n, v in worst.items() if n not in ("Ziegler-Nichols", "Cohen-Coon")),
            "predictive_clamping (largest |dIAE| of TL, AMIGO, SIMC, Optimal ITAE)", "{:.1f}")
     simc = [r for r in pc if r["Method"] == "Skogestad SIMC"]
@@ -491,6 +494,32 @@ def predictive_and_exact_numbers() -> None:
         define(f"ex{SHORT[name]}euler", num(cell("exact_backcalc", "IAE Euler", **m)), "exact_backcalc")
         define(f"ex{SHORT[name]}exact", num(cell("exact_backcalc", "IAE exact", **m)), "exact_backcalc")
         define(f"ex{SHORT[name]}TVeuler", num(cell("exact_backcalc", "TV Euler (L/min)", **m)), "exact_backcalc", "{:.0f}")
+
+
+def shapley_numbers() -> None:
+    """Shapley effects on the feasible region, mean and 95 % half-width over seeds (Table S)."""
+    tab = rows("sobol_shapley")
+    fac = {"ea": "$E_a/R$", "ua": "$UA$", "caf": "$C_{Af}$", "th": "$\\theta_{\\mathrm{sensor}}$"}
+    r2 = "\\(R^2\\) (all four)"
+    iae = [r for r in tab if r["Metric"] == "IAE"]
+    for tag, col in (*fac.items(), ("rtwo", r2)):
+        vals = [num(r[col]) for r in iae]
+        define(f"shapIAE{tag}min", min(vals), "sobol_shapley (mean over seeds, IAE)")
+        define(f"shapIAE{tag}max", max(vals), "sobol_shapley (mean over seeds, IAE)")
+    tv = {r["Method"]: r for r in tab if r["Metric"] == "TV"}
+    define("shapTVZNth", num(tv["Ziegler-Nichols"][fac["th"]]), "sobol_shapley (TV)")
+    define("shapTVCCth", num(tv["Cohen-Coon"][fac["th"]]), "sobol_shapley (TV)")
+    define("shapTVCCea", num(tv["Cohen-Coon"][fac["ea"]]), "sobol_shapley (TV)")
+    group = ("Tyreus-Luyben", OPT, "2-DOF Optimal ITAE")
+    ea = [num(tv[m][fac["ea"]]) for m in group]
+    define("shapTVgroupeamin", min(ea), "sobol_shapley (TV, TL and optimal tunings)")
+    define("shapTVgroupeamax", max(ea), "sobol_shapley (TV, TL and optimal tunings)")
+    define("shapTVSIMCcaf", num(tv["Skogestad SIMC"][fac["caf"]]), "sobol_shapley (TV)")
+    rt = [num(r[r2]) for r in tv.values()]
+    define("shapTVrtwomin", min(rt), "sobol_shapley (TV)")
+    define("shapTVrtwomax", max(rt), "sobol_shapley (TV)")
+    hw = [num(r[c], 1) for r in tab for c in (*fac.values(), r2)]
+    define("shaphwmax", max(hw), "sobol_shapley (largest 95 % half-width over seeds)")
 
 
 def testbed_table() -> list[list[str]]:
@@ -634,11 +663,12 @@ def main() -> None:
     )
     (tables / "v7_load.tex").write_text(
         booktabs(
-            ["Tuning", *load_cols],
+            ["Tuning", "IAE", "TV (L/min)", "Peak (K)", "Max valve (L/min)"],
             load_body,
             "Deterministic rejection of a $+2$~K feed-temperature step at $t = 2$~min and a $+10\\%$ "
             "feed-concentration step at $t = 8$~min ($15$~min, no noise, directional rule).",
             "tab:load",
+            env="table",
         ),
         encoding="utf-8",
     )
