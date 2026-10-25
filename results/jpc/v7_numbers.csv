@@ -270,7 +270,7 @@ macro,value,source
 \vshapTVSIMCcaf,0.71,sobol_shapley (TV)
 \vshapTVrtwomin,0.77,sobol_shapley (TV)
 \vshapTVrtwomax,0.97,sobol_shapley (TV)
-\vshaphwmax,0.01,sobol_shapley (largest 95 % half-width over seeds)
+\vshaphwmax,0.006,sobol_shapley_halfwidth (largest 95 % half-width over seeds)
 \vloadZN,2.04,disturbance_rejection_table
 \vloadCC,1.98,disturbance_rejection_table
 \vloadTL,3.02,disturbance_rejection_table

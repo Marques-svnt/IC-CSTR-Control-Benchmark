@@ -91,3 +91,35 @@ Divergências entre o pedido e os CSV (prevaleceu o CSV):
 - ρ precisa de uma simulação do laço sem o limite de slew. É ex-ante, mas depende do modelo, e a regra ρ ≥ 1 foi verificada em um único reator.
 - O intervalo do Shapley não é incerteza amostral; com uma única amostra Sobol, essa incerteza não foi estimada.
 - Build do LaTeX: o `\suppref` exige compilar o Suplementar e rodar `scripts/jpc_supp_refs.py` antes da compilação final do main. O pacote `ready-to-overleaf/` **não** foi atualizado para a v7.
+
+## 7. Rodada editorial (revisão maior, 62–77)
+
+| Item | Estado | O que foi feito |
+|---|---|---|
+| 1 ρ | feito | ρ calculado fora da amostra em que foi observado: 2º ponto de operação e zonas mortas de 3 e 6 L/min, 17 casos (Tabela S `rate_demand_check`). Os 12 laços com ρ ≥ 1 melhoraram com o gatilho; com ρ < 1, AMIGO melhorou e SIMC piorou. O texto apresenta ρ ≥ 1 como heurística calibrada neste reator, sem ruído e baseada em modelo; "123 de 124" aparece como a amostra de onde a regra saiu, não como validação. |
+| 2 Ruído | feito | Sem anti-windup, BC(Tt^cv) e regra direcional, com σ = 0,01 e 0,05 K e 30 realizações (Tabela S `noise_policies`). **Achado:** com 0,05 K, o BC com Tt^cv escolhido sem ruído fica até 51 % pior que a regra para ZN, CC, AMIGO e ITAE ótimo, e melhor para TL e SIMC. A ordem das demais conclusões se mantém. Resumo, conclusão 3, Seção 4.7 e limitações agora dizem "sem ruído". |
+| 3 u_act | feito | Frases na Seção 2.3 e nas limitações: o controlador replica sat+taxa; posição medida não foi simulada. |
+| 4 Resumo | feito | 236 → 224 palavras. |
+| 5 AMIGO | feito | A macro saiu do modo matemático (Seção 4.5 e S3). |
+| 6 Carta | feito | `cover_letter_v7.md` (570 palavras) atualizada com ρ heurístico, ruído, u_act e segundo processo. |
+| 7 Regra padrão | feito | Seção 3.2: k−1 é a regra padrão porque usa só sinais guardados e é a regra de todos os resultados. |
+| 8 Coluna "free" exata | feito | Tabela 6 com "free, exact". Para ZN e CC o mínimo vai ao menor Tt varrido (0,009 e 0,008 min), sem ganho em ±5 K: T_d limita a escolha porque o IAE cai à medida que o rastreamento fica mais forte, e o mínimo em Δt com Euler é artefato. |
+| 9 ±0,00 | feito | Tabela do Shapley só com médias; a maior meia-largura (0,006) vai para a legenda e para `sobol_shapley_halfwidth.csv`. As médias são idênticas às da rodada anterior. |
+| 10 S2 | feito | Uma tabela (custo do projeto ITAE) e um parágrafo. O resto (tabela nominal com 2-DOF, margens, Fig. S1, erro de modelo, fora da amostra, locus, pesos conjuntos) foi para `repository/S2_tuning_extended.tex`. |
+| 11 Segundo processo / stiction | **não feito** | É um estudo novo, fora do alcance desta rodada; fica declarado nas limitações e na carta. |
+| 12 | parcial | Pacote Overleaf atualizado e testado numa pasta limpa (main e Suplementar compilam). [16] e [18] confirmadas no IEEE Xplore; [20] confirmada na MDPI. [19]: a ScienceDirect continua bloqueando o acesso automatizado, **confira à mão**. Script não renomeado (data statement). |
+
+Para manter 12 páginas:
+- A antiga Tabela 8 (razões em S_max) saiu do texto principal. O mesmo conteúdo está na primeira linha de cada laço da Tabela S `smax_map`, citada no texto. As tabelas seguintes do texto principal foram renumeradas.
+- A dedução da cota de D foi para o Suplementar (Eq. S `dbar`); no texto principal ficou uma frase com a referência.
+- Os números da zona morta e do 2º ponto de operação na Seção 4.6 foram reduzidos aos essenciais; os demais estão na Tabela 8 (antiga 9).
+
+O segundo rerun falhou na etapa Sobol com "Tcl_AsyncDelete": o backend Tk do matplotlib coletado numa thread do joblib. `build_paper_assets.py` agora fixa o backend `Agg`. O terceiro rerun completo passou em 1329 s; os CSVs só diferem do commit nos itens desta rodada.
+
+Verificação final da rodada:
+- PDF: 12 páginas de texto; Suplementar com 18 páginas.
+- Referências: nenhuma indefinida; ordem de citação 1–31.
+- Caixas estouradas: só as 4 que já vinham da v6.
+- Desk-check passou.
+- Testes: 157 passed, 1 xfailed; `ruff` limpo.
+- Macros: nenhuma macro da v6 mudou; há 121 novas.

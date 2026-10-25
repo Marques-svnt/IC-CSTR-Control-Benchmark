@@ -1,27 +1,27 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Shapley effects of the four uncertain factors on the feasible region ($u_{\mathrm{req}} \le u_{\max}$), where the truncated box makes the inputs dependent: shares of the explained variance (sum to one), from cross-validated random-forest conditional means; the last column is the cross-validated $R^2$ of the model with all four factors. Mean $\pm$ half-width of the $95\%$ $t$-interval over 30 seeds of the forest and of the cross-validation split; the interval measures the variability of the estimator, not that of the Sobol sample.}
+\caption{Shapley effects of the four uncertain factors on the feasible region ($u_{\mathrm{req}} \le u_{\max}$), where the truncated box makes the inputs dependent: shares of the explained variance (sum to one), from cross-validated random-forest conditional means; the last column is the cross-validated $R^2$ of the model with all four factors. Means over 30 seeds of the forest and of the cross-validation split; the largest half-width of the $95\%$ $t$-interval over seeds is 0.006, which measures the stability of the estimator, not the sampling uncertainty of the Sobol design (drawn once).}
 \label{tab:sobol_shapley}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lcccccc}
 \toprule
 Method & Metric & $E_a/R$ & $UA$ & $C_{Af}$ & $\theta_{\mathrm{sensor}}$ & \(R^2\) (all four) \\
 \midrule
-Ziegler-Nichols & IAE & 0.13 $\pm$ 0.00 & 0.36 $\pm$ 0.00 & 0.48 $\pm$ 0.00 & 0.03 $\pm$ 0.00 & 0.93 $\pm$ 0.01 \\
-Ziegler-Nichols & TV & 0.28 $\pm$ 0.00 & 0.05 $\pm$ 0.00 & 0.17 $\pm$ 0.00 & 0.51 $\pm$ 0.00 & 0.92 $\pm$ 0.00 \\
-Cohen-Coon & IAE & 0.20 $\pm$ 0.00 & 0.33 $\pm$ 0.00 & 0.43 $\pm$ 0.00 & 0.04 $\pm$ 0.00 & 0.92 $\pm$ 0.01 \\
-Cohen-Coon & TV & 0.30 $\pm$ 0.00 & 0.11 $\pm$ 0.00 & 0.22 $\pm$ 0.00 & 0.37 $\pm$ 0.00 & 0.91 $\pm$ 0.00 \\
-Tyreus-Luyben & IAE & 0.06 $\pm$ 0.00 & 0.37 $\pm$ 0.00 & 0.57 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 0.95 $\pm$ 0.00 \\
-Tyreus-Luyben & TV & 0.53 $\pm$ 0.00 & 0.15 $\pm$ 0.00 & 0.17 $\pm$ 0.00 & 0.14 $\pm$ 0.00 & 0.79 $\pm$ 0.00 \\
-AMIGO & IAE & 0.03 $\pm$ 0.00 & 0.39 $\pm$ 0.00 & 0.58 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 0.96 $\pm$ 0.00 \\
-AMIGO & TV & 0.27 $\pm$ 0.00 & 0.16 $\pm$ 0.00 & 0.46 $\pm$ 0.00 & 0.10 $\pm$ 0.00 & 0.85 $\pm$ 0.00 \\
-Skogestad SIMC & IAE & 0.04 $\pm$ 0.00 & 0.36 $\pm$ 0.00 & 0.61 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 0.97 $\pm$ 0.00 \\
-Skogestad SIMC & TV & 0.04 $\pm$ 0.00 & 0.25 $\pm$ 0.00 & 0.71 $\pm$ 0.00 & -0.01 $\pm$ 0.00 & 0.97 $\pm$ 0.00 \\
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & IAE & 0.05 $\pm$ 0.00 & 0.38 $\pm$ 0.00 & 0.57 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 0.95 $\pm$ 0.00 \\
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & TV & 0.50 $\pm$ 0.00 & 0.15 $\pm$ 0.00 & 0.21 $\pm$ 0.00 & 0.14 $\pm$ 0.00 & 0.77 $\pm$ 0.00 \\
-2-DOF Optimal ITAE & IAE & 0.06 $\pm$ 0.00 & 0.38 $\pm$ 0.00 & 0.57 $\pm$ 0.00 & 0.00 $\pm$ 0.00 & 0.95 $\pm$ 0.00 \\
-2-DOF Optimal ITAE & TV & 0.45 $\pm$ 0.00 & 0.16 $\pm$ 0.00 & 0.29 $\pm$ 0.00 & 0.11 $\pm$ 0.00 & 0.82 $\pm$ 0.00 \\
+Ziegler-Nichols & IAE & 0.13 & 0.36 & 0.48 & 0.03 & 0.93 \\
+Ziegler-Nichols & TV & 0.28 & 0.05 & 0.17 & 0.51 & 0.92 \\
+Cohen-Coon & IAE & 0.20 & 0.33 & 0.43 & 0.04 & 0.92 \\
+Cohen-Coon & TV & 0.30 & 0.11 & 0.22 & 0.37 & 0.91 \\
+Tyreus-Luyben & IAE & 0.06 & 0.37 & 0.57 & 0.00 & 0.95 \\
+Tyreus-Luyben & TV & 0.53 & 0.15 & 0.17 & 0.14 & 0.79 \\
+AMIGO & IAE & 0.03 & 0.39 & 0.58 & 0.00 & 0.96 \\
+AMIGO & TV & 0.27 & 0.16 & 0.46 & 0.10 & 0.85 \\
+Skogestad SIMC & IAE & 0.04 & 0.36 & 0.61 & 0.00 & 0.97 \\
+Skogestad SIMC & TV & 0.04 & 0.25 & 0.71 & -0.01 & 0.97 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & IAE & 0.05 & 0.38 & 0.57 & 0.00 & 0.95 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & TV & 0.50 & 0.15 & 0.21 & 0.14 & 0.77 \\
+2-DOF Optimal ITAE & IAE & 0.06 & 0.38 & 0.57 & 0.00 & 0.95 \\
+2-DOF Optimal ITAE & TV & 0.45 & 0.16 & 0.29 & 0.11 & 0.82 \\
 \bottomrule
 \end{tabular}%
 }

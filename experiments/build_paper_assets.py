@@ -25,7 +25,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import matplotlib.pyplot as plt
+import matplotlib
+
+matplotlib.use("Agg")  # files only; a Tk backend crashes when joblib threads collect figures
+import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
@@ -1125,9 +1128,9 @@ def run_robust_constraint_cost(plant, ss, foptd, gains: dict, tables_dir: Path) 
             "step ($6$~min) subject to $M_s \\le 1.6$ evaluated on the dead-time FOPTD "
             "($M_s^{\\mathrm{FOPTD}}$) or on the exact Jacobian loop with the half-sample "
             "zero-order hold ($M_s^{\\mathrm{lin}}$); ``joint'' rows optimize $(K_p, T_i, T_d, \\beta, \\gamma)$ "
-            "together, the 2-DOF row with $\\beta = 0.5$ is the fixed-weight variant of "
-            "Table~\\ref{tab:classical_benchmark}. ITAE in K$\\cdot$min$^2$, IAE in K$\\cdot$min, "
-            "TV in L/min, $K_{\\mathrm{hf}}$ in L/min/K, PM at the highest gain crossover."
+            "together, the 2-DOF row with $\\beta = 0.5$ is the fixed-weight variant "
+            "($\\beta = 0.5$, $\\gamma = 0$) of Fig.~\\ref{fig:classical_benchmark}. ITAE in K$\\cdot$min$^2$, IAE in K$\\cdot$min, "
+            "TV in L/min, $K_{\\mathrm{hf}}$ in (L/min)/K, PM at the highest gain crossover."
         ),
         label="tab:constraint_cost",
     )
@@ -1268,7 +1271,7 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
                     f"{sub['S1'][i]:.2f} $\\pm$ {sub['S1_conf'][i]:.2f}"
                 )
             rows_feas.append(row)
-    rows_shap = []
+    rows_shap, half = [], []
     for name, (_, outs) in raw.items():
         for m in ("IAE", "TV"):
             y_f = np.array([o[m] for o in outs])[feasible]
@@ -1278,10 +1281,14 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
             phi = np.array([r[0] for r in reps])
             r2 = np.array([r[1] for r in reps])
             row = {"Method": name, "Metric": m}
-            row |= {exp02.SOBOL_LABELS[nm]: f"{round(phi[:, i].mean(), 2) + 0.0:.2f} $\\pm$ {_ci95(phi[:, i]):.2f}"
+            row |= {exp02.SOBOL_LABELS[nm]: f"{round(phi[:, i].mean(), 2) + 0.0:.2f}"
                     for i, nm in enumerate(names)}
-            row["\\(R^2\\) (all four)"] = f"{r2.mean():.2f} $\\pm$ {_ci95(r2):.2f}"
+            row["\\(R^2\\) (all four)"] = f"{r2.mean():.2f}"
             rows_shap.append(row)
+            half.append({"Method": name, "Metric": m,
+                         "max_half_width": max(_ci95(v) for v in (*phi.T, r2))})
+    pd.DataFrame(half).to_csv(exp02.RESULTS_DIR / "sobol_shapley_halfwidth.csv", index=False,
+                              float_format="%.4f")
     exp02.export_latex_table(
         data=rows_shap,
         output_path=tables_dir / "sobol_shapley.tex",
@@ -1290,9 +1297,10 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
             "($u_{\\mathrm{req}} \\le u_{\\max}$), where the truncated box makes the inputs "
             "dependent: shares of the explained variance (sum to one), from cross-validated "
             "random-forest conditional means; the last column is the cross-validated $R^2$ of the "
-            f"model with all four factors. Mean $\\pm$ half-width of the $95\\%$ $t$-interval over {N_SEEDS} "
-            "seeds of the forest and of the cross-validation split; the interval measures the "
-            "variability of the estimator, not that of the Sobol sample."
+            f"model with all four factors. Means over {N_SEEDS} seeds of the forest and of the "
+            "cross-validation split; the largest half-width of the $95\\%$ $t$-interval over seeds is "
+            f"{max(h['max_half_width'] for h in half):.3f}, which measures the stability of the estimator, "
+            "not the sampling uncertainty of the Sobol design (drawn once)."
         ),
         label="tab:sobol_shapley",
     )

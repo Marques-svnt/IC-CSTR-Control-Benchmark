@@ -49,14 +49,14 @@ The thermal stability of the reactor is governed by the balance between Arrheniu
     \left.\frac{\partial Q_g}{\partial T}\right|_{\mathbf{x}_{ss}} > \left.\frac{\partial Q_r}{\partial T}\right|_{\mathbf{x}_{ss}}.
     \label{eq:van_heerden}
 \end{equation}
-At $\mathbf{x}_{ss}$ reactant depletion flattens the generation curve, so the inequality is reversed and the point is stable. The eigenvalues of the Jacobian of Eqs.~\eqref{eq:cstr_ca}--\eqref{eq:cstr_tj} (Supplementary Section~S1) confirm it: eigenvalues $-1.5712$, $-11.8006$ and $-13.2693$~min$^{-1}$. The exact linearized transfer function from coolant flow to reactor temperature is
+At $\mathbf{x}_{ss}$ reactant depletion flattens the generation curve, so the inequality is reversed and the point is stable. The eigenvalues of the Jacobian of Eqs.~\eqref{eq:cstr_ca}--\eqref{eq:cstr_tj} (Supplementary Eq.~\suppref{eq:jacobian_matrices}) confirm it: eigenvalues $-1.5712$, $-11.8006$ and $-13.2693$~min$^{-1}$. The exact linearized transfer function from coolant flow to reactor temperature is
 \begin{equation}
     G_{\text{true}}(s) = \frac{-2.416\,(s + 19.923)}{(s + 1.5712)(s + 11.8006)(s + 13.2693)},
     \label{eq:g_true_exact}
 \end{equation}
 which has relative degree two: its phase saturates at $-180^\circ$ at high frequency.
 
-A valve held at the upper stop settles the reactor at $T_\infty = T_{eq}(u_{\max})$, the steady temperature at full cooling ($\vTinf$~K for the nominal plant); no control law acting through this valve can hold a lower temperature, and $T_\infty$ is the offset equilibrium of Section~\ref{subsec:clamping_rule}. The heat-removal limit and the steady coolant flow needed to hold a given temperature are derived in Supplementary Section~S1.
+A valve held at the upper stop settles the reactor at $T_\infty = T_{eq}(u_{\max})$, the steady temperature at full cooling ($\vTinf$~K for the nominal plant); no control law acting through this valve can hold a lower temperature, and $T_\infty$ is the offset equilibrium of Section~\ref{subsec:clamping_rule}. The heat-removal limit and the steady coolant flow needed to hold a given temperature are derived in Supplementary Eqs.~\suppref{eq:tj_min_bound}--\suppref{eq:u_req}.
 
 \subsection{Valve amplitude and slew-rate limits}
 \label{subsec:actuator_limits}
@@ -66,4 +66,4 @@ The coolant valve is bounded in amplitude and in travel speed \cite{hippe2006win
     \left|dq_j/dt\right| &\le S_{\max} = 80~\text{L/min}^2.
     \label{eq:actuator_limits}
 \end{align}
-The rate limit corresponds to $1.33$~(L/min)/s, or $0.44\%$ of the stroke per second, so a full stroke takes $3.75$~min, which is representative of a large electro-pneumatic actuator. At the sampling interval $\Delta t = 0.02$~min the valve moves at most $S_{\max}\Delta t = 1.6$~L/min per sample. Amplitude and rate saturation are the first-order mechanisms behind windup in this loop; a deadband is added in Section~\ref{subsec:robustness_ext}, while hysteresis and stiction are not modelled \cite{choudhury2005modelling}.
+The rate limit corresponds to $1.33$~(L/min)/s, or $0.44\%$ of the stroke per second, so a full stroke takes $3.75$~min, which is representative of a large electro-pneumatic actuator. At the sampling interval $\Delta t = 0.02$~min the valve moves at most $S_{\max}\Delta t = 1.6$~L/min per sample. Amplitude and rate saturation are the first-order mechanisms behind windup in this loop; a deadband is added in Section~\ref{subsec:robustness_ext}, while hysteresis and stiction are not modelled \cite{choudhury2005modelling}. The anti-windup logic uses the valve position $u_{\text{act}}$ computed by a copy of the amplitude and slew limits at the controller output, not a measured position (Section~\ref{sec:results}, Limitations).

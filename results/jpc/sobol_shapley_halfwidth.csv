@@ -1,0 +1,15 @@
+Method,Metric,max_half_width
+Ziegler-Nichols,IAE,0.0060
+Ziegler-Nichols,TV,0.0017
+Cohen-Coon,IAE,0.0061
+Cohen-Coon,TV,0.0015
+Tyreus-Luyben,IAE,0.0041
+Tyreus-Luyben,TV,0.0039
+AMIGO,IAE,0.0046
+AMIGO,TV,0.0024
+Skogestad SIMC,IAE,0.0034
+Skogestad SIMC,TV,0.0018
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),IAE,0.0045
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),TV,0.0036
+2-DOF Optimal ITAE,IAE,0.0042
+2-DOF Optimal ITAE,TV,0.0031

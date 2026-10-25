@@ -567,8 +567,8 @@ def shapley_numbers() -> None:
     rt = [num(r[r2]) for r in tv.values()]
     define("shapTVrtwomin", min(rt), "sobol_shapley (TV)")
     define("shapTVrtwomax", max(rt), "sobol_shapley (TV)")
-    hw = [num(r[c], 1) for r in tab for c in (*fac.values(), r2)]
-    define("shaphwmax", max(hw), "sobol_shapley (largest 95 % half-width over seeds)")
+    hw = [float(r["max_half_width"]) for r in rows("sobol_shapley_halfwidth")]
+    define("shaphwmax", max(hw), "sobol_shapley_halfwidth (largest 95 % half-width over seeds)", "{:.3f}")
 
 
 def testbed_table() -> list[list[str]]:

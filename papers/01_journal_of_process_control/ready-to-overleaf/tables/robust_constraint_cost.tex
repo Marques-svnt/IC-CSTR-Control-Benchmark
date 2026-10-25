@@ -1,7 +1,7 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Cost of the design-model constraint. Each tuning minimizes the ITAE of the $-2$~K step ($6$~min) subject to $M_s \le 1.6$ evaluated on the dead-time FOPTD ($M_s^{\mathrm{FOPTD}}$) or on the exact Jacobian loop with the half-sample zero-order hold ($M_s^{\mathrm{lin}}$); ``joint'' rows optimize $(K_p, T_i, T_d, \beta, \gamma)$ together, the 2-DOF row with $\beta = 0.5$ is the fixed-weight variant of Table~\ref{tab:classical_benchmark}. ITAE in K$\cdot$min$^2$, IAE in K$\cdot$min, TV in L/min, $K_{\mathrm{hf}}$ in L/min/K, PM at the highest gain crossover.}
+\caption{Cost of the design-model constraint. Each tuning minimizes the ITAE of the $-2$~K step ($6$~min) subject to $M_s \le 1.6$ evaluated on the dead-time FOPTD ($M_s^{\mathrm{FOPTD}}$) or on the exact Jacobian loop with the half-sample zero-order hold ($M_s^{\mathrm{lin}}$); ``joint'' rows optimize $(K_p, T_i, T_d, \beta, \gamma)$ together, the 2-DOF row with $\beta = 0.5$ is the fixed-weight variant ($\beta = 0.5$, $\gamma = 0$) of Fig.~\ref{fig:classical_benchmark}. ITAE in K$\cdot$min$^2$, IAE in K$\cdot$min, TV in L/min, $K_{\mathrm{hf}}$ in (L/min)/K, PM at the highest gain crossover.}
 \label{tab:constraint_cost}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lccccccccccccccc}

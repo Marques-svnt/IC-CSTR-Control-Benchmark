@@ -48,9 +48,10 @@ def main() -> int:
 
     cs = "\\(\\|CS\\|_\\infty\\) (L/min/K)"
     khf = [cell("exact_robustness_table", cs, Method=m) for m in SIX]
-    got = supp_list(supp, "and equals it to within $0.3$~L/min/K for all six loops:", 6)
+    repo = (PAPER / "repository" / "S2_tuning_extended.tex").read_text(encoding="utf-8")
+    got = supp_list(repo, "and equals it to within $0.3$~L/min/K for all six loops:", 6)
     order = ["Ziegler-Nichols", "Cohen-Coon", "Tyreus-Luyben", "AMIGO", SIX[5], "Skogestad SIMC"]
-    same("K_hf = ||CS|| (S3 prose vs Table 3)", got, [khf[SIX.index(m)] for m in order])
+    same("K_hf = ||CS|| (repository S2 prose vs Table 3)", got, [khf[SIX.index(m)] for m in order])
 
     testbed = (PAPER / "tables" / "v7_testbed.tex").read_text(encoding="utf-8")
     for m in SIX:
@@ -61,7 +62,7 @@ def main() -> int:
             "\\(M_p\\text{ (\\%)}\\)", "\\(M_s\\)")]
         exact = [cell("exact_robustness_table", k, Method=m)
                  for k in ("\\(\\|S\\|_\\infty\\) (lin.)", "\\(\\|CS\\|_\\infty\\) (L/min/K)")]
-        same(f"Table 3 vs S1/S3 ({SHORT[m]})", cells, bench + exact)
+        same(f"Table 3 vs benchmark/exact-robustness CSV ({SHORT[m]})", cells, bench + exact)
 
     abl = {m: cell("antiwindup_ablation", c, Method=m) for m in ("Ziegler-Nichols", "Cohen-Coon")
            for c in ("Sign-blind amp.",)}
