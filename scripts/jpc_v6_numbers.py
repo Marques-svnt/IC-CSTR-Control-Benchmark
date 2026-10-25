@@ -577,6 +577,41 @@ def noise_round_numbers() -> None:
     define("extempnonemin", min(none), "noise_policies_ext_full (none/dir, ZN and CC)", "{:.0f}")
 
 
+def order_variant_numbers() -> None:
+    """D2: order of limits and filters (order_variants, order_variants_flips, _full)."""
+    tab = rows("order_variants")
+    dcol = "max \\(|\\Delta\\)IAE\\(|\\) (\\%)"
+    tags = {"(i)": "One", "(ii)": "Two", "(iii)": "Three", "(iv)": "Four"}
+    for r in tab:
+        t = tags[r["Variant"].split()[0]] + ("Noisy" if r["\\(\\sigma\\) (K)"] != "0" else "")
+        define(f"order{t}dIAE", num(r[dcol]), "order_variants", "{:.1f}")
+        define(f"order{t}rank", "changes" if "changes" in (r["loop ranking"], r["policy ranking"]) else "same",
+               "order_variants")
+    seen = {n: v for n, v, _ in MACROS if n.startswith("order") and n.endswith("rank")}
+    expect = {"orderOnerank": "same", "orderTworank": "changes", "orderThreerank": "same",
+              "orderThreeNoisyrank": "changes", "orderFourrank": "changes", "orderFourNoisyrank": "changes"}
+    if seen != expect:
+        raise ValueError(f"text states which order variants change a ranking: {seen}")
+    fl = rows("order_variants_flips")
+    working = ("Rate", "BC", "BC$^{\\mathrm{cv}}$")
+    pol = [r for r in fl if r["kind"] == "policies"]
+    work = [r for r in pol if all(p in working for p in r["flip"].split(": ")[1].split("<"))]
+    define("dtwopolflips", f"{len(pol)}", "order_variants_flips (policy-order swaps, all variants)")
+    define("dtwoworkflips", f"{len(work)}", "order_variants_flips (swaps among Rate, BC, BC^cv)")
+    full = rows("order_variants_full")
+    iae = {(r["Method"], r["policy"], r["variant"], r["sigma"], r["step_K"]): float(r["IAE"]) for r in full}
+    combos = {(k[2], k[3]) for k in iae}
+    sb, amp = [], []
+    for v, sg in combos:
+        for n in ("Ziegler-Nichols", "Cohen-Coon"):
+            for st in {k[4] for k in iae}:
+                rate = iae[(n, "Rate", v, sg, st)]
+                sb.append(iae[(n, "SB", v, sg, st)] / rate)
+                amp.append(iae[(n, "Amp.", v, sg, st)] / rate)
+    define("dtwosbmin", min(sb), "order_variants_full (SB/Rate, ZN and CC, every variant)", "{:.0f}")
+    define("dtwoampmin", min(amp), "order_variants_full (Amp/Rate, ZN and CC, every variant)", "{:.1f}")
+
+
 def predictive_and_exact_numbers() -> None:
     """Freeze test at k (predictor-corrector) and exact back-calculation factor (Tables S)."""
     pc = rows("predictive_clamping")
@@ -730,6 +765,7 @@ def main() -> None:
     rate_demand_check_numbers()
     noise_policy_numbers()
     noise_round_numbers()
+    order_variant_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
     load_cols, load_body = load_table()

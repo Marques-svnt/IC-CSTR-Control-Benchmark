@@ -32,11 +32,20 @@ class ActuatorLimits:
         u_max: Abertura máxima / vazão máxima permitida pelo atuador [L/min].
         max_slew_rate: Velocidade máxima de deslocamento da haste [L/min^2].
             Caso seja None ou inf, o atuador responde instantaneamente sem restrição de taxa.
+        order: "sat_rate" (amplitude, then slew limit on the saturated command; the default) or
+            "rate_sat" (slew limit on the raw command, then amplitude; the rate state can pass
+            the stops).
     """
 
     u_min: float = 0.0
     u_max: float = 300.0
     max_slew_rate: float = 100.0
+    order: str = "sat_rate"
+
+    def __post_init__(self) -> None:
+        """Rejects an unknown composition order."""
+        if self.order not in ("sat_rate", "rate_sat"):
+            raise ValueError(f"order must be 'sat_rate' or 'rate_sat', got {self.order!r}")
 
 
 # %% [Simulador de Válvula de Controle Industrial]
@@ -54,6 +63,7 @@ class ValveActuator:
         self._current_position = float(
             max(self.limits.u_min, min(self.limits.u_max, initial_position))
         )
+        self._rate_state = self._current_position  # slew-limiter state of the "rate_sat" order
         logger.info(
             "ValveActuator inicializado com u_min=%.2f, u_max=%.2f, atual=%.2f",
             self.limits.u_min,
@@ -93,8 +103,17 @@ class ValveActuator:
             ValueError: Se o passo de amostragem dt for menor ou igual a zero.
         """
         u_actual, is_saturated = self.preview(u_desired, dt)
+        if self.limits.order == "rate_sat":
+            self._rate_state = self._rate_limited(u_desired, self._rate_state, dt)
         self._current_position = u_actual
         return self._current_position, is_saturated
+
+    def _rate_limited(self, target: float, state: float, dt: float) -> float:
+        """One slew-limited move of `state` towards `target`."""
+        if self.limits.max_slew_rate is None or self.limits.max_slew_rate <= 0:
+            return target
+        d = self.limits.max_slew_rate * dt
+        return state + min(max(target - state, -d), d)
 
     def preview(self, u_desired: float, dt: float) -> Tuple[float, bool]:
         """What `apply` would return for `u_desired`, without moving the valve.
@@ -111,6 +130,11 @@ class ValveActuator:
         """
         if dt <= 0:
             raise ValueError(f"O passo temporal dt deve ser positivo, obtido {dt}")
+
+        if self.limits.order == "rate_sat":
+            r = self._rate_limited(u_desired, self._rate_state, dt)
+            u_actual = min(max(r, self.limits.u_min), self.limits.u_max)
+            return u_actual, u_actual != u_desired
 
         is_saturated = False
 
@@ -151,6 +175,7 @@ class ValveActuator:
         self._current_position = float(
             max(self.limits.u_min, min(self.limits.u_max, position))
         )
+        self._rate_state = self._current_position
         logger.debug("ValveActuator reiniciado para %.2f", self._current_position)
 
 

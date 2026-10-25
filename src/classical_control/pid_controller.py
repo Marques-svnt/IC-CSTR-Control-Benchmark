@@ -168,6 +168,7 @@ class PIDController:
         setpoint: float,
         measurement: float,
         dt: float,
+        d_measurement: Optional[float] = None,
     ) -> Tuple[float, dict[str, float]]:
         """Calcula a ação de controle discreta u_k para o período de amostragem atual.
 
@@ -191,6 +192,8 @@ class PIDController:
             setpoint: Valor de referência desejado (SP).
             measurement: Valor medido instantâneo da variável controlada (PV).
             dt: Período de amostragem discreto [min].
+            d_measurement: Measurement used by the derivative path only (e.g. the unfiltered
+                sensor signal); None uses `measurement` for P, I and D alike.
 
         Returns:
             Tuple[float, dict[str, float]]:
@@ -217,7 +220,8 @@ class PIDController:
         p_term = self.gains.kp * (self.gains.beta * dy_sp - dy)
         # Derivative path e_d = gamma*dSP - dPV (gamma=1 when differentiating the error)
         gamma = self.gains.gamma if self.derivative_on_measurement else 1.0
-        error_d = gamma * dy_sp - dy
+        dy_d = dy if d_measurement is None else d_measurement - self._y_ss
+        error_d = gamma * dy_sp - dy_d
         if self._prev_error_d is None:
             # Bumpless start: assume the previous setpoint equalled the previous PV
             self._prev_error_d = (gamma - 1.0) * (self._prev_measurement - self._y_ss)

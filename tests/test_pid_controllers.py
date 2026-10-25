@@ -207,3 +207,40 @@ class TestClosedLoopIntegration:
         final_pv = result.t_pv[-1]
         assert abs(final_pv - ss.T) < 0.15  # Returns to within 0.15 K of nominal setpoint
         assert result.metrics.iae > 0.0
+
+
+class TestImplementationOrderVariants:
+    """Order of the actuator limits, derivative measurement and filter discretization (v9, D2)."""
+
+    def test_rate_then_saturation_keeps_rate_state_beyond_the_stop(self) -> None:
+        """Rate limiter before saturation: its state can pass u_max, so the valve leaves late."""
+        base = ValveActuator(ActuatorLimits(0.0, 300.0, 80.0), 299.0)
+        swap = ValveActuator(ActuatorLimits(0.0, 300.0, 80.0, order="rate_sat"), 299.0)
+        for _ in range(5):
+            base.apply(1000.0, dt=0.02)
+            swap.apply(1000.0, dt=0.02)
+        assert base.current_position == pytest.approx(300.0)
+        assert swap.current_position == pytest.approx(300.0)
+        # command drops to 250: sat->rate moves at once, rate->sat must first unwind 299+8-300
+        u_base, _ = base.apply(250.0, dt=0.02)
+        u_swap, _ = swap.apply(250.0, dt=0.02)
+        assert u_base == pytest.approx(298.4)
+        assert u_swap == pytest.approx(300.0)
+
+    def test_unknown_order_is_rejected(self) -> None:
+        """Only the two documented orders exist."""
+        with pytest.raises(ValueError):
+            ActuatorLimits(0.0, 300.0, 80.0, order="backlash_first")
+
+    def test_derivative_measurement_override(self) -> None:
+        """d_measurement feeds the derivative only; P sees the main measurement."""
+        gains = PIDGains(kp=-10.0, ti=1e9, td=0.5)
+        a = PIDController(gains=gains, anti_windup=AntiWindupMethod.NONE, u_bias=100.0, y_ss=400.0)
+        b = PIDController(gains=gains, anti_windup=AntiWindupMethod.NONE, u_bias=100.0, y_ss=400.0)
+        for pid in (a, b):
+            pid.reset(initial_measurement=400.0)
+        _, da = a.compute(setpoint=400.0, measurement=401.0, dt=0.1)
+        _, db = b.compute(setpoint=400.0, measurement=401.0, dt=0.1, d_measurement=400.0)
+        assert da["p"] == pytest.approx(db["p"])
+        assert db["d"] == pytest.approx(0.0)
+        assert da["d"] != pytest.approx(0.0)

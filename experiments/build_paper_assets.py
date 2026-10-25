@@ -681,6 +681,150 @@ def run_noise_policies_ext(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path
     )
 
 
+class _BacklashBeforeRate:
+    """Plant path sat -> backlash -> slew limit; the anti-windup still uses rate(sat(u_raw)).
+
+    The controller's own valve model (amplitude and slew limits) is unchanged, so the signal fed
+    back to the integrator logic is the same as in the base order; only the plant input differs.
+    """
+
+    def __init__(self, pid, band: float) -> None:
+        self.pid, self.band, self.u_bias = pid, band, pid.u_bias
+        self.pos = self.out = pid.u_bias
+
+    def reset(self, *args, **kwargs) -> None:
+        self.pid.reset(*args, **kwargs)
+        self.pos = self.out = self.pid.u_bias
+
+    def compute(self, setpoint, measurement, dt):
+        _, diag = self.pid.compute(setpoint=setpoint, measurement=measurement, dt=dt)
+        lim = self.pid.limits
+        u = min(max(diag["u_unconstrained"], lim.u_min), lim.u_max)
+        half = 0.5 * self.band
+        if u > self.pos + half:
+            self.pos = u - half
+        elif u < self.pos - half:
+            self.pos = u + half
+        d = lim.max_slew_rate * dt
+        self.out += min(max(self.pos - self.out, -d), d)
+        return self.out, diag
+
+
+D2_POLICIES = (
+    ("SB", AW.CLAMPING_NAIVE, False), ("Amp.", AW.CLAMPING_POS_DIRECTIONAL, False),
+    ("Rate", AW.CLAMPING, False), ("BC", AW.BACK_CALCULATION, False),
+    ("BC$^{\\mathrm{cv}}$", AW.BACK_CALCULATION, True),
+)
+D2_VARIANTS = {
+    "base": dict(), "rate_sat": dict(order="rate_sat"),
+    "db_after": dict(band=6.0), "db_before": dict(band=6.0, before=True),
+    "filt_D": dict(tau=MEASUREMENT_TAU_F), "filt_PI": dict(tau=MEASUREMENT_TAU_F, d_raw=True),
+    "filt_euler": dict(tau=MEASUREMENT_TAU_F, euler=True),
+}
+D2_PAIRS = (("base", "rate_sat", "(i) slew limit before saturation"),
+            ("db_after", "db_before", "(ii) backlash before the slew limit"),
+            ("filt_D", "filt_PI", "(iii) derivative on the unfiltered measurement"),
+            ("filt_D", "filt_euler", "(iv) measurement filter by explicit Euler"))
+
+
+def _d2_run(name, g, method, step, var, sigma, seed):
+    """One run of a D2 variant: IAE, overshoot, TV."""
+    plant, ss = plant_global(), ss_global()
+    lim = replace(exp02.BENCHMARK_LIMITS, order=var.get("order", "sat_rate"))
+    pid = exp02.PIDController(g, lim, method, u_bias=100.0, y_ss=ss.T)
+    ctrl = pid
+    if "band" in var:
+        ctrl = (_BacklashBeforeRate if var.get("before") else _Deadband)(pid, var["band"])
+    m = exp02.ClosedLoopSimulator().run(
+        plant, ctrl, ss, (0.0, 10.0), SIM_DT, setpoint_func=lambda t: ss.T + step,
+        noise_std=sigma, seed=100 + seed, meas_filter_tau=var.get("tau", 0.0),
+        meas_filter_exact=not var.get("euler", False), meas_filter_derivative=not var.get("d_raw", False),
+    ).metrics
+    return m.iae, m.overshoot_pct, m.tv
+
+
+def _flips(base: dict, var: dict, margin: float = 0.01) -> list:
+    """Pairs whose order flips by more than `margin` (relative) in both conditions."""
+    out, keys = [], list(base)
+    for i, a in enumerate(keys):
+        for b in keys[i + 1:]:
+            lo, hi = (a, b) if base[a] < base[b] else (b, a)
+            if base[lo] < (1 - margin) * base[hi] and var[lo] > (1 + margin) * var[hi]:
+                out.append(f"{lo}<{hi}")
+    return out
+
+
+def run_order_variants(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
+    """D2: does the order of limits and filters, or the filter discretization, change a verdict?
+
+    Six loops, five policies of the robustness table, three steps; noise-free, and the filter
+    variants also with sigma = 0.05 K (30 seeds). A ranking 'changes' when a pair of loops (under
+    one policy) or of policies (for one loop) swaps order by more than 1 % in both conditions.
+    """
+    loops = _one_dof(gains)
+    cases = [(v, 0.0) for v in D2_VARIANTS] + [(v, NOISE_SIGMA_BC) for v in ("filt_D", "filt_PI", "filt_euler")]
+    jobs = [(n, lab, v, sg, st, k) for n in loops for lab, _, _ in D2_POLICIES for v, sg in cases
+            for st in TT_STEPS for k in (range(N_SEEDS) if sg else [0])]
+    pol = {lab: (m, cv) for lab, m, cv in D2_POLICIES}
+
+    def one(n, lab, v, sg, st, k):
+        m, cv = pol[lab]
+        g = replace(loops[n], tt=tt_cv[n]) if cv else loops[n]
+        return (n, lab, v, sg, st), _d2_run(n, g, m, st, D2_VARIANTS[v], sg, k)
+
+    out = Parallel(n_jobs=-1)(delayed(one)(*j) for j in jobs)
+    acc: dict = {}
+    for key, met in out:
+        acc.setdefault(key, []).append(met)
+    mean = {k: np.mean(np.array(v), axis=0) for k, v in acc.items()}
+    pd.DataFrame([{"Method": k[0], "policy": k[1], "variant": k[2], "sigma": k[3], "step_K": k[4],
+                   "IAE": v[0], "Mp_pct": v[1], "TV": v[2]} for k, v in mean.items()]).to_csv(
+        exp02.RESULTS_DIR / "order_variants_full.csv", index=False, float_format="%.4f")
+    rows, changes = [], []
+    for base_v, var_v, label in D2_PAIRS:
+        for sg in sorted({sg for v, sg in cases if v == base_v and (var_v, sg) in cases}):
+            d_iae, loop_fl, pol_fl = [], [], []
+            for st in TT_STEPS:
+                for lab, _, _ in D2_POLICIES:
+                    b = {_short_name(n): mean[(n, lab, base_v, sg, st)][0] for n in loops}
+                    w = {_short_name(n): mean[(n, lab, var_v, sg, st)][0] for n in loops}
+                    d_iae += [abs(w[x] / b[x] - 1.0) for x in b]
+                    loop_fl += [f"{lab}, {st:+g} K: {f}" for f in _flips(b, w)]
+                for n in loops:
+                    b = {lab: mean[(n, lab, base_v, sg, st)][0] for lab, _, _ in D2_POLICIES}
+                    w = {lab: mean[(n, lab, var_v, sg, st)][0] for lab, _, _ in D2_POLICIES}
+                    pol_fl += [f"{_short_name(n)}, {st:+g} K: {f}" for f in _flips(b, w)]
+            rows.append({"Variant": label, "\\(\\sigma\\) (K)": f"{sg:g}",
+                         "max \\(|\\Delta\\)IAE\\(|\\) (\\%)": f"{100 * max(d_iae):.1f}",
+                         "loop ranking": "changes" if loop_fl else "same",
+                         "policy ranking": "changes" if pol_fl else "same"})
+            changes += [{"variant": label, "sigma": sg, "kind": "loops", "flip": f} for f in loop_fl]
+            changes += [{"variant": label, "sigma": sg, "kind": "policies", "flip": f} for f in pol_fl]
+    pd.DataFrame(changes, columns=["variant", "sigma", "kind", "flip"]).to_csv(
+        exp02.RESULTS_DIR / "order_variants_flips.csv", index=False)
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "order_variants.tex",
+        caption=(
+            "Order of evaluation and discretization (six loops, five policies of "
+            "Table~\\ref{tab:robustness_ext}, three steps). Largest relative change of IAE against the "
+            "base implementation, and whether the ranking of the loops under a policy or of the "
+            "policies for a loop changes (a pair swapping order by more than $1\\%$ in both cases). "
+            "(i) base: saturation then slew limit; (ii) base: backlash ($6$~L/min) after the slew "
+            "limit; (iii)--(iv) base: filter ($\\tau_m = 0.05$~min, exact) before all three terms; "
+            f"noisy rows: {N_SEEDS} realizations. The anti-windup sees the controller's "
+            "$u_{\\text{act}}$ in every variant. Every swapped pair is listed in "
+            "\\texttt{results/jpc/order\\_variants\\_flips.csv}."
+        ),
+        label="tab:order_variants",
+    )
+
+
+def _short_name(name: str) -> str:
+    """Short loop name for the flip lists."""
+    return {"Ziegler-Nichols": "ZN", "Cohen-Coon": "CC", "Tyreus-Luyben": "TL",
+            "Skogestad SIMC": "SIMC"}.get(name, name.split(" (")[0])
+
+
 def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
     """The rho >= 1 rule, defined on the nominal grid, checked on conditions it was not built on.
 
@@ -1606,6 +1750,7 @@ def remediate_jpc() -> Path:
     run_noise_mechanism(plant, ss, gains, tt_cv, tables_dir)
     run_rho_noise(plant, ss, gains, tables_dir)
     run_noise_policies_ext(plant, ss, gains, tt_cv, tables_dir)
+    run_order_variants(plant, ss, gains, tt_cv, tables_dir)
     run_predictive_clamping(plant, ss, gains, tables_dir)
     run_exact_backcalc(plant, ss, gains, tables_dir)
     run_second_operating_point(SECOND_OP_Q_J, tables_dir)

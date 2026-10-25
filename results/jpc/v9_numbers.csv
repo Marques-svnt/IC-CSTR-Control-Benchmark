@@ -263,6 +263,22 @@ macro,value,source
 \vextrawmax,1.50,"noise_policies_ext_full (BC/dir, 0.05 K, raw)"
 \vextfiltmax,1.15,"noise_policies_ext_full (BC/dir, filtered)"
 \vextempnonemin,19,"noise_policies_ext_full (none/dir, ZN and CC)"
+\vorderOnedIAE,6.3,order_variants
+\vorderOnerank,same,order_variants
+\vorderTwodIAE,44.2,order_variants
+\vorderTworank,changes,order_variants
+\vorderThreedIAE,13.9,order_variants
+\vorderThreerank,same,order_variants
+\vorderThreeNoisydIAE,58.0,order_variants
+\vorderThreeNoisyrank,changes,order_variants
+\vorderFourdIAE,24.2,order_variants
+\vorderFourrank,changes,order_variants
+\vorderFourNoisydIAE,21.5,order_variants
+\vorderFourNoisyrank,changes,order_variants
+\vdtwopolflips,11,"order_variants_flips (policy-order swaps, all variants)"
+\vdtwoworkflips,9,"order_variants_flips (swaps among Rate, BC, BC^cv)"
+\vdtwosbmin,22,"order_variants_full (SB/Rate, ZN and CC, every variant)"
+\vdtwoampmin,3.9,"order_variants_full (Amp/Rate, ZN and CC, every variant)"
 \vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
 \vpcZNfiveold,3.65,predictive_clamping
 \vpcZNfivenew,3.44,predictive_clamping

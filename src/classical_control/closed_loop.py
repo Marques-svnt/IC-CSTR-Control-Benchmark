@@ -73,6 +73,8 @@ class ClosedLoopSimulator:
         seed: Optional[int] = None,
         t_step: float = 0.0,
         meas_filter_tau: float = 0.0,
+        meas_filter_exact: bool = True,
+        meas_filter_derivative: bool = True,
     ) -> ClosedLoopResult:
         """Executa a simulação em malha fechada ao longo de um horizonte temporal.
 
@@ -97,6 +99,9 @@ class ClosedLoopSimulator:
             t_step: Instante do degrau de setpoint [min], usado no ITAE ponderado.
             meas_filter_tau: Constante de tempo tau_f [min] do filtro passa-baixa de medição
                 dT_meas/dt = (T + ruído - T_meas)/tau_f (discretização exata, ZOH). 0 = sem filtro.
+            meas_filter_exact: False discretizes the filter by explicit Euler (factor dt/tau_f).
+            meas_filter_derivative: False feeds the unfiltered measurement to the derivative
+                path (PIDController only); P and I keep the filtered one.
 
         Returns:
             ClosedLoopResult: Resultados completos das trajetórias temporais e métricas.
@@ -113,7 +118,11 @@ class ClosedLoopSimulator:
 
         current_state = initial_state
         u_init = float(controller.u_bias)
-        alpha_f = 1.0 - np.exp(-dt / meas_filter_tau) if meas_filter_tau > 0.0 else 1.0
+        if meas_filter_tau > 0.0:
+            exact = 1.0 - np.exp(-dt / meas_filter_tau)
+            alpha_f = exact if meas_filter_exact else dt / meas_filter_tau
+        else:
+            alpha_f = 1.0
         t_meas = current_state.T
         controller.reset(initial_measurement=current_state.T, initial_u=controller.u_bias)
 
@@ -142,6 +151,11 @@ class ClosedLoopSimulator:
                     measurement=pv_measured,
                     dt=dt,
                     full_state=current_state.to_array(),
+                )
+            elif not meas_filter_derivative:
+                u_act, diag = controller.compute(
+                    setpoint=sp, measurement=pv_measured, dt=dt,
+                    d_measurement=current_state.T + noise,
                 )
             else:
                 u_act, diag = controller.compute(setpoint=sp, measurement=pv_measured, dt=dt)
