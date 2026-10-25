@@ -1,7 +1,7 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Anti-windup ablation on the nominal $-2$~K step (same gains, valve and protocol as Table~\ref{tab:classical_benchmark}); each cell reports IAE (K$\cdot$min) / overshoot (\%). The last four columns are the $2\times 2$ clamping factorial (trigger: amplitude only or amplitude + slew rate; sign awareness: unconditional or directional); the last column is Eq.~\eqref{eq:clamping_antiwindup}. ``Sign-blind amp.'' freezes the integrator when $u_{\text{raw}} \ge u_{\max} \wedge e>0$ or $u_{\text{raw}} \le u_{\min} \wedge e<0$, the sign convention of direct-acting loops.}
+\caption{Anti-windup ablation on the nominal $-2$~K step (same gains, valve and protocol as Table~\ref{tab:testbed}); each cell reports IAE (K$\cdot$min) / overshoot (\%). The last four columns are the $2\times 2$ clamping factorial (trigger: amplitude only or amplitude + slew rate; sign awareness: unconditional or directional); the last column is Eq.~\eqref{eq:clamping_antiwindup}. ``Sign-blind amp.'' freezes the integrator when $u_{\text{raw}} \ge u_{\max} \wedge e>0$ or $u_{\text{raw}} \le u_{\min} \wedge e<0$, the sign convention of direct-acting loops.}
 \label{tab:antiwindup_ablation}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lccccccc}

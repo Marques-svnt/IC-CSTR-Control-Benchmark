@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Test-bed loops: gains, nominal $-2$~K step with the directional rule (IAE in K$\cdot$min), sensitivity peak on the identified FOPTD and on the exact linearization with the half-sample hold, and the peak of the noise-to-valve gain $CS = C/(1+L)$, which equals $|K_p|(1+N)$ to within $0.3$~L/min/K.}
+\label{tab:testbed}
+\begin{tabular}{lccccccccc}
+\toprule
+Tuning & \(K_p\) & \(T_i\) (min) & \(T_d\) (min) & IAE & TV (L/min) & \(M_p\) (\%) & \(M_s^{\mathrm{FOPTD}}\) & \(\|S\|_\infty^{\mathrm{lin}}\) & \(\|CS\|_\infty^{\mathrm{lin}}\) (L/min/K) \\
+\midrule
+ZN & -44.56 & 0.187 & 0.047 & 0.940 & 81.9 & 22.6 & 4.14 & 1.57 & 490.1 \\
+CC & -50.86 & 0.217 & 0.033 & 1.017 & 104.0 & 31.0 & 4.54 & 1.75 & 559.2 \\
+TL & -28.10 & 0.779 & 0.056 & 0.917 & 48.8 & 0.0 & 2.32 & 1.15 & 309.0 \\
+AMIGO & -17.79 & 0.327 & 0.045 & 0.925 & 40.4 & 9.7 & 1.45 & 1.26 & 195.6 \\
+SIMC & -7.03 & 0.643 & 0.031 & 1.288 & 15.7 & 0.0 & 1.13 & 1.11 & 77.3 \\
+Optimal ITAE & -23.55 & 0.465 & 0.032 & 0.827 & 48.6 & 2.2 & 1.60 & 1.31 & 258.9 \\
+\bottomrule
+\end{tabular}
+\end{table*}

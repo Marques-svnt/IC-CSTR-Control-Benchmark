@@ -119,7 +119,7 @@ def run_antiwindup_ablation(
         output_path=tables_dir / "antiwindup_ablation.tex",
         caption=(
             "Anti-windup ablation on the nominal $-2$~K step (same gains, valve and protocol as "
-            "Table~\\ref{tab:classical_benchmark}); each cell reports IAE (K$\\cdot$min) / overshoot (\\%). "
+            "Table~\\ref{tab:testbed}); each cell reports IAE (K$\\cdot$min) / overshoot (\\%). "
             "The last four columns are the $2\\times 2$ clamping factorial (trigger: amplitude only or "
             "amplitude + slew rate; sign awareness: unconditional or directional); the last column is "
             "Eq.~\\eqref{eq:clamping_antiwindup}. ``Sign-blind amp.'' freezes the integrator when "
