@@ -194,9 +194,10 @@ As sementes aleatórias são fixas no código; a ordem abaixo regenera tudo o qu
 # 2. Macros numéricas do texto (generated/numbers.tex) e tabelas condensadas, a partir dos CSV
 .venv/bin/python scripts/jpc_v6_numbers.py
 # 3. PDFs (o suplementar referencia o main.aux, por isso vem depois)
-cd papers/01_journal_of_process_control && latexmk -pdf main.tex && latexmk -pdf supplementary.tex && cd ../..
+cd papers/01_journal_of_process_control && latexmk -pdf main.tex; latexmk -pdf supplementary.tex && ../../.venv/bin/python ../../scripts/jpc_supp_refs.py && latexmk -pdf main.tex && cd ../..
 # 4. Conferências: ordem das referências e números do texto contra os CSV
 .venv/bin/python scripts/check_citation_order.py papers/01_journal_of_process_control/main.aux
+.venv/bin/python scripts/check_main_supp_consistency.py
 ```
 
 ### Reproduzir Artigo 2 (*Computers & Chemical Engineering*)
