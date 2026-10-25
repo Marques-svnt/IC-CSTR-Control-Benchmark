@@ -75,6 +75,15 @@ macro,value,source
 \vCCfiveTVbc,101.2,antiwindup_tt_tvmp
 \vCCfiveMpdir,40.8,antiwindup_tt_tvmp
 \vCCfiveMpbc,11.3,antiwindup_tt_tvmp
+\vrestcases,9,"antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE)"
+\vrestTVhigher,6,"antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher TV under BC)"
+\vrestMphigher,6,"antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher overshoot under BC)"
+\vSIMCfiveTVdir,30.7,antiwindup_tt_tvmp
+\vSIMCfiveTVbc,42.5,antiwindup_tt_tvmp
+\vOPTfiveMpdir,8.7,antiwindup_tt_tvmp
+\vOPTfiveMpbc,12.5,antiwindup_tt_tvmp
+\vTLfiveMpdir,11.1,antiwindup_tt_tvmp
+\vTLfiveMpbc,13.0,antiwindup_tt_tvmp
 \vSIMCtvincmin,20,antiwindup_tt_tvmp
 \vSIMCtvincmax,38,antiwindup_tt_tvmp
 \vmapZNmin,7.9,smax_regime_map

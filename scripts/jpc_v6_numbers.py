@@ -277,6 +277,24 @@ def back_calculation_detail() -> None:
     for col, tag in (("TV dir. (L/min)", "CCfiveTVdir"), ("TV BC (L/min)", "CCfiveTVbc"),
                      ("\\(M_p\\) dir. (\\%)", "CCfiveMpdir"), ("\\(M_p\\) BC (\\%)", "CCfiveMpbc")):
         define(tag, num(cell("antiwindup_tt_tvmp", col, **cc5)), "antiwindup_tt_tvmp", "{:.1f}")
+    rest = [r for r in tv if r["Method"] in ("Tyreus-Luyben", "Skogestad SIMC", OPT)]
+    mp = "\\(M_p\\) BC (\\%)", "\\(M_p\\) dir. (\\%)"
+    define("restcases", f"{len(rest)}", "antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE)")
+    define("restTVhigher", f"{sum(num(r['TV BC (L/min)']) > num(r['TV dir. (L/min)']) for r in rest)}",
+           "antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher TV under BC)")
+    if any(num(r[mp[0]]) < num(r[mp[1]]) for r in rest):
+        raise ValueError("text states that BC never overshoots less for TL, SIMC and Optimal ITAE")
+    define("restMphigher", f"{sum(num(r[mp[0]]) > num(r[mp[1]]) for r in rest)}",
+           "antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher overshoot under BC)")
+    for m, step, col, tag in (
+        ("Skogestad SIMC", "$-5$ K", "TV dir. (L/min)", "SIMCfiveTVdir"),
+        ("Skogestad SIMC", "$-5$ K", "TV BC (L/min)", "SIMCfiveTVbc"),
+        (OPT, "$+5$ K", mp[1], "OPTfiveMpdir"),
+        (OPT, "$+5$ K", mp[0], "OPTfiveMpbc"),
+        ("Tyreus-Luyben", "$+5$ K", mp[1], "TLfiveMpdir"),
+        ("Tyreus-Luyben", "$+5$ K", mp[0], "TLfiveMpbc"),
+    ):
+        define(tag, num(cell("antiwindup_tt_tvmp", col, Method=m, Step=step)), "antiwindup_tt_tvmp", "{:.1f}")
     simc = [r for r in tv if r["Method"] == "Skogestad SIMC"]
     inc = [100.0 * (num(r["TV BC (L/min)"]) / num(r["TV dir. (L/min)"]) - 1.0) for r in simc]
     define("SIMCtvincmin", min(inc), "antiwindup_tt_tvmp", "{:.0f}")
