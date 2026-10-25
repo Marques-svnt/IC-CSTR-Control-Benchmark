@@ -277,7 +277,7 @@ class TestMeasuredPositionFeedback:
     """Anti-windup fed with a measured valve position (v9, C4)."""
 
     def test_measured_position_drives_the_freeze_decision(self) -> None:
-        """Without a band, any residual with the pushing sign freezes; a band suppresses small ones."""
+        """Without a band any residual with the pushing sign freezes; a band hides small ones."""
         gains = PIDGains(kp=-10.0, ti=0.5, td=0.0)
         out = {}
         for band in (0.0, 1.7):
