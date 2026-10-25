@@ -279,6 +279,28 @@ macro,value,source
 \vdtwoworkflips,9,"order_variants_flips (swaps among Rate, BC, BC^cv)"
 \vdtwosbmin,22,"order_variants_full (SB/Rate, ZN and CC, every variant)"
 \vdtwoampmin,3.9,"order_variants_full (Amp/Rate, ZN and CC, every variant)"
+\vhxK,-0.204,hx_model
+\vhxtau,0.657,hx_model
+\vhxtheta,0.224,hx_model
+\vhxr,0.34,hx_model
+\vhxTss,355.9,hx_model
+\vhxTinf,331.3,hx_model
+\vhxeigfast,-6.29,hx_model
+\vhxeigslow,-1.66,hx_model
+\vhxampratemin,9,"hx_ablation (Amp/Rate, ZN and CC, +-5 K)"
+\vhxsbnonemin,1.03,"hx_ablation (SB/None, ZN and CC, +-5 K)"
+\vhxsbnonemax,1.23,"hx_ablation (SB/None, ZN and CC, +-5 K)"
+\vhxTLratemin,1.35,hx_ablation (TL rate/none)
+\vhxTLratemax,1.62,hx_ablation (TL rate/none)
+\vhxSIMCworse,2,hx_ablation (steps where the rule worsens SIMC)
+\vhxbcmin,0.84,"hx_ablation (BC T_t^cv / rate, all loops and steps)"
+\vhxbcmax,1.01,"hx_ablation (BC T_t^cv / rate, all loops and steps)"
+\vhxnrhohi,129,hx_rate_demand_grid (rho >= 1)
+\vhxnrhohihelp,104,"hx_rate_demand_grid (rho >= 1, R > 1)"
+\vhxbadloops,TL and SIMC,"hx_rate_demand_grid (rho >= 1, R <= 1)"
+\vhxbadrhomax,25,hx_rate_demand_grid
+\vhxbadRmin,0.60,hx_rate_demand_grid
+\vhxncases,162,hx_rate_demand_grid
 \vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
 \vpcZNfiveold,3.65,predictive_clamping
 \vpcZNfivenew,3.44,predictive_clamping

@@ -825,6 +825,164 @@ def _short_name(name: str) -> str:
             "Skogestad SIMC": "SIMC"}.get(name, name.split(" (")[0])
 
 
+HX_DELAY_SAMPLES = 10  # 0.20 min transport delay on the heat-exchanger outlet, dt = 0.02 min
+
+
+class _HXResult:
+    """Closed-loop trajectory of the heat exchanger (same fields the paper tables use)."""
+
+    def __init__(self, t, y, sp, u_act, u_raw, metrics, i_state=None) -> None:
+        self.t, self.y, self.sp, self.u_applied = t, y, sp, u_act
+        self.u_unconstrained, self.metrics, self.i_state = u_raw, metrics, i_state
+
+
+def _hx_run(hx, g, method, step, limits=None, t_end=10.0, q_ss=100.0) -> _HXResult:
+    """Setpoint step on the heat exchanger: same PID, valve and anti-windup as the CSTR loop."""
+    from src.evaluation.metrics import evaluate_performance
+
+    x = hx.steady_state(q_ss)
+    y_ss = float(x[1])
+    pid = exp02.PIDController(g, limits or exp02.BENCHMARK_LIMITS, method, u_bias=q_ss, y_ss=y_ss)
+    pid.reset(initial_measurement=y_ss, initial_u=q_ss)
+    n = int(round(t_end / SIM_DT)) + 1
+    t = np.arange(n) * SIM_DT
+    hist = [y_ss] * HX_DELAY_SAMPLES  # outlet temperatures still in the transport line
+    y, u, ur, ii = (np.zeros(n) for _ in range(4))
+    for k in range(n):
+        y[k] = hist[-HX_DELAY_SAMPLES]
+        u[k], diag = pid.compute(setpoint=y_ss + step, measurement=y[k], dt=SIM_DT)
+        ur[k], ii[k] = diag["u_unconstrained"], diag["i"]
+        x = hx.step(x, u[k], SIM_DT)
+        hist.append(float(x[1]))
+    sp = np.full(n, y_ss + step)
+    return _HXResult(t, y, sp, u, ur, evaluate_performance(t=t, y=y, setpoint=sp, u=u, u_init=q_ss), ii)
+
+
+def _hx_setup(hx):
+    """FOPTD from a +10 L/min step and the six loops; Optimal ITAE re-optimized on this plant."""
+    from scipy.optimize import minimize
+
+    from src.classical_control.foptd import identify_foptd
+
+    x, q, dq = hx.steady_state(100.0), 100.0, 10.0
+    t = np.arange(0.0, 8.0 + 1e-9, SIM_DT)
+    hist, y = [float(x[1])] * HX_DELAY_SAMPLES, []
+    for _ in t:
+        y.append(hist[-HX_DELAY_SAMPLES])
+        x = hx.step(x, q + dq, SIM_DT)
+        hist.append(float(x[1]))
+    foptd, rmse = identify_foptd(t=t, y=np.array(y), delta_u=dq, y0=y[0])
+    tr = exp02.TuningRule
+    loops = {
+        "Ziegler-Nichols": exp02.tune_analytical(foptd, rule=tr.ZIEGLER_NICHOLS_PID),
+        "Cohen-Coon": exp02.tune_analytical(foptd, rule=tr.COHEN_COON_PID),
+        "Tyreus-Luyben": exp02.tune_analytical(foptd, rule=tr.TYREUS_LUYBEN),
+        "AMIGO": exp02.tune_analytical(foptd, rule=tr.AMIGO),
+        "Skogestad SIMC": exp02.tune_analytical(foptd, rule=tr.SKOGESTAD_SIMC_PID, tau_c=0.4),
+    }
+
+    def cost(par):
+        kp, ti, td = (float(v) for v in par)
+        if kp >= 0.0 or ti <= 0.05 or td < 0.0:
+            return 1e6
+        g = exp02.PIDGains(kp=kp, ti=ti, td=td)
+        ms = calculate_maximum_sensitivity_foptd(foptd, g)
+        r = _hx_run(hx, g, AW.CLAMPING, -2.0, t_end=6.0)
+        off = abs(r.y[-1] - r.sp[-1])
+        return r.metrics.itae + 1e4 * max(0.0, ms - 1.6) ** 2 + (1e3 * off if off > 0.5 else 0.0)
+
+    starts = [np.array([-5.0, 1.5, 0.2])] + [np.array([g.kp, g.ti, g.td]) for g in loops.values()
+                                             if calculate_maximum_sensitivity_foptd(foptd, g) <= 1.6]
+    sols = [minimize(cost, x0, method="Nelder-Mead",
+                     options={"maxiter": 120, "xatol": 1e-2, "fatol": 1e-2}).x for x0 in starts]
+    cand = [exp02.PIDGains(kp=float(a), ti=float(b), td=float(c)) for a, b, c in sols]
+    cand = [g for g in cand if calculate_maximum_sensitivity_foptd(foptd, g) <= 1.6 + 1e-3]
+    loops[exp02.OPT_ITAE] = min(cand, key=lambda g: _hx_run(hx, g, AW.CLAMPING, -2.0, t_end=6.0).metrics.itae)
+    return foptd, rmse, loops
+
+
+def run_heat_exchanger(tables_dir: Path) -> None:
+    """C1: the anti-windup ablation, T_t^cv, the S_max map and rho on the heat exchanger."""
+    from src.sim_core.heat_exchanger import HeatExchanger
+
+    hx = HeatExchanger()
+    foptd, rmse, loops = _hx_setup(hx)
+    x0 = hx.steady_state(100.0)
+    eig = np.sort(np.linalg.eigvals(hx.jacobian(x0, 100.0)).real)
+    pd.DataFrame([{
+        "T2_ss_K": x0[1], "T2_at_umax_K": hx.steady_state(300.0)[1], "eig_1": eig[0], "eig_2": eig[1],
+        "eig_3": eig[2], "K": foptd.k_p, "tau_min": foptd.tau, "theta_min": foptd.theta,
+        "r": foptd.theta / foptd.tau, "rmse_K": rmse}]).to_csv(
+        exp02.RESULTS_DIR / "hx_model.csv", index=False, float_format="%.4f")
+    gains_rows, tt_cv = [], {}
+    for n, g in loops.items():
+        grid = _tt_grid(g)
+        grid = grid[(grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)]
+        tt_cv[n] = float(grid[int(np.argmin([_hx_run(hx, replace(g, tt=float(t)), AW.BACK_CALCULATION, -2.0).metrics.iae
+                                             for t in grid]))])
+        gains_rows.append({"Method": n, "\\(K_p\\) ((L/min)/K)": f"{g.kp:.2f}", "\\(T_i\\) (min)": f"{g.ti:.3f}",
+                           "\\(T_d\\) (min)": f"{g.td:.3f}",
+                           "\\(M_s^{\\mathrm{FOPTD}}\\)": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
+                           "\\(T_t^{\\mathrm{cv}}\\) (min)": f"{tt_cv[n]:.3f}"})
+    exp02.export_latex_table(
+        data=gains_rows, output_path=tables_dir / "hx_gains.tex",
+        caption=(
+            f"Heat exchanger: FOPTD from a $+10$~L/min step ($K = {foptd.k_p:.4f}$~K/(L/min), "
+            f"$\\tau = {foptd.tau:.3f}$~min, $\\theta = {foptd.theta:.3f}$~min, $r = \\theta/\\tau = "
+            f"{foptd.theta / foptd.tau:.3f}$, RMSE ${rmse:.4f}$~K), the six loops tuned by the same rules "
+            "(Optimal ITAE re-optimized on this plant under $M_s^{\\mathrm{FOPTD}} \\le 1.6$) and "
+            "$T_t^{\\mathrm{cv}}$ chosen by the criterion of Table~\\ref{tab:antiwindup_tt_summary}."
+        ),
+        label="tab:hx_gains",
+    )
+    full = []
+    for st in TT_STEPS:
+        for k, (n, g) in enumerate(loops.items()):
+            row = {"Step": f"${st:+g}$ K" if k == 0 else "", "Method": n}
+            for lab, m in ABLATION_VARIANTS:
+                r = _hx_run(hx, _variant_gains(lab, g, tt_cv[n]), m, st)
+                row[lab] = f"{r.metrics.iae:.2f} / {r.metrics.overshoot_pct:.1f}"
+                if lab == "Sign-blind amp.":
+                    row["SB \\(y(t_f) - y_{sp}\\) (K)"] = f"{r.y[-1] - r.sp[-1]:+.2f}"
+                    row["SB at \\(u_{\\max}\\) (min)"] = f"{np.sum(r.u_applied >= 300.0 - 1e-9) * SIM_DT:.2f}"
+            full.append(row)
+    exp02.export_latex_table(
+        data=full, output_path=tables_dir / "hx_ablation.tex",
+        caption=(
+            "Heat exchanger: the seven integrator policies of Table~\\ref{tab:antiwindup_ablation} (with "
+            "back-calculation at both tracking constants) on $-2$, $-5$ and $+5$~K steps of the outlet "
+            "temperature; IAE (K$\\cdot$min) / overshoot (\\%), final error and time at the upper stop "
+            "of sign-blind clamping. Same valve ($[0, 300]$~L/min, $S_{\\max} = 80$~L/min$^2$)."
+        ),
+        label="tab:hx_ablation",
+    )
+    grid = []
+    free_lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=np.inf)
+    for n, g in loops.items():
+        for st in TT_STEPS:
+            for smax in SMAX_GRID:
+                lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
+                amp = _hx_run(hx, g, AW.CLAMPING_POS_DIRECTIONAL, st, limits=lim).metrics.iae
+                rate = _hx_run(hx, g, AW.CLAMPING, st, limits=lim).metrics.iae
+                free = _hx_run(hx, g, AW.CLAMPING, st, limits=free_lim)
+                rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (smax * SIM_DT)
+                grid.append({"Method": n, "step_K": st, "S_max": smax, "R": amp / rate, "rho": rho})
+    pd.DataFrame(grid).to_csv(exp02.RESULTS_DIR / "hx_rate_demand_grid.csv", index=False, float_format="%.4f")
+    rows = []
+    for n in loops:
+        sel = [r for r in grid if r["Method"] == n and r["step_K"] == -2.0]
+        rows.append({"Method": n} | {f"$S_{{\\max}}={r['S_max']:g}$": f"{r['R']:.2f}" for r in sel})
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "hx_smax_map.tex",
+        caption=(
+            "Heat exchanger: $R = \\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}$ on the $-2$~K step "
+            "against the slew limit (L/min$^2$), gains fixed; the full grid with the three steps and "
+            "$\\rho$ is in \\texttt{results/jpc/hx\\_rate\\_demand\\_grid.csv}."
+        ),
+        label="tab:hx_smax_map",
+    )
+
+
 def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
     """The rho >= 1 rule, defined on the nominal grid, checked on conditions it was not built on.
 
@@ -1751,6 +1909,8 @@ def remediate_jpc() -> Path:
     run_rho_noise(plant, ss, gains, tables_dir)
     run_noise_policies_ext(plant, ss, gains, tt_cv, tables_dir)
     run_order_variants(plant, ss, gains, tt_cv, tables_dir)
+    stage("second plant: heat exchanger")
+    run_heat_exchanger(tables_dir)
     run_predictive_clamping(plant, ss, gains, tables_dir)
     run_exact_backcalc(plant, ss, gains, tables_dir)
     run_second_operating_point(SECOND_OP_Q_J, tables_dir)

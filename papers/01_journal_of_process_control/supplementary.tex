@@ -205,6 +205,27 @@ where $S_i$ is the share of variance explained by $\xi_i$ alone and $S_{Ti} \ge 
 
 \input{tables/sobol_margin_test}
 
+\section{Second plant: heat exchanger}\label{supp:hx}
+The second plant is built for this study as a reverse-acting, open-loop-stable process without reaction kinetics; it is not a published benchmark, and Seborg et al., Shinskey and Luyben only motivate its structure. A well-mixed shell (temperature $T_c$, coolant flow $q_c$, the manipulated input) cools a tube split into two cells in series ($T_1$, $T_2$); it is not a counter-current exchanger:
+\begin{equation}
+\begin{aligned}
+\dot T_1 &= \tfrac{2q_p}{V_p}(T_{p,\mathrm{in}} - T_1) - \tfrac{UA(q_c)/2}{\rho_p C_{p,p} V_p/2}(T_1 - T_c), \\
+\dot T_2 &= \tfrac{2q_p}{V_p}(T_1 - T_2) - \tfrac{UA(q_c)/2}{\rho_p C_{p,p} V_p/2}(T_2 - T_c), \\
+\dot T_c &= \tfrac{q_c}{V_c}(T_{c,\mathrm{in}} - T_c) + \tfrac{UA(q_c)}{\rho_c C_{p,c} V_c}\bigl(\tfrac{T_1 + T_2}{2} - T_c\bigr),
+\end{aligned}
+\qquad UA(q_c) = UA_0\left(\frac{\max(q_c, 5)}{q_{c,ss}}\right)^{0.8},
+\label{eq:hx}
+\end{equation}
+with output $y(t) = T_2(t - 0.20\text{ min})$ (a first-in first-out buffer of ten samples). Parameters: $V_p = 100$~L, $V_c = 40$~L, $q_p = 100$~L/min, $T_{p,\mathrm{in}} = 390$~K, $T_{c,\mathrm{in}} = 300$~K, $\rho C_p = 500$~cal/(L$\cdot$K) on both sides, $UA_0 = 6.0\times 10^4$~cal/(min$\cdot$K), $q_{c,ss} = u_{\text{bias}} = 100$~L/min; same valve, controller and $\Delta t$ as the reactor. The state is integrated by fixed-step fourth-order Runge--Kutta with four substeps per sample (\texttt{src/sim\_core/heat\_exchanger.py}). At $q_c = 100$~L/min, $T_{2,ss} = \vhxTss$~K and the eigenvalues lie between $\vhxeigfast$ and $\vhxeigslow$~min$^{-1}$; with the valve at its upper stop $T_2$ settles at $\vhxTinf$~K, below the setpoints of the steps, so the offset equilibrium of Proposition~\ref{prop:latch} exists. The transport delay was fixed before identification and not adjusted to reach a given $\theta/\tau$.
+
+Table~\ref{tab:hx_gains} gives the identified model, the gains and $T_t^{\mathrm{cv}}$; Table~\ref{tab:hx_ablation} the seven policies on the three steps; Table~\ref{tab:hx_smax_map} the ratio $R$ against the slew limit. Sign-blind clamping never holds the valve at the upper stop on these steps (zero time at $u_{\max}$): ZN and CC oscillate through the slew limit without settling at a stop, which is why the latch does not appear, while their final errors in Table~\ref{tab:hx_ablation} reflect the phase of that oscillation at $t_f$. On the $\vhxncases$ cases of the full grid, $\rho \ge 1$ was followed by $R > 1$ in $\vhxnrhohihelp$ of $\vhxnrhohi$ (\texttt{results/jpc/hx\_rate\_demand\_grid.csv}); the exceptions are TL at every step and limit, with $R$ down to $\vhxbadRmin$, and one SIMC case.
+
+\input{tables/hx_gains}
+
+\input{tables/hx_ablation}
+
+\input{tables/hx_smax_map}
+
 \bibliographystyle{elsarticle-num}
 \bibliography{references}
 \end{document}

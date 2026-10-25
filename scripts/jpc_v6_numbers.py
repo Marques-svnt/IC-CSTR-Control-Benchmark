@@ -612,6 +612,52 @@ def order_variant_numbers() -> None:
     define("dtwoampmin", min(amp), "order_variants_full (Amp/Rate, ZN and CC, every variant)", "{:.1f}")
 
 
+def hx_numbers() -> list[list[str]]:
+    """C1: second plant (hx_model, hx_ablation, hx_rate_demand_grid); returns the condensed table."""
+    mod = rows("hx_model")[0]
+    for k, tag, fmt in (("K", "K", "{:.3f}"), ("tau_min", "tau", "{:.3f}"), ("theta_min", "theta", "{:.3f}"),
+                        ("r", "r", "{:.2f}"), ("T2_ss_K", "Tss", "{:.1f}"), ("T2_at_umax_K", "Tinf", "{:.1f}"),
+                        ("eig_1", "eigfast", "{:.2f}"), ("eig_3", "eigslow", "{:.2f}")):
+        define(f"hx{tag}", float(mod[k]), "hx_model", fmt)
+    ab = rows("hx_ablation")
+    iae = {(r["Step"], r["Method"], c): num(r[c]) for r in ab for c in r if c not in ("Step", "Method")}
+    steps = ("$-2$ K", "$-5$ K", "$+5$ K")
+    emp = ("Ziegler-Nichols", "Cohen-Coon")
+    amp, sb, none = "Amp. direct.", "Sign-blind amp.", "None"
+    define("hxampratemin", min(iae[(s, n, amp)] / iae[(s, n, RATE)] for s in steps[1:] for n in emp),
+           "hx_ablation (Amp/Rate, ZN and CC, +-5 K)", "{:.0f}")
+    sbr = [iae[(s, n, sb)] / iae[(s, n, none)] for s in steps[1:] for n in emp]
+    define("hxsbnonemin", min(sbr), "hx_ablation (SB/None, ZN and CC, +-5 K)")
+    define("hxsbnonemax", max(sbr), "hx_ablation (SB/None, ZN and CC, +-5 K)")
+    if any(num(r["SB at \\(u_{\\max}\\) (min)"]) > 0.0 for r in ab):
+        raise ValueError("text states that sign-blind clamping never rests at the upper stop on the HX")
+    tl = [iae[(s, "Tyreus-Luyben", RATE)] / iae[(s, "Tyreus-Luyben", none)] for s in steps]
+    define("hxTLratemin", min(tl), "hx_ablation (TL rate/none)")
+    define("hxTLratemax", max(tl), "hx_ablation (TL rate/none)")
+    simc = [iae[(s, "Skogestad SIMC", RATE)] / iae[(s, "Skogestad SIMC", none)] for s in steps]
+    define("hxSIMCworse", f"{sum(v > 1.0 for v in simc)}", "hx_ablation (steps where the rule worsens SIMC)")
+    bc = [iae[(s, n, BC_CV)] / iae[(s, n, RATE)] for s in steps for n in SIX]
+    define("hxbcmin", min(bc), "hx_ablation (BC T_t^cv / rate, all loops and steps)")
+    define("hxbcmax", max(bc), "hx_ablation (BC T_t^cv / rate, all loops and steps)")
+    grid = rows("hx_rate_demand_grid")
+    for r in grid:
+        r["R"], r["rho"] = float(r["R"]), float(r["rho"])
+    hi = [r for r in grid if r["rho"] >= 1.0]
+    define("hxnrhohi", f"{len(hi)}", "hx_rate_demand_grid (rho >= 1)")
+    define("hxnrhohihelp", f"{sum(r['R'] > 1.0 for r in hi)}", "hx_rate_demand_grid (rho >= 1, R > 1)")
+    bad = [r for r in hi if r["R"] <= 1.0]
+    badl = [SHORT[m] for m in SIX if any(r["Method"] == m for r in bad)]
+    define("hxbadloops", " and ".join(badl), "hx_rate_demand_grid (rho >= 1, R <= 1)")
+    define("hxbadrhomax", max(r["rho"] for r in bad), "hx_rate_demand_grid", "{:.0f}")
+    define("hxbadRmin", min(r["R"] for r in bad), "hx_rate_demand_grid")
+    define("hxncases", f"{len(grid)}", "hx_rate_demand_grid")
+    body = []
+    for n in SIX:
+        body.append([SHORT[n]] + [f"{iae[('$-5$ K', n, c)]:.2f}" for c in (none, sb, amp, RATE, BC_CV)]
+                    + [f"{iae[('$-2$ K', n, c)]:.2f}" for c in (none, RATE)])
+    return body
+
+
 def predictive_and_exact_numbers() -> None:
     """Freeze test at k (predictor-corrector) and exact back-calculation factor (Tables S)."""
     pc = rows("predictive_clamping")
@@ -766,6 +812,7 @@ def main() -> None:
     noise_policy_numbers()
     noise_round_numbers()
     order_variant_numbers()
+    hx_body = hx_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
     load_cols, load_body = load_table()
@@ -791,6 +838,20 @@ def main() -> None:
             "hold, and the peak of the noise-to-valve gain $CS = C/(1+L)$, which equals "
             "$|K_p|(1+N)$ to within $0.3$~(L/min)/K. Units: $K_p$ and $\\|CS\\|_\\infty$ in (L/min)/K.",
             "tab:testbed",
+        ),
+        encoding="utf-8",
+    )
+    (tables / "v9_hx.tex").write_text(
+        booktabs(
+            ["Tuning", "None", "SB", "Amp.", "Rate", "BC$^{\\mathrm{cv}}$", "None", "Rate"],
+            hx_body,
+            "Second plant, the heat exchanger of Supplementary Section~\\suppref{supp:hx}: IAE "
+            "(K$\\cdot$min) of the integrator policies on the $-5$~K step (first five columns) and of no "
+            "anti-windup and the rate-aware rule on the $-2$~K step (last two); same valve "
+            "($[0, 300]$~L/min, $S_{\\max} = 80$~L/min$^2$), loops tuned by the same rules, Optimal ITAE "
+            "re-optimized, BC$^{\\mathrm{cv}}$ with $T_t^{\\mathrm{cv}}$ chosen on this plant.",
+            "tab:hx",
+            group=" & \\multicolumn{5}{c}{$-5$~K step} & \\multicolumn{2}{c}{$-2$~K step}",
         ),
         encoding="utf-8",
     )
@@ -842,7 +903,7 @@ def main() -> None:
         w = csv.writer(fh)
         w.writerow(["macro", "value", "source"])
         w.writerows((f"\\v{n}", v, s) for n, v, s in MACROS)
-    print(f"{len(MACROS)} macros, 3 tables")
+    print(f"{len(MACROS)} macros, 4 tables")
 
 
 if __name__ == "__main__":
