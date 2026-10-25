@@ -158,3 +158,21 @@ Verificação final da rodada:
 
 - Todos os candidatos são estáveis e têm estado estacionário único. A primeira contagem dava 2 estados em todos porque contava a troca de sinal no polo de u_req(T) (T_j* = T_jf, perto de 350 K). Corrigi para contar só raízes entre vizinhos fisicamente válidos (0 ≤ u_req < 10⁴).
 - Pelo critério registrado, o escolhido é **q_j,ss = 250 L/min**, sem empate: o segundo colocado tem folga 0,333.
+
+**D1 — protocolo da auditoria da literatura (registrado antes de buscar).**
+- **Base de busca:** OpenAlex (API pública, ordem de relevância da própria base). Texto completo lido no site do editor ou em PDF de acesso aberto, quando acessível. Scopus e Google Scholar não estão acessíveis neste ambiente (sem credencial; o Scholar exige CAPTCHA, que não contorno). A ScienceDirect bloqueia acesso automatizado; registro cada bloqueio.
+- **Janela:** 2015–2026 (filtro `publication_year:2015-2026`, tipo `article`).
+- **Strings de busca, exatas e nesta ordem:**
+  1. `CSTR control comparison actuator saturation`
+  2. `continuous stirred tank reactor temperature control comparison PID MPC constraints`
+  3. `CSTR controller comparison input constraints`
+- **Inclusão:** comparação de estratégias de controle num CSTR (ou reator químico equivalente) com alguma restrição de atuador mencionada na metodologia.
+- **Seleção:** os primeiros resultados que atendam à inclusão, na ordem da base, percorrendo as strings em sequência, sem filtrar por resultado, até 12–15 artigos lidos no texto completo. Artigo cujo texto completo não abra entra como "resumo apenas" e não é contado.
+- **Itens codificados** (sim / não / não aplicável / não verificável):
+  1. modelo de atuador declarado (amplitude, taxa, folga);
+  2. lógica anti-windup declarada;
+  3. sinal de ação do laço explícito;
+  4. Δt e método de discretização do controlador declarados;
+  5. caminho de medição (ruído, filtro) declarado.
+- **Método de leitura:** busca por palavras-chave no texto completo (saturation, rate, slew, windup, anti-windup, sampling, discret, Euler, noise, filter, reverse, direct acting) e leitura dos trechos encontrados. É uma codificação de um executor, sem segundo codificador.
+- **Saída:** `papers/01_journal_of_process_control/repository/literature_audit.csv` (lista completa) e uma tabela agregada no Suplementar.
