@@ -6,7 +6,8 @@
 \usepackage{algpseudocode}
 
 \newtheorem{proposition}{Proposition}
-\shorttitle{Anti-windup for reverse-acting PID loops with rate-limited valves}
+\input{generated/numbers}
+\shorttitle{Anti-windup under amplitude and slew-rate limits}
 \shortauthors{G.M. de Andrade and E.R. Edwards}
 
 \begin{document}
@@ -14,7 +15,7 @@
 \def\floatpagepagefraction{1}
 \def\textpagefraction{.001}
 
-\title [mode = title]{Anti-Windup for Reverse-Acting PID Loops under Amplitude and Slew-Rate Limits: An Implementation Study on an Exothermic CSTR}
+\title [mode = title]{Anti-Windup under Amplitude and Slew-Rate Limits in Reverse-Acting Process Loops: An Implementation Study on an Exothermic CSTR}
 
 \author[1]{Gabriel Marques de Andrade}[orcid=0009-0008-8868-5100]
 \cormark[1]
@@ -35,13 +36,13 @@
 \cortext[1]{Corresponding author}
 
 \begin{abstract}
-Verdicts on PID tuning rules for exothermic reactors depend on implementation details that are rarely reported, chiefly the anti-windup logic of a valve limited in amplitude and slew rate. A study of a three-state CSTR with eight PID tunings and seven integrator policies shows that sign-blind amplitude clamping, a frequent implementation error, latches a reverse-acting loop at full cooling (a proposition gives the offset equilibrium; here the integral absolute error of a $-2$~K step for Ziegler--Nichols rises from $0.940$ to $104.123$~K$\cdot$min). A slew-rate trigger restores the loop; over slew limits of $20$ to $320$~L/min$^2$ it matters for the empirical rules at every limit and for AMIGO and the optimal tuning when the valve is slow. Back-calculation with one tracking constant per loop, chosen by minimax over three steps, is within $2\%$ of the directional rule and up to $10\%$ better; common defaults are up to $97\%$ worse. Bounding $M_s \le 1.6$ on the exact linearization instead of the identified dead-time model lowers the optimal ITAE by $11\%$ in sample, with no gain out of sample and $76\%$ higher high-frequency gain. Noise-to-valve gain follows $|K_p|(1+N)$. On the feasible region, heat-removal demand explains only part of the error variance (Sobol and Shapley analyses).
+Comparisons of controllers on processes with constrained actuators rarely state the anti-windup logic, although it can decide the verdict. This implementation study examines the integrator logic of PID loops under the amplitude and slew-rate limits of a cooling valve in a reverse-acting loop, the temperature loop of a three-state exothermic CSTR, with six fixed-gain controllers as a test bed. A proposition shows that sign-blind amplitude clamping, a frequent implementation error that reuses the direct-acting freeze condition, latches a reverse-acting loop at full cooling; on the reactor the temperature settles $\vlatchgap$~K below the setpoint and the integral absolute error of a $-2$~K step for Ziegler--Nichols rises from $\vZNdir$ to $\vZNsign$~K$\cdot$min. A seven-policy ablation over three setpoint steps, a load profile, a valve deadband and a second operating point shows that a slew-rate trigger, not sign awareness, restores the loop, and a map over slew limits of $20$ to $320$~L/min$^2$ shows for which loops and valve speeds the trigger matters. Back-calculation with one tracking constant per loop, chosen on the design step, stays within $\vttcvmaxpct\%$ of the directional rule on larger steps, whereas the usual defaults are up to $\vtttimaxpct\%$ worse. The noise-to-valve gain follows the high-frequency controller gain $|K_p|(1+N)$, not the sensitivity peak. A pseudocode and a five-item checklist state what a comparison of controllers on a constrained loop must report.
 \end{abstract}
 
 \input{highlights}
 
 \begin{keywords}
-Exothermic CSTR \sep PID implementation \sep Anti-windup \sep Rate saturation \sep Measurement filtering \sep Sobol indices
+Anti-windup \sep Actuator rate saturation \sep Conditional integration \sep Back-calculation \sep Reverse-acting loop \sep Exothermic CSTR
 \end{keywords}
 
 \maketitle
@@ -52,7 +53,7 @@ Exothermic CSTR \sep PID implementation \sep Anti-windup \sep Rate saturation \s
 \section{Plant model and actuator limits}\label{sec:model}
 \input{sections/02_plant_actuator_limits}
 
-\section{Robust PID tuning and anti-windup}\label{sec:pid}
+\section{PID implementation and anti-windup logic}\label{sec:pid}
 \input{sections/03_robust_pid_antiwindup}
 
 \section{Results and discussion}\label{sec:results}
@@ -62,7 +63,7 @@ Exothermic CSTR \sep PID implementation \sep Anti-windup \sep Rate saturation \s
 \input{sections/05_conclusion}
 
 \section*{Data and code availability}
-The simulation code, controllers, campaign scripts and the CSV files behind every table and figure are available at \url{https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark}.
+The simulation code, controllers, campaign scripts and the CSV files behind every table and figure are available at \url{https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark}. The tuning-specific analyses are in the Supplementary Material.
 
 \section*{CRediT authorship contribution statement}
 \textbf{Gabriel Marques de Andrade:} Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data Curation, Writing -- Original Draft, Writing -- Review \& Editing, Visualization. \textbf{Elilton Rodrigues Edwards:} Supervision, Methodology, Writing -- Review \& Editing.
