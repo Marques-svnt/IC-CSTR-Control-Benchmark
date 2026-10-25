@@ -27,7 +27,7 @@ What the literature does not provide, to our knowledge, is a controlled comparis
 \subsection{Contributions}
 The study uses a three-state CSTR model with an explicit jacket balance and a cooling valve limited to $[0, 300]$~L/min and $80$~L/min$^2$, with error metrics evaluated on the true reactor temperature. The contributions are:
 \begin{enumerate}
-    \item A proposition that explains why sign-blind amplitude clamping latches a reverse-acting loop at full cooling, valid for any reverse-acting loop around an open-loop-stable plant, with the mechanism shown on the reactor.
+    \item A proposition that explains why sign-blind amplitude clamping latches a reverse-acting loop at full cooling, valid for any reverse-acting loop around an open-loop-stable plant under the hypotheses of Proposition~\ref{prop:latch}; that the reactor reaches these hypotheses is shown by simulation, not proved.
     \item A seven-policy ablation of the integrator logic (no anti-windup, back-calculation, sign-blind amplitude clamping, and the $2\times 2$ factorial of trigger---amplitude or amplitude plus slew rate---and sign awareness---unconditional or directional) over three setpoint steps, a load profile, a valve deadband and a second operating point, which attributes the recovery to the slew-rate trigger.
     \item A regime map over slew limits of $20$ to $320$~L/min$^2$ that shows for which loops and valve speeds the slew-rate trigger matters.
     \item A comparison of the directional rule with back-calculation using one tracking constant per loop, chosen by a declared criterion, and with the usual defaults.

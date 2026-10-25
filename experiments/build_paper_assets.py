@@ -578,7 +578,7 @@ class _Tap:
 
     def compute(self, setpoint, measurement, dt):
         u, diag = self.pid.compute(setpoint=setpoint, measurement=measurement, dt=dt)
-        self.rows.append((diag["i"], diag["u_unconstrained"]))
+        self.rows.append((diag["i"], diag["u_unconstrained"], diag["d"]))
         return u, diag
 
 
@@ -613,6 +613,48 @@ def plot_mechanism(plant, ss, gains: dict, figures_dir: Path) -> None:
         ax.grid(True, which="both", linestyle=":", alpha=0.5)
     fig.tight_layout()
     exp02.save_grouped(fig, figures_dir / "fig_mechanism")
+
+
+def run_latch_check(plant, ss, gains: dict) -> None:
+    """Checks the hypotheses of Proposition 1 on the sign-blind latch of ZN and CC (CSV only).
+
+    k0 is the first sample from which the valve stays at u_max until t_f; delta is the smallest
+    band [T_inf - delta, T_sp) that holds T_k for k > k0. The derivative bound follows from Eq. (10):
+    |D_k| <= max(|D_k0|, |Kp| Td max_k |T_k - T_{k-1}| / dt) ("sharp"), and with the band width
+    T_sp - T_inf + delta in place of the largest increment ("band"). The latch holds if
+    I_k0 >= I* + |Kp| delta + D_bar.
+    """
+    t_sp, u_max = ss.T - 2.0, exp02.BENCHMARK_LIMITS.u_max
+    t_inf = plant.find_steady_state(q_j=u_max).T
+    out = []
+    for name in ("Ziegler-Nichols", "Cohen-Coon"):
+        g = gains[name]
+        tap = _Tap(exp02.PIDController(g, exp02.BENCHMARK_LIMITS, AW.CLAMPING_NAIVE, u_bias=100.0, y_ss=ss.T))
+        res = exp02.ClosedLoopSimulator().run(
+            plant, tap, ss, (0.0, 10.0), SIM_DT, setpoint_func=lambda t: t_sp
+        )
+        i_state, u_raw, d = (np.array([r[j] for r in tap.rows]) for j in range(3))
+        temp = res.states[:, 1]
+        at_max = res.u_applied >= u_max - 1e-9
+        k0 = int(np.flatnonzero(~at_max)[-1]) + 1  # first sample of the final run at u_max
+        after = slice(k0 + 1, None)
+        delta = max(t_inf - float(temp[after].min()), 0.0)
+        i_star = u_max - 100.0 + abs(g.kp) * (t_sp - t_inf)
+        d_sharp = max(abs(d[k0]), abs(g.kp) * g.td * float(np.abs(np.diff(temp[k0:])).max()) / SIM_DT)
+        d_band = max(abs(d[k0]), abs(g.kp) * g.td * (t_sp - t_inf + delta) / SIM_DT)
+        need = i_star + abs(g.kp) * delta
+        out.append({
+            "Method": name, "T_inf_K": t_inf, "I_star": i_star, "t_k0_min": res.t[k0],
+            "T_k0_minus_Tsp": temp[k0] - t_sp, "I_k0": i_state[k0], "D_k0": d[k0], "delta_K": delta,
+            "I_frozen_after_k0": bool(np.all(i_state[k0:] == i_state[k0])),
+            "u_raw_ge_umax_after_k0": bool(np.all(u_raw[k0:] >= u_max)),
+            "e_pos_after_k0": bool(np.all(temp[after] < t_sp)),
+            "max_abs_D_after_k0": float(np.abs(d[after]).max()),
+            "D_bar_sharp": d_sharp, "D_bar_band": d_band,
+            "margin_sharp": i_state[k0] - need - d_sharp, "margin_band": i_state[k0] - need - d_band,
+            "Tf_minus_Tsp": temp[-1] - t_sp,
+        })
+    pd.DataFrame(out).to_csv(exp02.RESULTS_DIR / "latch_check.csv", index=False, float_format="%.4f")
 
 
 def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
@@ -1165,6 +1207,7 @@ def remediate_jpc() -> Path:
     run_smax_map(plant, ss, gains, tables_dir, figures_dir)
     run_amigo_regime_diagnostics(plant, ss, gains)
     plot_mechanism(plant, ss, gains, figures_dir)
+    run_latch_check(plant, ss, gains)
     run_second_operating_point(SECOND_OP_Q_J, tables_dir)
     run_exact_robustness(plant, ss, foptd, gains, tables_dir)
     stage("cost of the design-model constraint + joint 2-DOF")

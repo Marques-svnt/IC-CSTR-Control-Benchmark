@@ -220,6 +220,23 @@ def proposition_numbers() -> None:
         )
 
 
+def latch_check_numbers() -> None:
+    """Hypotheses of Proposition 1 checked on the simulated latch (latch_check.csv)."""
+    for r in rows("latch_check"):
+        flags = ("I_frozen_after_k0", "u_raw_ge_umax_after_k0", "e_pos_after_k0")
+        if not all(r[f] == "True" for f in flags) or float(r["margin_band"]) <= 0.0:
+            raise ValueError(f"Proposition 1 hypotheses fail on the simulated latch: {r}")
+        s = SHORT[r["Method"]]
+        define(f"{s}tkzero", float(r["t_k0_min"]), "latch_check", "{:.2f}")
+        define(f"{s}Ikzero", float(r["I_k0"]), "latch_check", "{:.0f}")
+        define(f"{s}Dbar", float(r["D_bar_band"]), "latch_check (D bound from Eq. 10 and the band)", "{:.0f}")
+        define(f"{s}delta", float(r["delta_K"]), "latch_check", "{:.2f}")
+        define(f"{s}latchmargin", float(r["margin_band"]), "latch_check", "{:.0f}")
+        istar = next(v for n, v, _ in MACROS if n == f"{s}Istar")
+        if istar != f"{float(r['I_star']):.0f}":
+            raise ValueError(f"I* of latch_check ({r['I_star']}) differs from Proposition 1 ({istar})")
+
+
 def back_calculation_numbers() -> None:
     """One T_t per loop (Table antiwindup_tt_summary)."""
     tab = rows("antiwindup_tt_summary")
@@ -513,6 +530,7 @@ def main() -> None:
     """Writes numbers.tex, the condensed tables and the provenance CSV."""
     ablation_numbers()
     proposition_numbers()
+    latch_check_numbers()
     back_calculation_numbers()
     back_calculation_detail()
     smax_cols, smax_body = regime_map()

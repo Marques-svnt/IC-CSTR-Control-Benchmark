@@ -38,6 +38,16 @@ macro,value,source
 \vTinf,377.94,CSTRPlant.find_steady_state(q_j=300)
 \vZNIstar,945,u_max - u_bias + |Kp|(T_sp - T_inf); Kp from benchmark_table
 \vCCIstar,1050,u_max - u_bias + |Kp|(T_sp - T_inf); Kp from benchmark_table
+\vZNtkzero,6.16,latch_check
+\vZNIkzero,4506,latch_check
+\vZNDbar,1754,latch_check (D bound from Eq. 10 and the band)
+\vZNdelta,0.13,latch_check
+\vZNlatchmargin,1801,latch_check
+\vCCtkzero,5.96,latch_check
+\vCCIkzero,3546,latch_check
+\vCCDbar,1419,latch_check (D bound from Eq. 10 and the band)
+\vCCdelta,0.13,latch_check
+\vCClatchmargin,1070,latch_check
 \vttmmmax,1.02,antiwindup_tt_summary
 \vttmmmin,0.90,antiwindup_tt_summary
 \vttmmmaxpct,2,antiwindup_tt_summary

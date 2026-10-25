@@ -1,0 +1,3 @@
+Method,T_inf_K,I_star,t_k0_min,T_k0_minus_Tsp,I_k0,D_k0,delta_K,I_frozen_after_k0,u_raw_ge_umax_after_k0,e_pos_after_k0,max_abs_D_after_k0,D_bar_sharp,D_bar_band,margin_sharp,margin_band,Tf_minus_Tsp
+Ziegler-Nichols,377.9356,944.9832,6.1600,-14.0354,4506.2763,-12.1623,0.1315,True,True,True,12.0178,12.1623,1754.3524,3543.2719,1801.0818,-16.7175
+Cohen-Coon,377.9356,1050.3293,5.9600,-13.9636,3545.8318,-9.8300,0.1309,True,True,True,9.7309,9.8300,1418.7537,2479.0127,1070.0890,-16.7180
