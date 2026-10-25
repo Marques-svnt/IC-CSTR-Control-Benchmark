@@ -1,19 +1,19 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Order of evaluation and discretization (six loops, five policies of Table~\ref{tab:robustness_ext}, three steps). Largest relative change of IAE against the base implementation, and whether the ranking of the loops under a policy or of the policies for a loop changes (a pair swapping order by more than $1\%$ in both cases). (i) base: saturation then slew limit; (ii) base: backlash ($6$~L/min) after the slew limit; (iii)--(iv) base: filter ($\tau_m = 0.05$~min, exact) before all three terms; noisy rows: 30 realizations. The anti-windup sees the controller's $u_{\text{act}}$ in every variant. Every swapped pair is listed in \texttt{results/jpc/order\_variants\_flips.csv}.}
+\caption{Order of evaluation and discretization (six loops, five policies of Table~\ref{tab:robustness_ext}, three steps). Largest relative change of IAE against the base implementation, and whether the ranking of the loops under a policy or of the policies for a loop changes (a pair swapping order by more than $1\%$ in both cases). (i) base: saturation then slew limit; (ii) base: backlash ($6$~L/min) after the slew limit; (iii)--(iv) base: filter ($\tau_m = 0.05$~min, exact) before all three terms; noisy rows: 30 realizations. The anti-windup sees the controller's $u_{\text{act}}$ in every variant. Group: controller, a choice of the controller implementation; actuator, a property of the actuator model, not of the controller. Every swapped pair is listed in \texttt{results/jpc/order\_variants\_flips.csv}.}
 \label{tab:order_variants}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-Variant & \(\sigma\) (K) & max \(|\Delta\)IAE\(|\) (\%) & loop ranking & policy ranking \\
+Variant & group & \(\sigma\) (K) & max \(|\Delta\)IAE\(|\) (\%) & loop ranking & policy ranking \\
 \midrule
-(i) slew limit before saturation & 0 & 6.3 & same & same \\
-(ii) backlash before the slew limit & 0 & 44.2 & changes & changes \\
-(iii) derivative on the unfiltered measurement & 0 & 13.9 & same & same \\
-(iii) derivative on the unfiltered measurement & 0.05 & 58.0 & changes & changes \\
-(iv) measurement filter by explicit Euler & 0 & 24.2 & changes & changes \\
-(iv) measurement filter by explicit Euler & 0.05 & 21.5 & changes & changes \\
+(i) slew limit before saturation & controller & 0 & 6.3 & same & same \\
+(ii) backlash before the slew limit & actuator & 0 & 44.2 & changes & changes \\
+(iii) derivative on the unfiltered measurement & controller & 0 & 13.9 & same & same \\
+(iii) derivative on the unfiltered measurement & controller & 0.05 & 58.0 & changes & changes \\
+(iv) measurement filter by explicit Euler & controller & 0 & 24.2 & changes & changes \\
+(iv) measurement filter by explicit Euler & controller & 0.05 & 21.5 & changes & changes \\
 \bottomrule
 \end{tabular}%
 }
