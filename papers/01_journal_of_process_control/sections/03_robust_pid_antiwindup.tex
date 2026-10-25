@@ -31,7 +31,8 @@ Then $I_k = I_{k_0}$, $u_{\text{raw},k} \ge u_{\max}$ and $u_{\text{act},k} = u_
 By induction on $k \ge k_0$. Base: the slew limiter moves $u_{\text{act}}$ towards $\operatorname{sat}(u_{\text{raw},k_0})$ without passing it, so $u_{\text{act},k_0} = u_{\max}$ implies $u_{\text{raw},k_0} \ge u_{\max}$. Step: if the claim holds up to $k$, the input has been $u_{\max}$ on $[t_{k_0}, t_{k+1})$, so by (H2) $0 < e_{k+1} \le T_{sp} - T_\infty + \delta$. With $u_{\text{raw},k} \ge u_{\max}$ and $e_{k+1} > 0$ the rule freezes $I_{k+1} = I_k = I_{k_0}$, and by (H1) and (H3)
 \begin{align*}
 u_{\text{raw},k+1} &= u_{\text{bias}} - |K_p|\,e_{k+1} + I_{k_0} + D_{k+1} \\
-&\ge u_{\text{bias}} - |K_p|(T_{sp} - T_\infty + \delta) + I^\star + |K_p|\delta = u_{\max},
+&\ge u_{\text{bias}} - |K_p|(T_{sp} - T_\infty + \delta) \\
+&\quad + I^\star + |K_p|\delta = u_{\max},
 \end{align*}
 so $\operatorname{sat}(u_{\text{raw},k+1}) = u_{\max} = u_{\text{act},k}$ and $u_{\text{act},k+1} = u_{\max}$. The input is constant from $t_{k_0}$ on and the plant is stable, hence $T_k \to T_\infty$.
 \end{proof}

@@ -664,10 +664,11 @@ def main() -> None:
     )
     (tables / "v7_load.tex").write_text(
         booktabs(
-            ["Tuning", "IAE", "TV (L/min)", "Peak (K)", "Max valve (L/min)"],
+            ["Tuning", "IAE", "TV", "Peak", "Max \\(q_j\\)"],
             load_body,
             "Deterministic rejection of a $+2$~K feed-temperature step at $t = 2$~min and a $+10\\%$ "
-            "feed-concentration step at $t = 8$~min ($15$~min, no noise, directional rule).",
+            "feed-concentration step at $t = 8$~min ($15$~min, no noise, directional rule). IAE in "
+            "K$\\cdot$min, TV and largest valve opening $q_j$ in L/min, peak deviation in K.",
             "tab:load",
             env="table",
         ),
