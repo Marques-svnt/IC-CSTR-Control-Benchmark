@@ -39,6 +39,7 @@ class HeatExchanger:
     """Three-state model; state x = [T1, T2, Tc] in K, input q_c in L/min."""
 
     def __init__(self, params: HeatExchangerParameters | None = None) -> None:
+        """Uses the nominal parameters unless others are given."""
         self.p = params or HeatExchangerParameters()
 
     def ua(self, q_c: float) -> float:
