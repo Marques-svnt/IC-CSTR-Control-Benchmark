@@ -1,4 +1,4 @@
-"""Checks the numbers of the JPC v6 manuscript against the CSV mirrors.
+"""Checks the numbers of the JPC v7 manuscript against the CSV mirrors.
 
 1. Main text: every quoted result must be a macro of `generated/numbers.tex`. The script
    regenerates the macros and fails if the committed file differs (stale numbers), then lists

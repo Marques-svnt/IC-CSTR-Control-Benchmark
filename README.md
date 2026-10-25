@@ -186,7 +186,7 @@ pytest -q
 
 ## 6. Receitas de Reprodução em 1 Comando (Reprodutibilidade Estrita)
 
-### Reproduzir Artigo 1 (*Journal of Process Control*, v6)
+### Reproduzir Artigo 1 (*Journal of Process Control*, v7)
 As sementes aleatórias são fixas no código; a ordem abaixo regenera tudo o que o manuscrito e o material suplementar citam.
 ```bash
 # 1. Tabelas, figuras e espelhos CSV (results/jpc/*.csv); cerca de 11 min

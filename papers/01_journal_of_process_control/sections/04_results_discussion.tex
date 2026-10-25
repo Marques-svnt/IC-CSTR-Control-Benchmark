@@ -14,7 +14,7 @@ Figure~\ref{fig:classical_benchmark} and Table~\ref{tab:testbed} summarize the s
     \label{fig:classical_benchmark}
 \end{figure*}
 
-\input{tables/v6_testbed}
+\input{tables/v7_testbed}
 
 \subsection{Anti-windup ablation}
 \label{subsec:ablation}
@@ -52,7 +52,9 @@ Fig.~\ref{fig:tt_curve} scans $T_t$ from $0.525\,\Delta t$ to $10\,T_i$ for the 
 
 \subsection{Regime map: where the slew-rate trigger matters}
 \label{subsec:regime}
-Fig.~\ref{fig:smax_map} and Table~\ref{tab:smax_ratio} repeat the $-2$~K step for slew limits from $20$ to $320$~L/min$^2$ with the gains fixed. For ZN and CC the amplitude-only rule is $\vmapCCmin$ to $\vmapZNmax$ times worse than the rate-aware rule at every limit, because the amplitude limit is reached and the integrator winds up during the rate-limited ramp; sign-blind clamping latches for $S_{\max} \ge \vlatchfromZN$~L/min$^2$. For AMIGO the ratio is $\vmapAMIGOtwenty$ at $20$~L/min$^2$, $\vmapAMIGOeighty$ at the benchmark value and $\vmapAMIGOlast$ at $320$, and for Optimal ITAE $\vmapOptimalITAEtwenty$, $\vmapOptimalITAEeighty$ and $\vmapOptimalITAElast$: the trigger matters when the valve is slow compared with what the loop demands. For TL the ratio stays between $\vmapTLmin$ and $\vmapTLmax$, and for SIMC between $\vmapSIMCmin$ and $\vmapSIMCmax$: the SIMC loop demands less than the slew limit allows and the trigger does not help it. Re-optimizing the Optimal ITAE gains at each limit gives ratios from $\vretunedfirst$ to $\vretunedlast$ (Supplementary Section~S3), so the map is not an artefact of gains designed at $80$~L/min$^2$. The rate-aware rule should therefore be switched on whenever the slew limit is active during the transient.
+Fig.~\ref{fig:smax_map} and Table~\ref{tab:smax_ratio} repeat the $-2$~K step for slew limits from $20$ to $320$~L/min$^2$ with the gains fixed. For ZN and CC the amplitude-only rule is $\vmapCCmin$ to $\vmapZNmax$ times worse than the rate-aware rule at every limit, because the amplitude limit is reached and the integrator winds up during the rate-limited ramp; sign-blind clamping latches for $S_{\max} \ge \vlatchfromZN$~L/min$^2$. For AMIGO the ratio is $\vmapAMIGOtwenty$ at $20$~L/min$^2$, $\vmapAMIGOeighty$ at the benchmark value and $\vmapAMIGOlast$ at $320$, and for Optimal ITAE $\vmapOptimalITAEtwenty$, $\vmapOptimalITAEeighty$ and $\vmapOptimalITAElast$: the trigger matters when the valve is slow compared with what the loop demands. For TL the ratio stays between $\vmapTLmin$ and $\vmapTLmax$. Re-optimizing the Optimal ITAE gains at each limit gives ratios from $\vretunedfirst$ to $\vretunedlast$ (Table~\suppref{tab:smax_retuned}), so the map is not an artefact of gains designed at $80$~L/min$^2$.
+
+\paragraph{SIMC is a counterexample.} For SIMC the rate-aware trigger makes the loop \emph{worse} than no anti-windup: the ratio is $\vSIMCratioff$, $\vSIMCratioeighty$ and $\vSIMCratiolast$ at $45$, $80$ and $320$~L/min$^2$ (it exceeds $1$ only at $20$, $\vSIMCratiotwenty$), and the IAE is $\vSIMCdir$ against $\vSIMCnone$~K$\cdot$min on the $-2$~K step, $\vSIMCfivemdir$ against $\vSIMCfivemnone$ on $-5$~K, $\vSIMCfivepdir$ against $\vSIMCfivepnone$ on $+5$~K, $\vopSIMCdir$ against $\vopSIMCnone$ at the second operating point and $\vdbSIMCdirsix$ against $\vdbSIMCnonesix$ with a $6$~L/min deadband (Section~\ref{subsec:robustness_ext}). The slow, well-damped loop asks for valve moves only slightly faster than the slew limit and only briefly ($\vTrlSIMC$~min slew-limited on the $-2$~K step, against $\vTrlothersmin$ to $\vTrlothersmax$~min for the other loops), so little windup accumulates; freezing the integrator during those samples removes integral action the loop needed, and the freeze acts as a delay rather than as a protection. To find a criterion, Table~\suppref{tab:rate_demand} relates the outcome to the rate demand $\rho = \max_k|u_k - u_{k-1}|/(S_{\max}\Delta t)$ of the same loop with the slew limit removed (setpoint kick excluded). Over $\vncases$ cases (six loops, three steps, nine limits), the trigger improved the loop in $\vnrhohihelp$ of the $\vnrhohi$ cases with $\rho \ge 1$ (worst ratio $\vrhohiratiomin$); with $\rho < 1$ the ratio ranged from $\vrholoratiomin$ to $\vrholoratiomax$, and although all $\vnrholohurt$ cases made worse are SIMC, $\rho$ does not separate SIMC from the other loops ($\vrhohelplowloop$ at $\vrhohelplowsmax$~L/min$^2$ gains $\vrhohelplowratio$ with $\rho = \vrhohelplow$). The rate-aware trigger is therefore recommended when the loop demands faster valve moves than the slew limit allows ($\rho \ge 1$); otherwise its effect must be checked for the loop at hand.
 
 \begin{figure*}[t]
     \centering
@@ -61,13 +63,13 @@ Fig.~\ref{fig:smax_map} and Table~\ref{tab:smax_ratio} repeat the $-2$~K step fo
     \label{fig:smax_map}
 \end{figure*}
 
-\input{tables/v6_smax_ratio}
+\input{tables/v7_smax_ratio}
 
 \subsection{Deadband and a second operating point}
 \label{subsec:robustness_ext}
 Table~\ref{tab:robustness_ext} repeats the comparison with a valve deadband (backlash) of $6$~L/min between controller and plant, which the anti-windup logic does not see, and at a second operating point, $q_{j,ss} = 150$~L/min, with the FOPTD re-identified and the analytical rules re-tuned. The deadband raises every IAE (AMIGO with the rate-aware rule: $\vdbAMIGOdirthree$ at $3$~L/min and $\vdbAMIGOdirsix$ at $6$~L/min), but the ordering persists: at $6$~L/min sign-blind clamping still latches ZN and CC ($\vdbZNsignsix$ and $\vdbCCsignsix$~K$\cdot$min), amplitude-only clamping leaves them at $\vdbZNampsix$ and $\vdbCCampsix$ against $\vdbZNdirsix$ and $\vdbCCdirsix$ with the rate-aware rule, which stays within $\vdbsixworstpct\%$ of back-calculation for every loop. At the second operating point sign-blind clamping is again worse than no anti-windup for ZN and CC ($\vopZNsign$ and $\vopCCsign$ against $\vopZNnone$ and $\vopCCnone$), amplitude-only clamping leaves them at $\vopZNamp$ and $\vopCCamp$, and the rate-aware rule recovers $\vopZNdir$ and $\vopCCdir$; AMIGO needs the rate-aware trigger ($\vopAMIGOnone$ without, $\vopAMIGOdir$ with), SIMC does not ($\vopSIMCnone$ without, $\vopSIMCdir$ with). Full tables are in Supplementary Section~S3.
 
-\input{tables/v6_robustness_ext}
+\input{tables/v7_robustness_ext}
 
 \subsection{Measurement path}
 \label{subsec:measurement_path}
@@ -77,7 +79,7 @@ The noise vulnerability of the empirical rules is often attributed to a high sen
 \label{subsec:load_results}
 A feed temperature step $\Delta T_f = +2$~K at $t = 2$~min and a feed concentration step $\Delta C_{Af} = +10\%$ at $t = 8$~min were applied at constant setpoint (Table~\ref{tab:load}). The largest valve opening is $\vloadvalvemin$ to $\vloadvalvemax$~L/min, far from the stop, so amplitude saturation plays no part in this response. The peak deviation lies between $\vloadpeakmin$ and $\vloadpeakmax$~K for all six loops and does not discriminate between them; the IAE ranges from $\vloadCC$ (CC) to $\vloadSIMC$~K$\cdot$min (SIMC). This regulation ranking is specific to a regime in which the rate limit dominates the peak deviation; Supplementary Section~S5 repeats it with $30$ noise realizations and with the measurement filter.
 
-\input{tables/v6_load}
+\input{tables/v7_load}
 
 \subsection{Limitations}
 The study uses one reactor model with constant physical properties, a valve without stiction (deadband is simulated only for the anti-windup policies), and deterministic responses in the main text. No second process or higher-fidelity plant was tested: the transferability of the findings rests on the mechanism (loop sign and rate limit, Proposition~\ref{prop:latch}), whereas the regime map, the back-calculation constants and the loop-by-loop numbers refer to this reactor and valve. The one-sample delay of the freeze decision was not varied, and dynamic anti-windup compensators were not compared. The six test-bed loops are fixed-gain PID controllers; gain scheduling and model-based controllers are outside the scope.

@@ -1,4 +1,4 @@
-r"""Numbers and condensed tables of the JPC v6 manuscript, generated from the CSV mirrors.
+r"""Numbers and condensed tables of the JPC v7 manuscript, generated from the CSV mirrors.
 
 Every value quoted in the main text of Artigo 1 is a LaTeX macro defined here from
 `results/jpc/*.csv` (written by `experiments/build_paper_assets.py jpc-remediation`), or from
@@ -6,8 +6,8 @@ the plant code for the two steady-state quantities of Proposition 1. Nothing is 
 
 Outputs:
     papers/01_journal_of_process_control/generated/numbers.tex   (\\newcommand macros)
-    papers/01_journal_of_process_control/tables/v6_*.tex         (condensed tables)
-    results/jpc/v6_numbers.csv                                    (macro -> value, source)
+    papers/01_journal_of_process_control/tables/v7_*.tex         (condensed tables)
+    results/jpc/v7_numbers.csv                                    (macro -> value, source)
 
 Usage:
     .venv/bin/python scripts/jpc_v6_numbers.py
@@ -346,6 +346,49 @@ def robustness_extension() -> list[list[str]]:
     return [[c for _, c in pol], body]
 
 
+def rate_trigger_numbers() -> None:
+    """SIMC as the counterexample of the slew-rate trigger, and what the rate demand rho tells."""
+    simc = "Skogestad SIMC"
+    for col, tag in (("None", "none"), (RATE, "dir")):
+        define(f"SIMC{tag}", num(cell("antiwindup_ablation", col, Method=simc)), "antiwindup_ablation")
+        for scen, s in (("$-5$ K step", "m"), ("$+5$ K step", "p")):
+            define(f"SIMCfive{s}{tag}", num(cell("antiwindup_scenarios", col, Scenario=scen, Method=simc)),
+                   "antiwindup_scenarios")
+        define(f"dbSIMC{tag}six",
+               num(cell("antiwindup_deadband", col, **{"Deadband (L/min)": "6", "Method": simc})),
+               "antiwindup_deadband")
+    grid = rows("rate_demand_grid")
+    for r in grid:
+        for k in ("ratio", "rho", "step_K", "S_max"):
+            r[k] = float(r[k])
+    for smax, tag in ((20.0, "twenty"), (45.0, "ff"), (80.0, "eighty"), (320.0, "last")):
+        r = next(x for x in grid if x["Method"] == simc and x["step_K"] == -2.0 and x["S_max"] == smax)
+        define(f"SIMCratio{tag}", r["ratio"], "rate_demand_grid (IAE_amp/IAE_rate, -2 K)")
+    at80 = [r for r in grid if r["S_max"] == 80.0]
+    trl = {r["Method"]: float(r["T_rl_min"]) for r in at80 if r["step_K"] == -2.0}
+    define("TrlSIMC", trl[simc], "rate_demand_grid (time slew-limited, -2 K, S_max = 80)")
+    define("Trlothersmin", min(v for k, v in trl.items() if k != simc), "rate_demand_grid")
+    define("Trlothersmax", max(v for k, v in trl.items() if k != simc), "rate_demand_grid")
+    define("rhoSIMCmaxeighty", max(r["rho"] for r in at80 if r["Method"] == simc), "rate_demand_grid")
+    define("rhoothersmineighty", min(r["rho"] for r in at80 if r["Method"] != simc), "rate_demand_grid")
+    hi, lo = [r for r in grid if r["rho"] >= 1.0], [r for r in grid if r["rho"] < 1.0]
+    define("ncases", f"{len(grid)}", "rate_demand_grid (6 loops x 3 steps x 9 S_max)")
+    define("nrhohi", f"{len(hi)}", "rate_demand_grid (cases with rho >= 1)")
+    define("nrhohihelp", f"{sum(r['ratio'] > 1.0 for r in hi)}", "rate_demand_grid (rho >= 1, ratio > 1)")
+    define("rhohiratiomin", min(r["ratio"] for r in hi), "rate_demand_grid (worst ratio with rho >= 1)")
+    define("rholoratiomin", min(r["ratio"] for r in lo), "rate_demand_grid (ratio range with rho < 1)")
+    define("rholoratiomax", max(r["ratio"] for r in lo), "rate_demand_grid (ratio range with rho < 1)")
+    hurt_lo = [r for r in lo if r["ratio"] < 1.0]
+    if {r["Method"] for r in hurt_lo} != {simc}:
+        raise ValueError("text states that every rho < 1 case made worse by the trigger is SIMC")
+    define("nrholohurt", f"{len(hurt_lo)}", "rate_demand_grid (rho < 1, ratio < 1: all SIMC)")
+    helped = min((r for r in lo if r["ratio"] > 1.0), key=lambda r: r["rho"])
+    define("rhohelplow", helped["rho"], "rate_demand_grid (lowest rho of a helped case)")
+    define("rhohelplowratio", helped["ratio"], "rate_demand_grid")
+    define("rhohelplowloop", SHORT[helped["Method"]], "rate_demand_grid")
+    define("rhohelplowsmax", f"{helped['S_max']:.0f}", "rate_demand_grid")
+
+
 def testbed_table() -> list[list[str]]:
     """Gains, nominal metrics and robustness of the six feedback loops."""
     body = []
@@ -427,10 +470,11 @@ def main() -> None:
     pol, ext_body = robustness_extension()
     tb_body = testbed_table()
     measurement_numbers()
+    rate_trigger_numbers()
     load_cols, load_body = load_table()
 
     tables = PAPER / "tables"
-    (tables / "v6_testbed.tex").write_text(
+    (tables / "v7_testbed.tex").write_text(
         booktabs(
             [
                 "Tuning",
@@ -453,18 +497,18 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    (tables / "v6_smax_ratio.tex").write_text(
+    (tables / "v7_smax_ratio.tex").write_text(
         booktabs(
             ["Tuning", *smax_cols],
             smax_body,
             "Regime map: IAE of amplitude-only directional clamping over IAE of the rate-aware rule "
-            "on the $-2$~K step against the slew limit $S_{\\max}$ (L/min$^2$), gains fixed (values near "
-            "$1$: the rate trigger is irrelevant).",
+            "on the $-2$~K step against the slew limit $S_{\\max}$ (L/min$^2$), gains fixed. Above $1$ the "
+            "rate trigger improves the loop; below $1$ it makes the loop worse.",
             "tab:smax_ratio",
         ),
         encoding="utf-8",
     )
-    (tables / "v6_robustness_ext.tex").write_text(
+    (tables / "v7_robustness_ext.tex").write_text(
         booktabs(
             ["Tuning", *[f"{p}, DB 6" for p in pol], *[f"{p}, $q_j$ 150" for p in pol]],
             ext_body,
@@ -477,7 +521,7 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    (tables / "v6_load.tex").write_text(
+    (tables / "v7_load.tex").write_text(
         booktabs(
             ["Tuning", *load_cols],
             load_body,
@@ -501,7 +545,7 @@ def main() -> None:
     (out / "numbers.tex").write_text(
         "% Generated by scripts/jpc_v6_numbers.py -- do not edit.\n" + body + "\n", encoding="utf-8"
     )
-    with open(RES / "v6_numbers.csv", "w", newline="", encoding="utf-8") as fh:
+    with open(RES / "v7_numbers.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(["macro", "value", "source"])
         w.writerows((f"\\v{n}", v, s) for n, v, s in MACROS)

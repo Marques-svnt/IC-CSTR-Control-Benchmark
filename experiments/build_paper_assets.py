@@ -316,8 +316,9 @@ def run_smax_map(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
         caption=(
             "Regime map over the valve slew-rate limit ($-2$~K step, gains designed at "
             "$S_{\\max} = 80$~L/min$^2$). First row of each tuning: IAE of amplitude-only "
-            "directional clamping over IAE of the rate-aware rule (values near $1$: the rate "
-            "trigger is irrelevant); second: IAE of the rate-aware rule; third: final error of "
+            "directional clamping over IAE of the rate-aware rule (above $1$ the rate trigger "
+            "improves the loop; below $1$ it makes the loop worse, as for SIMC, rather than being "
+            "irrelevant); second: IAE of the rate-aware rule; third: final error of "
             "sign-blind clamping ($\\approx -16.7$~K: valve latched at full cooling)."
         ),
         label="tab:smax_map",
@@ -359,6 +360,54 @@ def run_amigo_regime_diagnostics(plant, ss, gains: dict) -> None:
                     "max_u_act": round(float(res.u_applied.max()), 1),
                     "max_abs_u_raw_minus_u_act": round(float(np.max(np.abs(res.u_unconstrained - res.u_applied))), 0)})
     pd.DataFrame(out).to_csv(exp02.RESULTS_DIR / "smax_amigo_diagnostics.csv", index=False)
+
+
+def run_rate_demand(plant, ss, gains: dict, tables_dir: Path) -> None:
+    """Does the rate demanded by a loop tell when the slew-rate trigger helps or hurts?
+
+    For every loop, step and S_max: IAE of amplitude-only and rate-aware directional clamping,
+    the peak rate demanded by the same loop with the slew limit removed (amplitude limit kept),
+    rho = max_k |u_k - u_{k-1}| / (S_max dt), excluding the setpoint kick at t = 0 that every
+    loop has, and the time the rate-aware loop spends slew-limited. Full grid in
+    rate_demand_grid.csv; the S_max = 80 L/min^2 slice is the paper table.
+    """
+    grid, rows = [], []
+    for name, g in _one_dof(gains).items():
+        for i, step in enumerate(TT_STEPS):
+            for smax in SMAX_GRID:
+                lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
+                amp = _step_run(plant, ss, g, AW.CLAMPING_POS_DIRECTIONAL, step, limits=lim)
+                rate = _step_run(plant, ss, g, AW.CLAMPING, step, limits=lim)
+                free = _step_run(plant, ss, g, AW.CLAMPING, step,
+                                 limits=replace(lim, max_slew_rate=np.inf))
+                rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (smax * SIM_DT)
+                t_rl = float(np.sum(np.abs(np.diff(rate.u_applied)) >= smax * SIM_DT - 1e-9)) * SIM_DT
+                ratio = amp.metrics.iae / rate.metrics.iae
+                grid.append({"Method": name, "step_K": step, "S_max": smax,
+                             "IAE_amp": amp.metrics.iae, "IAE_rate": rate.metrics.iae,
+                             "ratio": ratio, "rho": rho, "T_rl_min": t_rl})
+                if smax == 80.0:
+                    rows.append({
+                        "Method": name if i == 0 else "", "Step": f"${step:+g}$ K",
+                        "\\(\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}\\)": f"{ratio:.2f}",
+                        "\\(\\rho\\)": f"{rho:.2f}",
+                        "slew-limited (min)": f"{t_rl:.2f}",
+                    })
+    pd.DataFrame(grid).to_csv(exp02.RESULTS_DIR / "rate_demand_grid.csv", index=False,
+                              float_format="%.4f")
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "rate_demand.tex",
+        caption=(
+            "Rate demand and the slew-rate trigger at $S_{\\max} = 80$~L/min$^2$: IAE of "
+            "amplitude-only over that of rate-aware directional clamping (below $1$: the trigger "
+            "makes the loop worse), peak rate demanded by the same loop with the slew limit removed "
+            "relative to the limit, $\\rho = \\max_k |u_k - u_{k-1}|/(S_{\\max}\\Delta t)$ (setpoint "
+            "kick at $t = 0$ excluded), and time spent slew-limited under the rate-aware rule. The "
+            "full grid over $S_{\\max}$ is in \\texttt{results/jpc/rate\\_demand\\_grid.csv}."
+        ),
+        label="tab:rate_demand",
+    )
 
 
 def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) -> None:

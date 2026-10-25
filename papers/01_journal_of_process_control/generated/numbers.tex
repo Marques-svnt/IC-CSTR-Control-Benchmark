@@ -150,6 +150,34 @@
 \newcommand{\vfiltfactmin}{1.8}  % noise_chattering_table
 \newcommand{\vfiltfactmax}{3.3}  % noise_chattering_table
 \newcommand{\vNcut}{64}  % n_design_sweep
+\newcommand{\vSIMCnone}{1.09}  % antiwindup_ablation
+\newcommand{\vSIMCfivemnone}{3.78}  % antiwindup_scenarios
+\newcommand{\vSIMCfivepnone}{3.59}  % antiwindup_scenarios
+\newcommand{\vdbSIMCnonesix}{1.55}  % antiwindup_deadband
+\newcommand{\vSIMCdir}{1.29}  % antiwindup_ablation
+\newcommand{\vSIMCfivemdir}{4.41}  % antiwindup_scenarios
+\newcommand{\vSIMCfivepdir}{3.69}  % antiwindup_scenarios
+\newcommand{\vdbSIMCdirsix}{1.92}  % antiwindup_deadband
+\newcommand{\vSIMCratiotwenty}{1.05}  % rate_demand_grid (IAE_amp/IAE_rate, -2 K)
+\newcommand{\vSIMCratioff}{0.86}  % rate_demand_grid (IAE_amp/IAE_rate, -2 K)
+\newcommand{\vSIMCratioeighty}{0.85}  % rate_demand_grid (IAE_amp/IAE_rate, -2 K)
+\newcommand{\vSIMCratiolast}{0.94}  % rate_demand_grid (IAE_amp/IAE_rate, -2 K)
+\newcommand{\vTrlSIMC}{0.14}  % rate_demand_grid (time slew-limited, -2 K, S_max = 80)
+\newcommand{\vTrlothersmin}{0.28}  % rate_demand_grid
+\newcommand{\vTrlothersmax}{1.10}  % rate_demand_grid
+\newcommand{\vrhoSIMCmaxeighty}{0.52}  % rate_demand_grid
+\newcommand{\vrhoothersmineighty}{0.83}  % rate_demand_grid
+\newcommand{\vncases}{162}  % rate_demand_grid (6 loops x 3 steps x 9 S_max)
+\newcommand{\vnrhohi}{124}  % rate_demand_grid (cases with rho >= 1)
+\newcommand{\vnrhohihelp}{123}  % rate_demand_grid (rho >= 1, ratio > 1)
+\newcommand{\vrhohiratiomin}{0.99}  % rate_demand_grid (worst ratio with rho >= 1)
+\newcommand{\vrholoratiomin}{0.81}  % rate_demand_grid (ratio range with rho < 1)
+\newcommand{\vrholoratiomax}{1.73}  % rate_demand_grid (ratio range with rho < 1)
+\newcommand{\vnrholohurt}{19}  % rate_demand_grid (rho < 1, ratio < 1: all SIMC)
+\newcommand{\vrhohelplow}{0.21}  % rate_demand_grid (lowest rho of a helped case)
+\newcommand{\vrhohelplowratio}{1.14}  % rate_demand_grid
+\newcommand{\vrhohelplowloop}{AMIGO}  % rate_demand_grid
+\newcommand{\vrhohelplowsmax}{320}  % rate_demand_grid
 \newcommand{\vloadZN}{2.04}  % disturbance_rejection_table
 \newcommand{\vloadCC}{1.98}  % disturbance_rejection_table
 \newcommand{\vloadTL}{3.02}  % disturbance_rejection_table
