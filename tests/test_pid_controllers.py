@@ -268,5 +268,6 @@ class TestStictionValve:
     @given(us=st.lists(st.floats(0.0, 300.0), min_size=2, max_size=60))
     def test_position_stays_within_the_stops(self, us: list) -> None:
         """Whatever the input, the position stays inside [u_min, u_max]."""
-        v = StictionValve(s_band=12.0, j_jump=6.0, u0=100.0, limits=ActuatorLimits(0.0, 300.0, 80.0))
+        lim = ActuatorLimits(0.0, 300.0, 80.0)
+        v = StictionValve(s_band=12.0, j_jump=6.0, u0=100.0, limits=lim)
         assert all(0.0 <= v.apply(u) <= 300.0 for u in us)
