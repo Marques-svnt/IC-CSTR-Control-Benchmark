@@ -37,7 +37,7 @@ SHORT = {
     OPT: "Optimal ITAE",
 }
 RATE = "Amp.+rate direct. (Eq.~\\ref{eq:clamping_antiwindup})"
-BC_SQRT, BC_CV = "BC ($\\sqrt{T_iT_d}$)", "BC ($T_t^{\\mathrm{cv}}$)"
+BC_SQRT, BC_CV = "BC ($\\sqrt{T_iT_d}$)", "BC ($T_t^{\\mathrm{sel}}$)"
 
 
 def rows(stem: str) -> list[dict[str, str]]:
@@ -257,7 +257,7 @@ def back_calculation_numbers() -> None:
         "mm": "mm",
         "sqrt": "\\(\\sqrt{T_iT_d}\\)",
         "ti": "\\(T_i\\)",
-        "cv": "cv: \\(\\pm 5\\)~K",
+        "cv": "sel: \\(\\pm 5\\)~K",
     }
     for tag, col in cols.items():
         vals = [num(r[col]) for r in tab]
@@ -268,25 +268,25 @@ def back_calculation_numbers() -> None:
 
 
 def back_calculation_detail() -> None:
-    """Unrestricted design-step choice and the TV/overshoot comparison at T_t^cv."""
+    """Unrestricted design-step choice and the TV/overshoot comparison at T_t^sel."""
     tab = rows("antiwindup_tt_summary")
     out = [SHORT[r["Method"]] for r in tab if r["in range"] == "no"]
     define("ttoutside", ", ".join(out[:-1]) + " and " + out[-1] if len(out) > 1 else out[0],
-           "antiwindup_tt_summary (unrestricted T_t^cv outside [T_d, T_i])")
-    col_r, col_f = "cv: \\(\\pm 5\\)~K", "free: \\(\\pm 5\\)~K"
+           "antiwindup_tt_summary (unrestricted T_t^sel outside [T_d, T_i])")
+    col_r, col_f = "sel: \\(\\pm 5\\)~K", "free: \\(\\pm 5\\)~K"
     gain = [num(r[col_r]) - num(r[col_f]) for r in tab if r["in range"] == "no"]
     define("ttfreemaxgain", max(gain), "antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)")
     define("ttfreemaxloss", -min(gain), "antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)")
     lower, upper = [], []
     for r in tab:
         td, ti = (float(x) for x in r["\\([T_d, T_i]\\)"].strip("[]").split(","))
-        cv = float(r["\\(T_t^{\\mathrm{cv}}\\)"])
+        cv = float(r["\\(T_t^{\\mathrm{sel}}\\)"])
         lower += [SHORT[r["Method"]]] if cv == td else []
         upper += [SHORT[r["Method"]]] if cv == ti else []
     join = lambda xs: " and ".join(xs) if len(xs) < 3 else ", ".join(xs[:-1]) + " and " + xs[-1]  # noqa: E731
-    define("ttcvlower", join(lower), "antiwindup_tt_summary (T_t^cv = T_d)")
-    define("ttcvupper", join(upper), "antiwindup_tt_summary (T_t^cv = T_i)")
-    free = {SHORT[r["Method"]]: float(r["free \\(T_t^{\\mathrm{cv}}\\)"]) for r in tab}
+    define("ttcvlower", join(lower), "antiwindup_tt_summary (T_t^sel = T_d)")
+    define("ttcvupper", join(upper), "antiwindup_tt_summary (T_t^sel = T_i)")
+    free = {SHORT[r["Method"]]: float(r["free \\(T_t^{\\mathrm{sel}}\\)"]) for r in tab}
     define("ttfreeZN", free["ZN"], "antiwindup_tt_summary", "{:.3f}")
     define("ttfreeCC", free["CC"], "antiwindup_tt_summary", "{:.3f}")
     simc = next(r for r in tab if r["Method"] == "Skogestad SIMC")
@@ -294,18 +294,18 @@ def back_calculation_detail() -> None:
     freex = {SHORT[r["Method"]]: float(r["free, exact"]) for r in tab}
     define("ttfreexZN", freex["ZN"], "antiwindup_tt_summary (free choice, exact factor)", "{:.3f}")
     define("ttfreexCC", freex["CC"], "antiwindup_tt_summary (free choice, exact factor)", "{:.3f}")
-    dif = [(abs(num(r[c]) - num(r["cv: \\(\\pm 5\\)~K"])), SHORT[r["Method"]])
+    dif = [(abs(num(r[c]) - num(r["sel: \\(\\pm 5\\)~K"])), SHORT[r["Method"]])
            for r in tab for c in ("free: \\(\\pm 5\\)~K", "exact: \\(\\pm 5\\)~K")]
     top = max(dif)
     define("ttfreediffmax", top[0], "antiwindup_tt_summary (largest |free - cv| of the +-5 K worst ratio)")
     define("ttfreediffloop", top[1], "antiwindup_tt_summary")
     define("ttfreediffrest", max(d for d, n in dif if n != top[1]), "antiwindup_tt_summary (other loops)")
-    define("ttfreexgain", max(num(r["cv: \\(\\pm 5\\)~K"]) - num(r["exact: \\(\\pm 5\\)~K"]) for r in tab),
-           "antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)")
-    define("ttfreeSIMCovTi", free["SIMC"] / ti_simc, "antiwindup_tt_summary (free T_t^cv / T_i)", "{:.0f}")
+    define("ttfreexgain", max(num(r["sel: \\(\\pm 5\\)~K"]) - num(r["exact: \\(\\pm 5\\)~K"]) for r in tab),
+           "antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^sel)")
+    define("ttfreeSIMCovTi", free["SIMC"] / ti_simc, "antiwindup_tt_summary (free T_t^sel / T_i)", "{:.0f}")
     for step, s in (("$-2$ K", "two"), ("$-5$ K", "m"), ("$+5$ K", "p")):
         m = {"Method": "Skogestad SIMC", "Step": step}
-        define(f"SIMCcv{s}", num(cell("antiwindup_tt_sweep", "IAE $T_t^{\\mathrm{cv}}$", **m)), "antiwindup_tt_sweep")
+        define(f"SIMCcv{s}", num(cell("antiwindup_tt_sweep", "IAE $T_t^{\\mathrm{sel}}$", **m)), "antiwindup_tt_sweep")
         define(f"SIMCti{s}", num(cell("antiwindup_tt_sweep", "IAE $T_t=T_i$", **m)), "antiwindup_tt_sweep")
     tv = rows("antiwindup_tt_tvmp")
     emp = [r for r in tv if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
@@ -378,7 +378,7 @@ def robustness_extension() -> list[list[str]]:
         ("Amp. direct.", "Amp."),
         (RATE, "Rate"),
         (BC_SQRT, "BC"),
-        (BC_CV, "BC$^{\\mathrm{cv}}$"),
+        (BC_CV, "BC$^{\\mathrm{sel}}$"),
     )
     body = []
     for name in SIX:
@@ -423,7 +423,7 @@ def robustness_extension() -> list[list[str]]:
         / num(cell("antiwindup_deadband", BC_CV, **{"Deadband (L/min)": "6", "Method": n}))
         for n in SIX
     ]
-    define("dbsixworstpctcv", 100.0 * (max(ratios_cv) - 1.0), "antiwindup_deadband (rate rule vs BC T_t^cv)", "{:.0f}")
+    define("dbsixworstpctcv", 100.0 * (max(ratios_cv) - 1.0), "antiwindup_deadband (rate rule vs BC T_t^sel)", "{:.0f}")
     for name in ("Ziegler-Nichols", "Cohen-Coon", "AMIGO", "Skogestad SIMC"):
         s = SHORT[name]
         for col, tag in (
@@ -513,7 +513,7 @@ def rate_demand_check_numbers() -> None:
 
 def noise_policy_numbers() -> None:
     """Policies under sensor noise (noise_policies): does back-calculation keep up with the rule?"""
-    bc, dr = "IAE BC ($T_t^{\\mathrm{cv}}$)", "IAE Directional"
+    bc, dr = "IAE BC ($T_t^{\\mathrm{sel}}$)", "IAE Directional"
     for sigma, tag in (("0.01", "lo"), ("0.05", "hi")):
         sel = [r for r in rows("noise_policies") if r["\\(\\sigma\\) (K)"] == sigma]
         ratio = {r["Method"]: num(r[bc]) / num(r[dr]) for r in sel}
@@ -537,8 +537,8 @@ def noise_round_numbers() -> None:
     """Block B of v9: T_t re-chosen under noise, mechanism, rho under noise, extended policies."""
     join = lambda xs: xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]  # noqa: E731
     tab = rows("noise_ttcv")
-    ttcol = "\\(T_t^{\\mathrm{cv}}\\), \\(T_t^{\\mathrm{cv,noise}}\\) (min)"
-    bc, bcn, dr = "IAE BC ($T_t^{\\mathrm{cv}}$)", "IAE BC ($T_t^{\\mathrm{cv,noise}}$)", "IAE Directional"
+    ttcol = "\\(T_t^{\\mathrm{sel}}\\), \\(T_t^{\\mathrm{sel,noise}}\\) (min)"
+    bc, bcn, dr = "IAE BC ($T_t^{\\mathrm{sel}}$)", "IAE BC ($T_t^{\\mathrm{sel,noise}}$)", "IAE Directional"
     changed = [SHORT[r["Method"]] for r in tab if r[ttcol] and len(set(r[ttcol].split(", "))) == 2]
     define("nzttchanged", join(changed), "noise_ttcv (loops whose T_t changes under noise)")
     two = [r for r in tab if r["Step"] == "$-2$ K" and SHORT[r["Method"]] in changed]
@@ -548,13 +548,13 @@ def noise_round_numbers() -> None:
     define("nzttfiveaftermax", max(num(r[bcn]) / num(r[dr]) for r in five), "noise_ttcv (+-5 K, BC/dir, noise T_t)")
     mech = rows("noise_mechanism")
     emp = [r for r in mech if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
-    rb, rd = "RMS \\(I - I_0\\) BC ($T_t^{\\mathrm{cv}}$)", "RMS \\(I - I_0\\) Directional"
+    rb, rd = "RMS \\(I - I_0\\) BC ($T_t^{\\mathrm{sel}}$)", "RMS \\(I - I_0\\) Directional"
     define("mechcutmin", min(num(r["cut share Directional"]) for r in emp), "noise_mechanism (ZN, CC)")
     define("mechrmsratiomin", min(num(r[rb]) / num(r[rd]) for r in emp), "noise_mechanism (ZN, CC)", "{:.0f}")
     define("mechrmsratiomax", max(num(r[rb]) / num(r[rd]) for r in emp), "noise_mechanism (ZN, CC)", "{:.0f}")
     define("mechtrackmin", min(num(r["mean tracking step (L/min)"]) for r in emp), "noise_mechanism (ZN, CC)", "{:.1f}")
     define("mechtrackmax", max(num(r["mean tracking step (L/min)"]) for r in emp), "noise_mechanism (ZN, CC)", "{:.1f}")
-    if any(r["cut share Directional"] != r["cut share BC ($T_t^{\\mathrm{cv}}$)"] for r in emp):
+    if any(r["cut share Directional"] != r["cut share BC ($T_t^{\\mathrm{sel}}$)"] for r in emp):
         raise ValueError("text states that both policies are cut in the same share of samples")
     grid = rows("rho_noise_grid")
     for r in grid:
@@ -593,11 +593,11 @@ def order_variant_numbers() -> None:
     if seen != expect:
         raise ValueError(f"text states which order variants change a ranking: {seen}")
     fl = rows("order_variants_flips")
-    working = ("Rate", "BC", "BC$^{\\mathrm{cv}}$")
+    working = ("Rate", "BC", "BC$^{\\mathrm{sel}}$")
     pol = [r for r in fl if r["kind"] == "policies"]
     work = [r for r in pol if all(p in working for p in r["flip"].split(": ")[1].split("<"))]
     define("dtwopolflips", f"{len(pol)}", "order_variants_flips (policy-order swaps, all variants)")
-    define("dtwoworkflips", f"{len(work)}", "order_variants_flips (swaps among Rate, BC, BC^cv)")
+    define("dtwoworkflips", f"{len(work)}", "order_variants_flips (swaps among Rate, BC, BC^sel)")
     full = rows("order_variants_full")
     iae = {(r["Method"], r["policy"], r["variant"], r["sigma"], r["step_K"]): float(r["IAE"]) for r in full}
     combos = {(k[2], k[3]) for k in iae}
@@ -637,8 +637,8 @@ def hx_numbers() -> list[list[str]]:
     simc = [iae[(s, "Skogestad SIMC", RATE)] / iae[(s, "Skogestad SIMC", none)] for s in steps]
     define("hxSIMCworse", f"{sum(v > 1.0 for v in simc)}", "hx_ablation (steps where the rule worsens SIMC)")
     bc = [iae[(s, n, BC_CV)] / iae[(s, n, RATE)] for s in steps for n in SIX]
-    define("hxbcmin", min(bc), "hx_ablation (BC T_t^cv / rate, all loops and steps)")
-    define("hxbcmax", max(bc), "hx_ablation (BC T_t^cv / rate, all loops and steps)")
+    define("hxbcmin", min(bc), "hx_ablation (BC T_t^sel / rate, all loops and steps)")
+    define("hxbcmax", max(bc), "hx_ablation (BC T_t^sel / rate, all loops and steps)")
     grid = rows("hx_rate_demand_grid")
     for r in grid:
         r["R"], r["rho"] = float(r["R"]), float(r["rho"])
@@ -665,7 +665,7 @@ def stiction_numbers() -> None:
         for k in ("IAE", "step_K"):
             r[k] = float(r[k])
     iae = {(r["severity"], r["Method"], r["policy"], r["step_K"]): r["IAE"] for r in d}
-    work = ("Amp.", "Rate", "BC", "BC$^{\\mathrm{cv}}$")
+    work = ("Amp.", "Rate", "BC", "BC$^{\\mathrm{sel}}$")
     for sev in ("moderate", "severe"):
         sel = [r for r in d if r["severity"] == sev and r["policy"] in work]
         define(f"stick{sev}hunt", 100.0 * sum(r["hunting"] == "True" for r in sel) / len(sel),
@@ -676,10 +676,10 @@ def stiction_numbers() -> None:
                              for r in stuck if r["Method"] in emp), "stiction_full (SB/Rate, ZN and CC)", "{:.0f}")
     define("stickampmin", min(iae[(r["severity"], r["Method"], "Amp.", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
                               for r in stuck if r["Method"] in emp), "stiction_full (Amp/Rate, ZN and CC)", "{:.1f}")
-    bc = [iae[(r["severity"], r["Method"], "BC$^{\\mathrm{cv}}$", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
+    bc = [iae[(r["severity"], r["Method"], "BC$^{\\mathrm{sel}}$", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
           for r in stuck]
-    define("stickbcmin", min(bc), "stiction_full (BC^cv/Rate)")
-    define("stickbcmax", max(bc), "stiction_full (BC^cv/Rate)")
+    define("stickbcmin", min(bc), "stiction_full (BC^sel/Rate)")
+    define("stickbcmax", max(bc), "stiction_full (BC^sel/Rate)")
     simc = [iae[(s, "Skogestad SIMC", "Rate", st)] / iae[(s, "Skogestad SIMC", "Amp.", st)]
             for s in ("moderate", "severe") for st in (-2.0, -5.0, 5.0)]
     define("stickSIMCmin", min(simc), "stiction_full (SIMC Rate/Amp = Rate/None)")
@@ -695,7 +695,7 @@ def measured_position_numbers() -> None:
     get = {(r["Method"], r["case"], r["step_K"]): r for r in d}
     base, meas = "Rate, $u_{\\text{act}}$", "Rate, $u_{\\text{meas}}$"
     band = "Rate, $u_{\\text{meas}}$, $\\varepsilon_u$"
-    bca, bcm = "BC$^{\\mathrm{cv}}$, $u_{\\text{act}}$", "BC$^{\\mathrm{cv}}$, $u_{\\text{meas}}$"
+    bca, bcm = "BC$^{\\mathrm{sel}}$, $u_{\\text{act}}$", "BC$^{\\mathrm{sel}}$, $u_{\\text{meas}}$"
     keys = {(r["Method"], r["step_K"]) for r in d}
     sp = [get[(n, meas, s)]["spurious_freeze"] for n, s in keys]
     define("posspurmin", 100 * min(sp), "measured_position_full (spurious freezes, no band)", "{:.0f}")
@@ -957,13 +957,13 @@ def main() -> None:
     )
     (tables / "v9_hx.tex").write_text(
         booktabs(
-            ["Tuning", "None", "SB", "Amp.", "Rate", "BC$^{\\mathrm{cv}}$", "None", "Rate"],
+            ["Tuning", "None", "SB", "Amp.", "Rate", "BC$^{\\mathrm{sel}}$", "None", "Rate"],
             hx_body,
             "Second plant, the heat exchanger of Supplementary Section~\\suppref{supp:hx}: IAE "
             "(K$\\cdot$min) of the integrator policies on the $-5$~K step (first five columns) and of no "
             "anti-windup and the rate-aware rule on the $-2$~K step (last two); same valve "
             "($[0, 300]$~L/min, $S_{\\max} = 80$~L/min$^2$), loops tuned by the same rules, Optimal ITAE "
-            "re-optimized, BC$^{\\mathrm{cv}}$ with $T_t^{\\mathrm{cv}}$ chosen on this plant.",
+            "re-optimized, BC$^{\\mathrm{sel}}$ with $T_t^{\\mathrm{sel}}$ chosen on this plant.",
             "tab:hx",
             group=" & \\multicolumn{5}{c}{$-5$~K step} & \\multicolumn{2}{c}{$-2$~K step}",
         ),
@@ -992,8 +992,8 @@ def main() -> None:
             "analytical rules (the optimal tuning was not re-optimized there); valve $[0, 300]$~L/min, "
             "$S_{\\max} = 80$~L/min$^2$. SB: sign-blind amplitude clamping; Amp.: amplitude-only "
             "directional; Rate: amplitude-plus-rate directional (Eq.~\\eqref{eq:clamping_antiwindup}); "
-            "BC: back-calculation with $T_t = \\sqrt{T_iT_d}$; BC$^{\\mathrm{cv}}$: with the "
-            "$T_t^{\\mathrm{cv}}$ of Table~\\ref{tab:antiwindup_tt_summary}, re-chosen by the same criterion "
+            "BC: back-calculation with $T_t = \\sqrt{T_iT_d}$; BC$^{\\mathrm{sel}}$: with the "
+            "$T_t^{\\mathrm{sel}}$ of Table~\\ref{tab:antiwindup_tt_summary}, re-chosen by the same criterion "
             "at the second point.",
             "tab:robustness_ext",
             group=f" & \\multicolumn{{{len(pol)}}}{{c}}{{Deadband $6$~L/min}} & "

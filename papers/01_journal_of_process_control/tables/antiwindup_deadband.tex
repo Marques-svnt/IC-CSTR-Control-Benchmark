@@ -1,12 +1,12 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{IAE (K$\cdot$min) of the seven integrator policies on the $-2$~K step with a valve deadband (backlash, Eq.~\eqref{eq:backlash}) of $0$, $3$ and $6$~L/min after the amplitude and slew limits; the anti-windup logic sees $u_{\text{act}}$, not the backlash position. Valve $[0, 300]$~L/min, $S_{\max} = 80$~L/min$^2$; BC with $T_t = \sqrt{T_iT_d}$ and with the $T_t^{\mathrm{cv}}$ of Table~\ref{tab:antiwindup_tt_summary}. Stiction is not modelled.}
+\caption{IAE (K$\cdot$min) of the seven integrator policies on the $-2$~K step with a valve deadband (backlash, Eq.~\eqref{eq:backlash}) of $0$, $3$ and $6$~L/min after the amplitude and slew limits; the anti-windup logic sees $u_{\text{act}}$, not the backlash position. Valve $[0, 300]$~L/min, $S_{\max} = 80$~L/min$^2$; BC with $T_t = \sqrt{T_iT_d}$ and with the $T_t^{\mathrm{sel}}$ of Table~\ref{tab:antiwindup_tt_summary}. Stiction is not modelled.}
 \label{tab:antiwindup_deadband}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lccccccccc}
 \toprule
-Deadband (L/min) & Method & None & BC ($\sqrt{T_iT_d}$) & BC ($T_t^{\mathrm{cv}}$) & Sign-blind amp. & Amp. uncond. & Amp.+rate uncond. & Amp. direct. & Amp.+rate direct. (Eq.~\ref{eq:clamping_antiwindup}) \\
+Deadband (L/min) & Method & None & BC ($\sqrt{T_iT_d}$) & BC ($T_t^{\mathrm{sel}}$) & Sign-blind amp. & Amp. uncond. & Amp.+rate uncond. & Amp. direct. & Amp.+rate direct. (Eq.~\ref{eq:clamping_antiwindup}) \\
 \midrule
 0 & Ziegler-Nichols & 91.11 & 0.97 & 0.88 & 104.12 & 22.10 & 0.93 & 22.10 & 0.94 \\
  & Cohen-Coon & 87.37 & 0.87 & 0.82 & 102.67 & 20.60 & 1.10 & 20.60 & 1.02 \\

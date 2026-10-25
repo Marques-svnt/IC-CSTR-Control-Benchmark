@@ -1,4 +1,4 @@
-Method,\(\sigma\) (K),IAE None,TV None,IAE BC ($T_t^{\mathrm{cv}}$),TV BC ($T_t^{\mathrm{cv}}$),IAE Directional,TV Directional
+Method,\(\sigma\) (K),IAE None,TV None,IAE BC ($T_t^{\mathrm{sel}}$),TV BC ($T_t^{\mathrm{sel}}$),IAE Directional,TV Directional
 Ziegler-Nichols,0,91.11,767,0.88,71,0.94,82
 Ziegler-Nichols,0.01,91.17 $\pm$ 0.08,768,1.09 $\pm$ 0.01,591,1.00 $\pm$ 0.01,585
 Ziegler-Nichols,0.05,91.06 $\pm$ 0.09,769,2.16 $\pm$ 0.07,749,1.43 $\pm$ 0.03,749

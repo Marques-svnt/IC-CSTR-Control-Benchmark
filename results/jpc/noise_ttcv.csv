@@ -1,4 +1,4 @@
-Method,"\(T_t^{\mathrm{cv}}\), \(T_t^{\mathrm{cv,noise}}\) (min)",Step,IAE BC ($T_t^{\mathrm{cv}}$),"IAE BC ($T_t^{\mathrm{cv,noise}}$)",IAE Directional
+Method,"\(T_t^{\mathrm{sel}}\), \(T_t^{\mathrm{sel,noise}}\) (min)",Step,IAE BC ($T_t^{\mathrm{sel}}$),"IAE BC ($T_t^{\mathrm{sel,noise}}$)",IAE Directional
 Ziegler-Nichols,"0.047, 0.093",$-2$ K,2.16 $\pm$ 0.07,1.84 $\pm$ 0.05,1.43 $\pm$ 0.03
 ,,$-5$ K,4.74 $\pm$ 0.09,4.53 $\pm$ 0.05,3.82 $\pm$ 0.03
 ,,$+5$ K,4.61 $\pm$ 0.11,4.64 $\pm$ 0.09,4.39 $\pm$ 0.08

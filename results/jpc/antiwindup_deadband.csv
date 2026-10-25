@@ -1,4 +1,4 @@
-Deadband (L/min),Method,None,BC ($\sqrt{T_iT_d}$),BC ($T_t^{\mathrm{cv}}$),Sign-blind amp.,Amp. uncond.,Amp.+rate uncond.,Amp. direct.,Amp.+rate direct. (Eq.~\ref{eq:clamping_antiwindup})
+Deadband (L/min),Method,None,BC ($\sqrt{T_iT_d}$),BC ($T_t^{\mathrm{sel}}$),Sign-blind amp.,Amp. uncond.,Amp.+rate uncond.,Amp. direct.,Amp.+rate direct. (Eq.~\ref{eq:clamping_antiwindup})
 0,Ziegler-Nichols,91.11,0.97,0.88,104.12,22.10,0.93,22.10,0.94
 ,Cohen-Coon,87.37,0.87,0.82,102.67,20.60,1.10,20.60,1.02
 ,Tyreus-Luyben,1.26,1.26,0.83,1.26,1.26,1.07,1.26,0.92

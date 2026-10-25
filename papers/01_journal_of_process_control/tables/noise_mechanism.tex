@@ -1,12 +1,12 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Mechanism under sensor noise ($\sigma = 0.05$~K, $-2$~K step, 30 realizations): share of samples in which a limit cuts the command ($u_{\text{act}} \ne u_{\text{raw}}$), RMS deviation (L/min) of the integrator from its noise-free trajectory, and mean magnitude of the back-calculation increment $(\Delta t/T_t)|u_{\text{act},k-1} - u_{\text{raw},k-1}|$ with $T_t^{\mathrm{cv}}$.}
+\caption{Mechanism under sensor noise ($\sigma = 0.05$~K, $-2$~K step, 30 realizations): share of samples in which a limit cuts the command ($u_{\text{act}} \ne u_{\text{raw}}$), RMS deviation (L/min) of the integrator from its noise-free trajectory, and mean magnitude of the back-calculation increment $(\Delta t/T_t)|u_{\text{act},k-1} - u_{\text{raw},k-1}|$ with $T_t^{\mathrm{sel}}$.}
 \label{tab:noise_mechanism}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lccccc}
 \toprule
-Method & cut share BC ($T_t^{\mathrm{cv}}$) & RMS \(I - I_0\) BC ($T_t^{\mathrm{cv}}$) & mean tracking step (L/min) & cut share Directional & RMS \(I - I_0\) Directional \\
+Method & cut share BC ($T_t^{\mathrm{sel}}$) & RMS \(I - I_0\) BC ($T_t^{\mathrm{sel}}$) & mean tracking step (L/min) & cut share Directional & RMS \(I - I_0\) Directional \\
 \midrule
 Ziegler-Nichols & 0.87 & 7.7 & 2.90 & 0.87 & 1.5 \\
 Cohen-Coon & 0.87 & 9.6 & 4.01 & 0.87 & 1.3 \\

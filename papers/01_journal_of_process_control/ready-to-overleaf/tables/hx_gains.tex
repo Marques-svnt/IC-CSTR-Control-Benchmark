@@ -1,12 +1,12 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Heat exchanger: FOPTD from a $+10$~L/min step ($K = -0.2036$~K/(L/min), $\tau = 0.657$~min, $\theta = 0.224$~min, $r = \theta/\tau = 0.341$, RMSE $0.0115$~K), the six loops tuned by the same rules (Optimal ITAE re-optimized on this plant under $M_s^{\mathrm{FOPTD}} \le 1.6$) and $T_t^{\mathrm{cv}}$ chosen by the criterion of Table~\ref{tab:antiwindup_tt_summary}.}
+\caption{Heat exchanger: FOPTD from a $+10$~L/min step ($K = -0.2036$~K/(L/min), $\tau = 0.657$~min, $\theta = 0.224$~min, $r = \theta/\tau = 0.341$, RMSE $0.0115$~K), the six loops tuned by the same rules (Optimal ITAE re-optimized on this plant under $M_s^{\mathrm{FOPTD}} \le 1.6$) and $T_t^{\mathrm{sel}}$ chosen by the criterion of Table~\ref{tab:antiwindup_tt_summary}.}
 \label{tab:hx_gains}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lccccc}
 \toprule
-Method & \(K_p\) ((L/min)/K) & \(T_i\) (min) & \(T_d\) (min) & \(M_s^{\mathrm{FOPTD}}\) & \(T_t^{\mathrm{cv}}\) (min) \\
+Method & \(K_p\) ((L/min)/K) & \(T_i\) (min) & \(T_d\) (min) & \(M_s^{\mathrm{FOPTD}}\) & \(T_t^{\mathrm{sel}}\) (min) \\
 \midrule
 Ziegler-Nichols & -17.28 & 0.448 & 0.112 & 3.89 & 0.123 \\
 Cohen-Coon & -20.43 & 0.485 & 0.077 & 4.28 & 0.166 \\

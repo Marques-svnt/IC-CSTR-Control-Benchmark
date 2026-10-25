@@ -1,12 +1,12 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{One tracking constant per loop (times in min). Ratios are the worst IAE of back-calculation over that of the directional rule (Eq.~\eqref{eq:clamping_antiwindup}); above $1$, back-calculation is worse. $T_t^{\mathrm{cv}}$: chosen inside $[T_d, T_i]$ on the $-2$~K design step, judged on $\pm 5$~K; free: the same choice without the range restriction; $T_t^{\mathrm{mm}}$: minimax over the $-2$, $-5$ and $+5$~K steps inside $[T_d, T_i]$; last two columns: worst ratio over the three steps with the defaults $T_t = \sqrt{T_iT_d}$ and $T_t = T_i$. A $T_t^{\mathrm{cv}}$ equal to $T_d$ or $T_i$ is a boundary solution of the restricted choice; ``in range'' tells whether the free choice stays inside $[T_d, T_i]$; ``free, exact'': the free choice with the exact tracking factor $1 - e^{-\Delta t/T_t}$ instead of the Euler step of Eq.~\eqref{eq:back_calculation}.}
+\caption{One tracking constant per loop (times in min). Ratios are the worst IAE of back-calculation over that of the directional rule (Eq.~\eqref{eq:clamping_antiwindup}); above $1$, back-calculation is worse. $T_t^{\mathrm{sel}}$: chosen inside $[T_d, T_i]$ on the $-2$~K design step, judged on $\pm 5$~K; free: the same choice without the range restriction; $T_t^{\mathrm{mm}}$: minimax over the $-2$, $-5$ and $+5$~K steps inside $[T_d, T_i]$; last two columns: worst ratio over the three steps with the defaults $T_t = \sqrt{T_iT_d}$ and $T_t = T_i$. A $T_t^{\mathrm{sel}}$ equal to $T_d$ or $T_i$ is a boundary solution of the restricted choice; ``in range'' tells whether the free choice stays inside $[T_d, T_i]$; ``free, exact'': the free choice with the exact tracking factor $1 - e^{-\Delta t/T_t}$ instead of the Euler step of Eq.~\eqref{eq:back_calculation}.}
 \label{tab:antiwindup_tt_summary}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lcccccccccccc}
 \toprule
-Method & \([T_d, T_i]\) & \(T_t^{\mathrm{cv}}\) & cv: \(\pm 5\)~K & free \(T_t^{\mathrm{cv}}\) & in range & free: \(\pm 5\)~K & free, exact & exact: \(\pm 5\)~K & \(T_t^{\mathrm{mm}}\) & mm & \(\sqrt{T_iT_d}\) & \(T_i\) \\
+Method & \([T_d, T_i]\) & \(T_t^{\mathrm{sel}}\) & sel: \(\pm 5\)~K & free \(T_t^{\mathrm{sel}}\) & in range & free: \(\pm 5\)~K & free, exact & exact: \(\pm 5\)~K & \(T_t^{\mathrm{mm}}\) & mm & \(\sqrt{T_iT_d}\) & \(T_i\) \\
 \midrule
 Ziegler-Nichols & [0.047, 0.187] & 0.047 & 1.02 & 0.020 & no & 1.02 & 0.009 & 1.02 & 0.047 & 1.02 & 1.09 & 1.97 \\
 Cohen-Coon & [0.033, 0.217] & 0.033 & 0.94 & 0.020 & no & 0.94 & 0.008 & 0.94 & 0.033 & 0.94 & 0.98 & 1.90 \\

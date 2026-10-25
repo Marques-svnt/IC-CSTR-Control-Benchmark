@@ -1,12 +1,12 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Tracking constant re-chosen under sensor noise ($\sigma = 0.05$~K, 30 realizations, seeds of the noise campaign, unfiltered measurement): $T_t^{\mathrm{cv,noise}}$ minimizes the mean IAE of the $-2$~K step inside $[T_d, T_i]$; IAE (K$\cdot$min, mean $\pm$ $95\%$ half-width) under the same noise for back-calculation with the noise-free and the noise-chosen constant and for the directional rule.}
+\caption{Tracking constant re-chosen under sensor noise ($\sigma = 0.05$~K, 30 realizations, seeds of the noise campaign, unfiltered measurement): $T_t^{\mathrm{sel,noise}}$ minimizes the mean IAE of the $-2$~K step inside $[T_d, T_i]$; IAE (K$\cdot$min, mean $\pm$ $95\%$ half-width) under the same noise for back-calculation with the noise-free and the noise-chosen constant and for the directional rule.}
 \label{tab:noise_ttcv}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lccccc}
 \toprule
-Method & \(T_t^{\mathrm{cv}}\), \(T_t^{\mathrm{cv,noise}}\) (min) & Step & IAE BC ($T_t^{\mathrm{cv}}$) & IAE BC ($T_t^{\mathrm{cv,noise}}$) & IAE Directional \\
+Method & \(T_t^{\mathrm{sel}}\), \(T_t^{\mathrm{sel,noise}}\) (min) & Step & IAE BC ($T_t^{\mathrm{sel}}$) & IAE BC ($T_t^{\mathrm{sel,noise}}$) & IAE Directional \\
 \midrule
 Ziegler-Nichols & 0.047, 0.093 & $-2$ K & 2.16 $\pm$ 0.07 & 1.84 $\pm$ 0.05 & 1.43 $\pm$ 0.03 \\
  &  & $-5$ K & 4.74 $\pm$ 0.09 & 4.53 $\pm$ 0.05 & 3.82 $\pm$ 0.03 \\

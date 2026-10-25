@@ -1,4 +1,4 @@
-Method,\(K_p\) ((L/min)/K),\(T_i\) (min),\(T_d\) (min),\(M_s^{\mathrm{FOPTD}}\),\(T_t^{\mathrm{cv}}\) (min)
+Method,\(K_p\) ((L/min)/K),\(T_i\) (min),\(T_d\) (min),\(M_s^{\mathrm{FOPTD}}\),\(T_t^{\mathrm{sel}}\) (min)
 Ziegler-Nichols,-17.28,0.448,0.112,3.89,0.123
 Cohen-Coon,-20.43,0.485,0.077,4.28,0.166
 Tyreus-Luyben,-11.75,1.757,0.127,2.37,1.757

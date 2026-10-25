@@ -67,11 +67,11 @@
 \newcommand{\vttcvmin}{0.86}  % antiwindup_tt_summary
 \newcommand{\vttcvmaxpct}{2}  % antiwindup_tt_summary
 \newcommand{\vttcvminpct}{14}  % antiwindup_tt_summary
-\newcommand{\vttoutside}{ZN, CC and SIMC}  % antiwindup_tt_summary (unrestricted T_t^cv outside [T_d, T_i])
+\newcommand{\vttoutside}{ZN, CC and SIMC}  % antiwindup_tt_summary (unrestricted T_t^sel outside [T_d, T_i])
 \newcommand{\vttfreemaxgain}{0.00}  % antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)
 \newcommand{\vttfreemaxloss}{0.08}  % antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)
-\newcommand{\vttcvlower}{ZN and CC}  % antiwindup_tt_summary (T_t^cv = T_d)
-\newcommand{\vttcvupper}{SIMC}  % antiwindup_tt_summary (T_t^cv = T_i)
+\newcommand{\vttcvlower}{ZN and CC}  % antiwindup_tt_summary (T_t^sel = T_d)
+\newcommand{\vttcvupper}{SIMC}  % antiwindup_tt_summary (T_t^sel = T_i)
 \newcommand{\vttfreeZN}{0.020}  % antiwindup_tt_summary
 \newcommand{\vttfreeCC}{0.020}  % antiwindup_tt_summary
 \newcommand{\vttfreexZN}{0.009}  % antiwindup_tt_summary (free choice, exact factor)
@@ -79,8 +79,8 @@
 \newcommand{\vttfreediffmax}{0.08}  % antiwindup_tt_summary (largest |free - cv| of the +-5 K worst ratio)
 \newcommand{\vttfreediffloop}{SIMC}  % antiwindup_tt_summary
 \newcommand{\vttfreediffrest}{0.01}  % antiwindup_tt_summary (other loops)
-\newcommand{\vttfreexgain}{0.01}  % antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)
-\newcommand{\vttfreeSIMCovTi}{10}  % antiwindup_tt_summary (free T_t^cv / T_i)
+\newcommand{\vttfreexgain}{0.01}  % antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^sel)
+\newcommand{\vttfreeSIMCovTi}{10}  % antiwindup_tt_summary (free T_t^sel / T_i)
 \newcommand{\vSIMCcvtwo}{1.15}  % antiwindup_tt_sweep
 \newcommand{\vSIMCtitwo}{1.15}  % antiwindup_tt_sweep
 \newcommand{\vSIMCcvm}{3.80}  % antiwindup_tt_sweep
@@ -155,7 +155,7 @@
 \newcommand{\vdbCCdirsix}{1.76}  % antiwindup_deadband
 \newcommand{\vdbsixworstpct}{10}  % antiwindup_deadband
 \newcommand{\vdbampratiomin}{13}  % antiwindup_deadband (amp-only / rate, ZN and CC)
-\newcommand{\vdbsixworstpctcv}{19}  % antiwindup_deadband (rate rule vs BC T_t^cv)
+\newcommand{\vdbsixworstpctcv}{19}  % antiwindup_deadband (rate rule vs BC T_t^sel)
 \newcommand{\vopZNnone}{55.58}  % antiwindup_second_op
 \newcommand{\vopZNsign}{61.48}  % antiwindup_second_op
 \newcommand{\vopZNamp}{16.13}  % antiwindup_second_op
@@ -276,7 +276,7 @@
 \newcommand{\vorderFourNoisydIAE}{21.5}  % order_variants
 \newcommand{\vorderFourNoisyrank}{changes}  % order_variants
 \newcommand{\vdtwopolflips}{11}  % order_variants_flips (policy-order swaps, all variants)
-\newcommand{\vdtwoworkflips}{9}  % order_variants_flips (swaps among Rate, BC, BC^cv)
+\newcommand{\vdtwoworkflips}{9}  % order_variants_flips (swaps among Rate, BC, BC^sel)
 \newcommand{\vdtwosbmin}{22}  % order_variants_full (SB/Rate, ZN and CC, every variant)
 \newcommand{\vdtwoampmin}{3.9}  % order_variants_full (Amp/Rate, ZN and CC, every variant)
 \newcommand{\vhxK}{-0.204}  % hx_model
@@ -293,8 +293,8 @@
 \newcommand{\vhxTLratemin}{1.35}  % hx_ablation (TL rate/none)
 \newcommand{\vhxTLratemax}{1.62}  % hx_ablation (TL rate/none)
 \newcommand{\vhxSIMCworse}{2}  % hx_ablation (steps where the rule worsens SIMC)
-\newcommand{\vhxbcmin}{0.84}  % hx_ablation (BC T_t^cv / rate, all loops and steps)
-\newcommand{\vhxbcmax}{1.01}  % hx_ablation (BC T_t^cv / rate, all loops and steps)
+\newcommand{\vhxbcmin}{0.84}  % hx_ablation (BC T_t^sel / rate, all loops and steps)
+\newcommand{\vhxbcmax}{1.01}  % hx_ablation (BC T_t^sel / rate, all loops and steps)
 \newcommand{\vhxnrhohi}{129}  % hx_rate_demand_grid (rho >= 1)
 \newcommand{\vhxnrhohihelp}{104}  % hx_rate_demand_grid (rho >= 1, R > 1)
 \newcommand{\vhxbadloops}{TL and SIMC}  % hx_rate_demand_grid (rho >= 1, R <= 1)
@@ -305,8 +305,8 @@
 \newcommand{\vstickseverehunt}{92}  % stiction_full (share of hunting runs, policies other than SB)
 \newcommand{\vsticksbmin}{46}  % stiction_full (SB/Rate, ZN and CC)
 \newcommand{\vstickampmin}{6.9}  % stiction_full (Amp/Rate, ZN and CC)
-\newcommand{\vstickbcmin}{0.37}  % stiction_full (BC^cv/Rate)
-\newcommand{\vstickbcmax}{1.61}  % stiction_full (BC^cv/Rate)
+\newcommand{\vstickbcmin}{0.37}  % stiction_full (BC^sel/Rate)
+\newcommand{\vstickbcmax}{1.61}  % stiction_full (BC^sel/Rate)
 \newcommand{\vstickSIMCmin}{0.61}  % stiction_full (SIMC Rate/Amp = Rate/None)
 \newcommand{\vstickSIMCmax}{3.50}  % stiction_full (SIMC Rate/Amp = Rate/None)
 \newcommand{\vposspurmin}{49}  % measured_position_full (spurious freezes, no band)

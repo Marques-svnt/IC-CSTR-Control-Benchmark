@@ -1,4 +1,4 @@
-Method,Step,IAE dir.,IAE $T_t^{\mathrm{mm}}$,IAE $\sqrt{T_iT_d}$,IAE $T_t=T_i$,IAE $T_t^{\mathrm{cv}}$
+Method,Step,IAE dir.,IAE $T_t^{\mathrm{mm}}$,IAE $\sqrt{T_iT_d}$,IAE $T_t=T_i$,IAE $T_t^{\mathrm{sel}}$
 Ziegler-Nichols,$-2$ K,0.94,0.88,0.97,1.66,0.88
 ,$-5$ K,3.33,3.42,3.63,4.92,3.42
 ,$+5$ K,3.65,3.13,3.65,7.20,3.13

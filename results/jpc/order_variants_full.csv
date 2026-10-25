@@ -119,36 +119,36 @@ Ziegler-Nichols,BC,filt_PI,0.0500,5.0000,7.1421,48.8358,759.8319
 Ziegler-Nichols,BC,filt_euler,0.0500,-2.0000,1.6059,41.7821,666.1420
 Ziegler-Nichols,BC,filt_euler,0.0500,-5.0000,4.4373,27.4966,676.8727
 Ziegler-Nichols,BC,filt_euler,0.0500,5.0000,5.0811,44.4814,690.9210
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,base,0.0000,-2.0000,0.8797,14.9636,70.7851
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,base,0.0000,-5.0000,3.4153,14.8919,130.5871
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,base,0.0000,5.0000,3.1348,20.6240,117.6101
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-2.0000,0.8797,14.9636,70.7851
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-5.0000,3.4153,14.8919,130.5871
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,rate_sat,0.0000,5.0000,3.1348,20.6240,117.6101
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,db_after,0.0000,-2.0000,1.6340,29.1563,154.4050
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,db_after,0.0000,-5.0000,4.3585,21.3391,206.5020
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,db_after,0.0000,5.0000,4.4098,32.9764,227.0970
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,db_before,0.0000,-2.0000,1.4888,22.0893,148.9971
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,db_before,0.0000,-5.0000,4.0472,18.1506,206.4010
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,db_before,0.0000,5.0000,3.9409,26.5376,215.4357
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_D,0.0000,-2.0000,1.1004,31.0572,121.7095
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_D,0.0000,-5.0000,3.8010,22.1330,188.8657
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_D,0.0000,5.0000,3.8366,34.2198,201.2014
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-2.0000,1.1643,32.0553,131.0931
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-5.0000,3.8708,22.3877,199.6648
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_PI,0.0000,5.0000,3.9084,34.2178,208.3437
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-2.0000,1.0083,26.5749,101.9803
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-5.0000,3.6646,20.2772,168.2833
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_euler,0.0000,5.0000,3.5721,30.5110,168.1468
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_D,0.0500,-2.0000,1.5358,35.4134,632.5933
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_D,0.0500,-5.0000,4.2479,24.0692,646.7772
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_D,0.0500,5.0000,4.3717,35.8762,652.9810
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-2.0000,2.4263,41.9441,740.4132
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-5.0000,4.9993,26.8508,743.3876
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_PI,0.0500,5.0000,5.4123,37.2103,747.1477
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-2.0000,1.5229,32.4715,658.9368
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-5.0000,4.1778,22.5583,669.1943
-Ziegler-Nichols,BC$^{\mathrm{cv}}$,filt_euler,0.0500,5.0000,4.1584,31.9303,674.2084
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,base,0.0000,-2.0000,0.8797,14.9636,70.7851
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,base,0.0000,-5.0000,3.4153,14.8919,130.5871
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,base,0.0000,5.0000,3.1348,20.6240,117.6101
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-2.0000,0.8797,14.9636,70.7851
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-5.0000,3.4153,14.8919,130.5871
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,rate_sat,0.0000,5.0000,3.1348,20.6240,117.6101
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,db_after,0.0000,-2.0000,1.6340,29.1563,154.4050
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,db_after,0.0000,-5.0000,4.3585,21.3391,206.5020
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,db_after,0.0000,5.0000,4.4098,32.9764,227.0970
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,db_before,0.0000,-2.0000,1.4888,22.0893,148.9971
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,db_before,0.0000,-5.0000,4.0472,18.1506,206.4010
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,db_before,0.0000,5.0000,3.9409,26.5376,215.4357
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_D,0.0000,-2.0000,1.1004,31.0572,121.7095
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_D,0.0000,-5.0000,3.8010,22.1330,188.8657
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_D,0.0000,5.0000,3.8366,34.2198,201.2014
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-2.0000,1.1643,32.0553,131.0931
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-5.0000,3.8708,22.3877,199.6648
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_PI,0.0000,5.0000,3.9084,34.2178,208.3437
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-2.0000,1.0083,26.5749,101.9803
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-5.0000,3.6646,20.2772,168.2833
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_euler,0.0000,5.0000,3.5721,30.5110,168.1468
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_D,0.0500,-2.0000,1.5358,35.4134,632.5933
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_D,0.0500,-5.0000,4.2479,24.0692,646.7772
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_D,0.0500,5.0000,4.3717,35.8762,652.9810
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-2.0000,2.4263,41.9441,740.4132
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-5.0000,4.9993,26.8508,743.3876
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_PI,0.0500,5.0000,5.4123,37.2103,747.1477
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-2.0000,1.5229,32.4715,658.9368
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-5.0000,4.1778,22.5583,669.1943
+Ziegler-Nichols,BC$^{\mathrm{sel}}$,filt_euler,0.0500,5.0000,4.1584,31.9303,674.2084
 Cohen-Coon,SB,base,0.0000,-2.0000,102.6680,842.4576,478.4000
 Cohen-Coon,SB,base,0.0000,-5.0000,224.7664,238.7396,477.6000
 Cohen-Coon,SB,base,0.0000,5.0000,166.9918,358.0062,400.0000
@@ -269,36 +269,36 @@ Cohen-Coon,BC,filt_PI,0.0500,5.0000,5.5292,39.8691,744.7128
 Cohen-Coon,BC,filt_euler,0.0500,-2.0000,1.4276,32.0953,656.8812
 Cohen-Coon,BC,filt_euler,0.0500,-5.0000,4.0254,21.4193,667.6372
 Cohen-Coon,BC,filt_euler,0.0500,5.0000,4.3504,34.8864,680.6448
-Cohen-Coon,BC$^{\mathrm{cv}}$,base,0.0000,-2.0000,0.8233,6.0472,61.9036
-Cohen-Coon,BC$^{\mathrm{cv}}$,base,0.0000,-5.0000,3.2504,9.0871,115.1726
-Cohen-Coon,BC$^{\mathrm{cv}}$,base,0.0000,5.0000,2.9122,11.3158,101.2364
-Cohen-Coon,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-2.0000,0.8233,6.0472,61.9036
-Cohen-Coon,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-5.0000,3.2504,9.0871,115.1726
-Cohen-Coon,BC$^{\mathrm{cv}}$,rate_sat,0.0000,5.0000,2.9122,11.3158,101.2364
-Cohen-Coon,BC$^{\mathrm{cv}}$,db_after,0.0000,-2.0000,1.4836,19.7410,146.4124
-Cohen-Coon,BC$^{\mathrm{cv}}$,db_after,0.0000,-5.0000,4.0630,15.5524,186.9548
-Cohen-Coon,BC$^{\mathrm{cv}}$,db_after,0.0000,5.0000,3.9454,22.8841,216.6370
-Cohen-Coon,BC$^{\mathrm{cv}}$,db_before,0.0000,-2.0000,1.3752,13.8483,136.0547
-Cohen-Coon,BC$^{\mathrm{cv}}$,db_before,0.0000,-5.0000,3.7779,11.9711,175.2581
-Cohen-Coon,BC$^{\mathrm{cv}}$,db_before,0.0000,5.0000,3.5453,15.6704,206.6439
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_D,0.0000,-2.0000,0.9899,21.4398,116.6712
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_D,0.0000,-5.0000,3.5330,16.3555,172.2444
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_D,0.0000,5.0000,3.3872,24.2982,188.2083
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-2.0000,1.0245,22.3743,120.1987
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-5.0000,3.5705,16.5331,177.6231
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_PI,0.0000,5.0000,3.4220,24.3787,186.2938
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-2.0000,0.9185,17.3074,95.5095
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-5.0000,3.4251,14.3820,150.8682
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_euler,0.0000,5.0000,3.2070,21.1508,153.1053
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_D,0.0500,-2.0000,1.4159,25.6126,621.6379
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_D,0.0500,-5.0000,3.9424,17.8917,633.5783
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_D,0.0500,5.0000,3.8450,24.8090,637.0252
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-2.0000,2.2309,31.3281,734.5422
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-5.0000,4.7292,21.6456,738.1598
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_PI,0.0500,5.0000,4.8348,28.4905,740.4325
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-2.0000,1.4518,23.5530,651.3230
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-5.0000,3.9441,16.7290,659.9726
-Cohen-Coon,BC$^{\mathrm{cv}}$,filt_euler,0.0500,5.0000,3.7626,22.1704,662.2566
+Cohen-Coon,BC$^{\mathrm{sel}}$,base,0.0000,-2.0000,0.8233,6.0472,61.9036
+Cohen-Coon,BC$^{\mathrm{sel}}$,base,0.0000,-5.0000,3.2504,9.0871,115.1726
+Cohen-Coon,BC$^{\mathrm{sel}}$,base,0.0000,5.0000,2.9122,11.3158,101.2364
+Cohen-Coon,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-2.0000,0.8233,6.0472,61.9036
+Cohen-Coon,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-5.0000,3.2504,9.0871,115.1726
+Cohen-Coon,BC$^{\mathrm{sel}}$,rate_sat,0.0000,5.0000,2.9122,11.3158,101.2364
+Cohen-Coon,BC$^{\mathrm{sel}}$,db_after,0.0000,-2.0000,1.4836,19.7410,146.4124
+Cohen-Coon,BC$^{\mathrm{sel}}$,db_after,0.0000,-5.0000,4.0630,15.5524,186.9548
+Cohen-Coon,BC$^{\mathrm{sel}}$,db_after,0.0000,5.0000,3.9454,22.8841,216.6370
+Cohen-Coon,BC$^{\mathrm{sel}}$,db_before,0.0000,-2.0000,1.3752,13.8483,136.0547
+Cohen-Coon,BC$^{\mathrm{sel}}$,db_before,0.0000,-5.0000,3.7779,11.9711,175.2581
+Cohen-Coon,BC$^{\mathrm{sel}}$,db_before,0.0000,5.0000,3.5453,15.6704,206.6439
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_D,0.0000,-2.0000,0.9899,21.4398,116.6712
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_D,0.0000,-5.0000,3.5330,16.3555,172.2444
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_D,0.0000,5.0000,3.3872,24.2982,188.2083
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-2.0000,1.0245,22.3743,120.1987
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-5.0000,3.5705,16.5331,177.6231
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_PI,0.0000,5.0000,3.4220,24.3787,186.2938
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-2.0000,0.9185,17.3074,95.5095
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-5.0000,3.4251,14.3820,150.8682
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_euler,0.0000,5.0000,3.2070,21.1508,153.1053
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_D,0.0500,-2.0000,1.4159,25.6126,621.6379
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_D,0.0500,-5.0000,3.9424,17.8917,633.5783
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_D,0.0500,5.0000,3.8450,24.8090,637.0252
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-2.0000,2.2309,31.3281,734.5422
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-5.0000,4.7292,21.6456,738.1598
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_PI,0.0500,5.0000,4.8348,28.4905,740.4325
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-2.0000,1.4518,23.5530,651.3230
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-5.0000,3.9441,16.7290,659.9726
+Cohen-Coon,BC$^{\mathrm{sel}}$,filt_euler,0.0500,5.0000,3.7626,22.1704,662.2566
 Tyreus-Luyben,SB,base,0.0000,-2.0000,1.2627,38.5719,81.9707
 Tyreus-Luyben,SB,base,0.0000,-5.0000,5.5051,58.3270,199.6371
 Tyreus-Luyben,SB,base,0.0000,5.0000,7.4988,88.5457,265.7183
@@ -419,36 +419,36 @@ Tyreus-Luyben,BC,filt_PI,0.0500,5.0000,4.1443,2.2518,706.6112
 Tyreus-Luyben,BC,filt_euler,0.0500,-2.0000,1.3119,2.1864,591.5578
 Tyreus-Luyben,BC,filt_euler,0.0500,-5.0000,4.4376,0.7497,596.2804
 Tyreus-Luyben,BC,filt_euler,0.0500,5.0000,4.0663,1.1038,600.2371
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,base,0.0000,-2.0000,0.8297,0.0000,52.0809
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,base,0.0000,-5.0000,3.3228,0.0000,89.5043
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,base,0.0000,5.0000,3.0025,12.9669,103.9114
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-2.0000,0.8297,0.0000,52.0809
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-5.0000,3.3228,0.0000,89.5043
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,rate_sat,0.0000,5.0000,3.0025,12.9669,103.9114
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,db_after,0.0000,-2.0000,1.0241,7.3016,51.2679
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,db_after,0.0000,-5.0000,3.5342,2.3780,90.3627
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,db_after,0.0000,5.0000,3.5589,21.0546,111.6318
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,db_before,0.0000,-2.0000,0.9515,4.8514,53.6616
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,db_before,0.0000,-5.0000,3.3758,0.0000,91.6922
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,db_before,0.0000,5.0000,3.2084,13.4173,108.6460
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_D,0.0000,-2.0000,0.8431,7.9140,64.4354
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_D,0.0000,-5.0000,3.2596,3.3269,105.5104
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_D,0.0000,5.0000,3.2634,22.6528,134.2723
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-2.0000,0.8483,7.0151,61.0620
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-5.0000,3.2708,3.4630,104.2619
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_PI,0.0000,5.0000,3.2325,21.6382,126.0804
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-2.0000,0.8336,6.0729,62.2276
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-5.0000,3.2596,1.1269,100.5829
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_euler,0.0000,5.0000,3.1691,19.6678,126.6439
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_D,0.0500,-2.0000,0.9575,9.9140,557.6464
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_D,0.0500,-5.0000,3.3387,3.5411,569.9568
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_D,0.0500,5.0000,3.3592,21.7969,579.9859
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-2.0000,1.1409,14.8973,704.8574
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-5.0000,3.4786,5.1743,709.3815
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_PI,0.0500,5.0000,3.5753,22.1744,712.9280
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-2.0000,0.9566,7.9601,597.5163
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-5.0000,3.3428,2.1190,607.2886
-Tyreus-Luyben,BC$^{\mathrm{cv}}$,filt_euler,0.0500,5.0000,3.2946,19.5796,616.1461
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,base,0.0000,-2.0000,0.8297,0.0000,52.0809
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,base,0.0000,-5.0000,3.3228,0.0000,89.5043
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,base,0.0000,5.0000,3.0025,12.9669,103.9114
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-2.0000,0.8297,0.0000,52.0809
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-5.0000,3.3228,0.0000,89.5043
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,rate_sat,0.0000,5.0000,3.0025,12.9669,103.9114
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,db_after,0.0000,-2.0000,1.0241,7.3016,51.2679
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,db_after,0.0000,-5.0000,3.5342,2.3780,90.3627
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,db_after,0.0000,5.0000,3.5589,21.0546,111.6318
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,db_before,0.0000,-2.0000,0.9515,4.8514,53.6616
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,db_before,0.0000,-5.0000,3.3758,0.0000,91.6922
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,db_before,0.0000,5.0000,3.2084,13.4173,108.6460
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_D,0.0000,-2.0000,0.8431,7.9140,64.4354
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_D,0.0000,-5.0000,3.2596,3.3269,105.5104
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_D,0.0000,5.0000,3.2634,22.6528,134.2723
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-2.0000,0.8483,7.0151,61.0620
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-5.0000,3.2708,3.4630,104.2619
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_PI,0.0000,5.0000,3.2325,21.6382,126.0804
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-2.0000,0.8336,6.0729,62.2276
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-5.0000,3.2596,1.1269,100.5829
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_euler,0.0000,5.0000,3.1691,19.6678,126.6439
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_D,0.0500,-2.0000,0.9575,9.9140,557.6464
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_D,0.0500,-5.0000,3.3387,3.5411,569.9568
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_D,0.0500,5.0000,3.3592,21.7969,579.9859
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-2.0000,1.1409,14.8973,704.8574
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-5.0000,3.4786,5.1743,709.3815
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_PI,0.0500,5.0000,3.5753,22.1744,712.9280
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-2.0000,0.9566,7.9601,597.5163
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-5.0000,3.3428,2.1190,607.2886
+Tyreus-Luyben,BC$^{\mathrm{sel}}$,filt_euler,0.0500,5.0000,3.2946,19.5796,616.1461
 AMIGO,SB,base,0.0000,-2.0000,1.6038,68.5910,107.5972
 AMIGO,SB,base,0.0000,-5.0000,43.7368,216.0726,801.6000
 AMIGO,SB,base,0.0000,5.0000,107.2091,541.8816,697.6000
@@ -569,36 +569,36 @@ AMIGO,BC,filt_PI,0.0500,5.0000,3.4362,13.9894,646.2742
 AMIGO,BC,filt_euler,0.0500,-2.0000,1.0520,12.3117,467.0237
 AMIGO,BC,filt_euler,0.0500,-5.0000,3.4497,8.0107,481.3962
 AMIGO,BC,filt_euler,0.0500,5.0000,3.0355,7.0422,481.6956
-AMIGO,BC$^{\mathrm{cv}}$,base,0.0000,-2.0000,0.9233,8.0413,36.7693
-AMIGO,BC$^{\mathrm{cv}}$,base,0.0000,-5.0000,3.3194,5.5921,72.0833
-AMIGO,BC$^{\mathrm{cv}}$,base,0.0000,5.0000,2.8818,3.1296,65.4665
-AMIGO,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-2.0000,0.9233,8.0413,36.7693
-AMIGO,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-5.0000,3.3194,5.5921,72.0833
-AMIGO,BC$^{\mathrm{cv}}$,rate_sat,0.0000,5.0000,2.8818,3.1296,65.4665
-AMIGO,BC$^{\mathrm{cv}}$,db_after,0.0000,-2.0000,1.5440,16.7194,40.5031
-AMIGO,BC$^{\mathrm{cv}}$,db_after,0.0000,-5.0000,3.9871,8.9608,76.2360
-AMIGO,BC$^{\mathrm{cv}}$,db_after,0.0000,5.0000,3.7693,6.8190,75.0728
-AMIGO,BC$^{\mathrm{cv}}$,db_before,0.0000,-2.0000,1.3771,11.1999,45.2356
-AMIGO,BC$^{\mathrm{cv}}$,db_before,0.0000,-5.0000,3.7622,7.5710,72.7399
-AMIGO,BC$^{\mathrm{cv}}$,db_before,0.0000,5.0000,3.5334,4.4329,77.8817
-AMIGO,BC$^{\mathrm{cv}}$,filt_D,0.0000,-2.0000,0.9376,12.6378,43.8707
-AMIGO,BC$^{\mathrm{cv}}$,filt_D,0.0000,-5.0000,3.3406,7.9691,81.8201
-AMIGO,BC$^{\mathrm{cv}}$,filt_D,0.0000,5.0000,2.8954,6.3761,78.3163
-AMIGO,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-2.0000,0.9551,13.9810,44.8747
-AMIGO,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-5.0000,3.3561,8.4605,83.3198
-AMIGO,BC$^{\mathrm{cv}}$,filt_PI,0.0000,5.0000,2.9390,7.6321,81.0263
-AMIGO,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-2.0000,0.9278,11.0632,41.7071
-AMIGO,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-5.0000,3.3278,7.1826,78.9057
-AMIGO,BC$^{\mathrm{cv}}$,filt_euler,0.0000,5.0000,2.8741,5.0169,74.0111
-AMIGO,BC$^{\mathrm{cv}}$,filt_D,0.0500,-2.0000,1.0436,13.5168,412.6681
-AMIGO,BC$^{\mathrm{cv}}$,filt_D,0.0500,-5.0000,3.4416,8.5652,430.2269
-AMIGO,BC$^{\mathrm{cv}}$,filt_D,0.0500,5.0000,3.0402,8.2461,431.5813
-AMIGO,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-2.0000,1.3310,18.9631,638.9735
-AMIGO,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-5.0000,3.7488,11.5898,645.5670
-AMIGO,BC$^{\mathrm{cv}}$,filt_PI,0.0500,5.0000,3.4362,13.9894,646.2742
-AMIGO,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-2.0000,1.0520,12.3117,467.0237
-AMIGO,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-5.0000,3.4497,8.0107,481.3962
-AMIGO,BC$^{\mathrm{cv}}$,filt_euler,0.0500,5.0000,3.0355,7.0422,481.6956
+AMIGO,BC$^{\mathrm{sel}}$,base,0.0000,-2.0000,0.9233,8.0413,36.7693
+AMIGO,BC$^{\mathrm{sel}}$,base,0.0000,-5.0000,3.3194,5.5921,72.0833
+AMIGO,BC$^{\mathrm{sel}}$,base,0.0000,5.0000,2.8818,3.1296,65.4665
+AMIGO,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-2.0000,0.9233,8.0413,36.7693
+AMIGO,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-5.0000,3.3194,5.5921,72.0833
+AMIGO,BC$^{\mathrm{sel}}$,rate_sat,0.0000,5.0000,2.8818,3.1296,65.4665
+AMIGO,BC$^{\mathrm{sel}}$,db_after,0.0000,-2.0000,1.5440,16.7194,40.5031
+AMIGO,BC$^{\mathrm{sel}}$,db_after,0.0000,-5.0000,3.9871,8.9608,76.2360
+AMIGO,BC$^{\mathrm{sel}}$,db_after,0.0000,5.0000,3.7693,6.8190,75.0728
+AMIGO,BC$^{\mathrm{sel}}$,db_before,0.0000,-2.0000,1.3771,11.1999,45.2356
+AMIGO,BC$^{\mathrm{sel}}$,db_before,0.0000,-5.0000,3.7622,7.5710,72.7399
+AMIGO,BC$^{\mathrm{sel}}$,db_before,0.0000,5.0000,3.5334,4.4329,77.8817
+AMIGO,BC$^{\mathrm{sel}}$,filt_D,0.0000,-2.0000,0.9376,12.6378,43.8707
+AMIGO,BC$^{\mathrm{sel}}$,filt_D,0.0000,-5.0000,3.3406,7.9691,81.8201
+AMIGO,BC$^{\mathrm{sel}}$,filt_D,0.0000,5.0000,2.8954,6.3761,78.3163
+AMIGO,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-2.0000,0.9551,13.9810,44.8747
+AMIGO,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-5.0000,3.3561,8.4605,83.3198
+AMIGO,BC$^{\mathrm{sel}}$,filt_PI,0.0000,5.0000,2.9390,7.6321,81.0263
+AMIGO,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-2.0000,0.9278,11.0632,41.7071
+AMIGO,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-5.0000,3.3278,7.1826,78.9057
+AMIGO,BC$^{\mathrm{sel}}$,filt_euler,0.0000,5.0000,2.8741,5.0169,74.0111
+AMIGO,BC$^{\mathrm{sel}}$,filt_D,0.0500,-2.0000,1.0436,13.5168,412.6681
+AMIGO,BC$^{\mathrm{sel}}$,filt_D,0.0500,-5.0000,3.4416,8.5652,430.2269
+AMIGO,BC$^{\mathrm{sel}}$,filt_D,0.0500,5.0000,3.0402,8.2461,431.5813
+AMIGO,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-2.0000,1.3310,18.9631,638.9735
+AMIGO,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-5.0000,3.7488,11.5898,645.5670
+AMIGO,BC$^{\mathrm{sel}}$,filt_PI,0.0500,5.0000,3.4362,13.9894,646.2742
+AMIGO,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-2.0000,1.0520,12.3117,467.0237
+AMIGO,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-5.0000,3.4497,8.0107,481.3962
+AMIGO,BC$^{\mathrm{sel}}$,filt_euler,0.0500,5.0000,3.0355,7.0422,481.6956
 Skogestad SIMC,SB,base,0.0000,-2.0000,1.0888,2.0875,22.4895
 Skogestad SIMC,SB,base,0.0000,-5.0000,3.7755,7.1182,64.0799
 Skogestad SIMC,SB,base,0.0000,5.0000,3.5935,14.5198,66.2686
@@ -719,36 +719,36 @@ Skogestad SIMC,BC,filt_PI,0.0500,5.0000,4.1365,0.5331,413.0855
 Skogestad SIMC,BC,filt_euler,0.0500,-2.0000,1.4505,0.6920,186.3267
 Skogestad SIMC,BC,filt_euler,0.0500,-5.0000,4.8429,0.2197,196.0979
 Skogestad SIMC,BC,filt_euler,0.0500,5.0000,4.1501,0.3121,195.4574
-Skogestad SIMC,BC$^{\mathrm{cv}}$,base,0.0000,-2.0000,1.1543,0.2608,18.8578
-Skogestad SIMC,BC$^{\mathrm{cv}}$,base,0.0000,-5.0000,3.7993,0.0000,42.5262
-Skogestad SIMC,BC$^{\mathrm{cv}}$,base,0.0000,5.0000,3.1722,0.9260,47.7782
-Skogestad SIMC,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-2.0000,1.1543,0.2608,18.8578
-Skogestad SIMC,BC$^{\mathrm{cv}}$,rate_sat,0.0000,-5.0000,3.7993,0.0000,42.5262
-Skogestad SIMC,BC$^{\mathrm{cv}}$,rate_sat,0.0000,5.0000,3.1722,0.9260,47.7782
-Skogestad SIMC,BC$^{\mathrm{cv}}$,db_after,0.0000,-2.0000,1.6670,11.9992,14.6045
-Skogestad SIMC,BC$^{\mathrm{cv}}$,db_after,0.0000,-5.0000,4.0343,3.0506,39.6049
-Skogestad SIMC,BC$^{\mathrm{cv}}$,db_after,0.0000,5.0000,3.6017,5.8921,45.1564
-Skogestad SIMC,BC$^{\mathrm{cv}}$,db_before,0.0000,-2.0000,1.6899,9.5379,13.2901
-Skogestad SIMC,BC$^{\mathrm{cv}}$,db_before,0.0000,-5.0000,3.9538,2.8202,36.7024
-Skogestad SIMC,BC$^{\mathrm{cv}}$,db_before,0.0000,5.0000,3.3227,4.1178,44.1566
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_D,0.0000,-2.0000,1.0943,0.6186,20.2712
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_D,0.0000,-5.0000,3.6460,0.0427,45.6861
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_D,0.0000,5.0000,3.0759,1.7732,51.1727
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-2.0000,1.0922,0.6124,20.1097
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_PI,0.0000,-5.0000,3.6391,0.0293,45.5978
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_PI,0.0000,5.0000,3.0727,1.9027,51.0078
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-2.0000,1.1089,0.4896,19.9313
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_euler,0.0000,-5.0000,3.6850,0.0139,44.8738
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_euler,0.0000,5.0000,3.0965,1.4310,50.2092
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_D,0.0500,-2.0000,1.1327,0.9396,154.7922
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_D,0.0500,-5.0000,3.6795,0.2686,174.1981
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_D,0.0500,5.0000,3.1189,1.7810,177.0212
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-2.0000,1.1365,1.0398,408.3884
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_PI,0.0500,-5.0000,3.6757,0.2997,419.8843
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_PI,0.0500,5.0000,3.1225,2.0500,419.9063
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-2.0000,1.1473,0.8731,189.8895
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_euler,0.0500,-5.0000,3.7182,0.2625,207.8199
-Skogestad SIMC,BC$^{\mathrm{cv}}$,filt_euler,0.0500,5.0000,3.1387,1.4410,209.7496
+Skogestad SIMC,BC$^{\mathrm{sel}}$,base,0.0000,-2.0000,1.1543,0.2608,18.8578
+Skogestad SIMC,BC$^{\mathrm{sel}}$,base,0.0000,-5.0000,3.7993,0.0000,42.5262
+Skogestad SIMC,BC$^{\mathrm{sel}}$,base,0.0000,5.0000,3.1722,0.9260,47.7782
+Skogestad SIMC,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-2.0000,1.1543,0.2608,18.8578
+Skogestad SIMC,BC$^{\mathrm{sel}}$,rate_sat,0.0000,-5.0000,3.7993,0.0000,42.5262
+Skogestad SIMC,BC$^{\mathrm{sel}}$,rate_sat,0.0000,5.0000,3.1722,0.9260,47.7782
+Skogestad SIMC,BC$^{\mathrm{sel}}$,db_after,0.0000,-2.0000,1.6670,11.9992,14.6045
+Skogestad SIMC,BC$^{\mathrm{sel}}$,db_after,0.0000,-5.0000,4.0343,3.0506,39.6049
+Skogestad SIMC,BC$^{\mathrm{sel}}$,db_after,0.0000,5.0000,3.6017,5.8921,45.1564
+Skogestad SIMC,BC$^{\mathrm{sel}}$,db_before,0.0000,-2.0000,1.6899,9.5379,13.2901
+Skogestad SIMC,BC$^{\mathrm{sel}}$,db_before,0.0000,-5.0000,3.9538,2.8202,36.7024
+Skogestad SIMC,BC$^{\mathrm{sel}}$,db_before,0.0000,5.0000,3.3227,4.1178,44.1566
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_D,0.0000,-2.0000,1.0943,0.6186,20.2712
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_D,0.0000,-5.0000,3.6460,0.0427,45.6861
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_D,0.0000,5.0000,3.0759,1.7732,51.1727
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-2.0000,1.0922,0.6124,20.1097
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_PI,0.0000,-5.0000,3.6391,0.0293,45.5978
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_PI,0.0000,5.0000,3.0727,1.9027,51.0078
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-2.0000,1.1089,0.4896,19.9313
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_euler,0.0000,-5.0000,3.6850,0.0139,44.8738
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_euler,0.0000,5.0000,3.0965,1.4310,50.2092
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_D,0.0500,-2.0000,1.1327,0.9396,154.7922
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_D,0.0500,-5.0000,3.6795,0.2686,174.1981
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_D,0.0500,5.0000,3.1189,1.7810,177.0212
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-2.0000,1.1365,1.0398,408.3884
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_PI,0.0500,-5.0000,3.6757,0.2997,419.8843
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_PI,0.0500,5.0000,3.1225,2.0500,419.9063
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-2.0000,1.1473,0.8731,189.8895
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_euler,0.0500,-5.0000,3.7182,0.2625,207.8199
+Skogestad SIMC,BC$^{\mathrm{sel}}$,filt_euler,0.0500,5.0000,3.1387,1.4410,209.7496
 Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),SB,base,0.0000,-2.0000,1.5079,66.0441,112.2001
 Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),SB,base,0.0000,-5.0000,14.2870,85.7948,505.8227
 Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),SB,base,0.0000,5.0000,84.3613,298.7710,800.8719
@@ -869,33 +869,33 @@ Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC,filt_PI,0.0500,5.0000,3.3942,2
 Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC,filt_euler,0.0500,-2.0000,1.0593,1.9272,487.0564
 Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC,filt_euler,0.0500,-5.0000,3.5585,0.6965,495.8480
 Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC,filt_euler,0.0500,5.0000,3.3242,0.9102,498.4448
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,base,0.0000,-2.0000,0.8329,4.3811,50.0653
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,base,0.0000,-5.0000,3.1615,0.4783,84.0786
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,base,0.0000,5.0000,2.9568,12.5168,100.7774
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,rate_sat,0.0000,-2.0000,0.8329,4.3811,50.0653
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,rate_sat,0.0000,-5.0000,3.1615,0.4783,84.0786
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,rate_sat,0.0000,5.0000,2.9568,12.5168,100.7774
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,db_after,0.0000,-2.0000,1.2562,11.2317,51.4151
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,db_after,0.0000,-5.0000,3.6349,3.9620,85.1426
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,db_after,0.0000,5.0000,3.8165,21.6413,108.0124
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,db_before,0.0000,-2.0000,1.1624,8.6380,55.3061
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,db_before,0.0000,-5.0000,3.4175,2.2946,88.8523
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,db_before,0.0000,5.0000,3.4730,15.7201,107.7134
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_D,0.0000,-2.0000,0.8617,10.6433,61.2052
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_D,0.0000,-5.0000,3.1862,4.1652,97.2336
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_D,0.0000,5.0000,3.2507,23.1333,126.2017
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_PI,0.0000,-2.0000,0.8758,11.7596,61.4770
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_PI,0.0000,-5.0000,3.1962,4.3484,97.8311
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_PI,0.0000,5.0000,3.2636,22.9117,125.5572
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_euler,0.0000,-2.0000,0.8464,8.4943,57.2568
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_euler,0.0000,-5.0000,3.1666,2.7462,92.2475
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_euler,0.0000,5.0000,3.1370,19.6678,118.7232
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_D,0.0500,-2.0000,0.9773,12.8661,443.9815
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_D,0.0500,-5.0000,3.2872,5.0824,462.2840
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_D,0.0500,5.0000,3.3607,22.5391,474.4137
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_PI,0.0500,-2.0000,1.1155,18.1384,643.8395
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_PI,0.0500,-5.0000,3.4217,7.6040,651.4096
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_PI,0.0500,5.0000,3.5433,23.2548,658.0149
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_euler,0.0500,-2.0000,0.9684,11.0761,494.4334
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_euler,0.0500,-5.0000,3.2729,3.9760,509.6966
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{cv}}$,filt_euler,0.0500,5.0000,3.2679,19.7289,519.9476
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,base,0.0000,-2.0000,0.8329,4.3811,50.0653
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,base,0.0000,-5.0000,3.1615,0.4783,84.0786
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,base,0.0000,5.0000,2.9568,12.5168,100.7774
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,rate_sat,0.0000,-2.0000,0.8329,4.3811,50.0653
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,rate_sat,0.0000,-5.0000,3.1615,0.4783,84.0786
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,rate_sat,0.0000,5.0000,2.9568,12.5168,100.7774
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,db_after,0.0000,-2.0000,1.2562,11.2317,51.4151
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,db_after,0.0000,-5.0000,3.6349,3.9620,85.1426
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,db_after,0.0000,5.0000,3.8165,21.6413,108.0124
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,db_before,0.0000,-2.0000,1.1624,8.6380,55.3061
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,db_before,0.0000,-5.0000,3.4175,2.2946,88.8523
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,db_before,0.0000,5.0000,3.4730,15.7201,107.7134
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_D,0.0000,-2.0000,0.8617,10.6433,61.2052
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_D,0.0000,-5.0000,3.1862,4.1652,97.2336
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_D,0.0000,5.0000,3.2507,23.1333,126.2017
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_PI,0.0000,-2.0000,0.8758,11.7596,61.4770
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_PI,0.0000,-5.0000,3.1962,4.3484,97.8311
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_PI,0.0000,5.0000,3.2636,22.9117,125.5572
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_euler,0.0000,-2.0000,0.8464,8.4943,57.2568
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_euler,0.0000,-5.0000,3.1666,2.7462,92.2475
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_euler,0.0000,5.0000,3.1370,19.6678,118.7232
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_D,0.0500,-2.0000,0.9773,12.8661,443.9815
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_D,0.0500,-5.0000,3.2872,5.0824,462.2840
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_D,0.0500,5.0000,3.3607,22.5391,474.4137
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_PI,0.0500,-2.0000,1.1155,18.1384,643.8395
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_PI,0.0500,-5.0000,3.4217,7.6040,651.4096
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_PI,0.0500,5.0000,3.5433,23.2548,658.0149
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_euler,0.0500,-2.0000,0.9684,11.0761,494.4334
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_euler,0.0500,-5.0000,3.2729,3.9760,509.6966
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),BC$^{\mathrm{sel}}$,filt_euler,0.0500,5.0000,3.2679,19.7289,519.9476

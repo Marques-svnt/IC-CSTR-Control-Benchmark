@@ -1,12 +1,12 @@
 \begin{table*}[t]
 \centering
 \footnotesize
-\caption{Integrator policies under Gaussian sensor noise, $-2$~K step, unfiltered measurement, 30 realizations per level (seeds of the noise campaign): IAE on the true temperature (K$\cdot$min, mean $\pm$ half-width of the $95\%$ $t$-interval) and mean TV (L/min). BC uses the $T_t^{\mathrm{cv}}$ of Table~\ref{tab:antiwindup_tt_summary}; ``Directional'' is Eq.~\eqref{eq:clamping_antiwindup}.}
+\caption{Integrator policies under Gaussian sensor noise, $-2$~K step, unfiltered measurement, 30 realizations per level (seeds of the noise campaign): IAE on the true temperature (K$\cdot$min, mean $\pm$ half-width of the $95\%$ $t$-interval) and mean TV (L/min). BC uses the $T_t^{\mathrm{sel}}$ of Table~\ref{tab:antiwindup_tt_summary}; ``Directional'' is Eq.~\eqref{eq:clamping_antiwindup}.}
 \label{tab:noise_policies}
 \resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
 \begin{tabular}{lccccccc}
 \toprule
-Method & \(\sigma\) (K) & IAE None & TV None & IAE BC ($T_t^{\mathrm{cv}}$) & TV BC ($T_t^{\mathrm{cv}}$) & IAE Directional & TV Directional \\
+Method & \(\sigma\) (K) & IAE None & TV None & IAE BC ($T_t^{\mathrm{sel}}$) & TV BC ($T_t^{\mathrm{sel}}$) & IAE Directional & TV Directional \\
 \midrule
 Ziegler-Nichols & 0 & 91.11 & 767 & 0.88 & 71 & 0.94 & 82 \\
 Ziegler-Nichols & 0.01 & 91.17 $\pm$ 0.08 & 768 & 1.09 $\pm$ 0.01 & 591 & 1.00 $\pm$ 0.01 & 585 \\

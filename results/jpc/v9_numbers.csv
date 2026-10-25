@@ -67,11 +67,11 @@ macro,value,source
 \vttcvmin,0.86,antiwindup_tt_summary
 \vttcvmaxpct,2,antiwindup_tt_summary
 \vttcvminpct,14,antiwindup_tt_summary
-\vttoutside,"ZN, CC and SIMC","antiwindup_tt_summary (unrestricted T_t^cv outside [T_d, T_i])"
+\vttoutside,"ZN, CC and SIMC","antiwindup_tt_summary (unrestricted T_t^sel outside [T_d, T_i])"
 \vttfreemaxgain,0.00,antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)
 \vttfreemaxloss,0.08,antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)
-\vttcvlower,ZN and CC,antiwindup_tt_summary (T_t^cv = T_d)
-\vttcvupper,SIMC,antiwindup_tt_summary (T_t^cv = T_i)
+\vttcvlower,ZN and CC,antiwindup_tt_summary (T_t^sel = T_d)
+\vttcvupper,SIMC,antiwindup_tt_summary (T_t^sel = T_i)
 \vttfreeZN,0.020,antiwindup_tt_summary
 \vttfreeCC,0.020,antiwindup_tt_summary
 \vttfreexZN,0.009,"antiwindup_tt_summary (free choice, exact factor)"
@@ -79,8 +79,8 @@ macro,value,source
 \vttfreediffmax,0.08,antiwindup_tt_summary (largest |free - cv| of the +-5 K worst ratio)
 \vttfreediffloop,SIMC,antiwindup_tt_summary
 \vttfreediffrest,0.01,antiwindup_tt_summary (other loops)
-\vttfreexgain,0.01,"antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)"
-\vttfreeSIMCovTi,10,antiwindup_tt_summary (free T_t^cv / T_i)
+\vttfreexgain,0.01,"antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^sel)"
+\vttfreeSIMCovTi,10,antiwindup_tt_summary (free T_t^sel / T_i)
 \vSIMCcvtwo,1.15,antiwindup_tt_sweep
 \vSIMCtitwo,1.15,antiwindup_tt_sweep
 \vSIMCcvm,3.80,antiwindup_tt_sweep
@@ -155,7 +155,7 @@ macro,value,source
 \vdbCCdirsix,1.76,antiwindup_deadband
 \vdbsixworstpct,10,antiwindup_deadband
 \vdbampratiomin,13,"antiwindup_deadband (amp-only / rate, ZN and CC)"
-\vdbsixworstpctcv,19,antiwindup_deadband (rate rule vs BC T_t^cv)
+\vdbsixworstpctcv,19,antiwindup_deadband (rate rule vs BC T_t^sel)
 \vopZNnone,55.58,antiwindup_second_op
 \vopZNsign,61.48,antiwindup_second_op
 \vopZNamp,16.13,antiwindup_second_op
@@ -276,7 +276,7 @@ macro,value,source
 \vorderFourNoisydIAE,21.5,order_variants
 \vorderFourNoisyrank,changes,order_variants
 \vdtwopolflips,11,"order_variants_flips (policy-order swaps, all variants)"
-\vdtwoworkflips,9,"order_variants_flips (swaps among Rate, BC, BC^cv)"
+\vdtwoworkflips,9,"order_variants_flips (swaps among Rate, BC, BC^sel)"
 \vdtwosbmin,22,"order_variants_full (SB/Rate, ZN and CC, every variant)"
 \vdtwoampmin,3.9,"order_variants_full (Amp/Rate, ZN and CC, every variant)"
 \vhxK,-0.204,hx_model
@@ -293,8 +293,8 @@ macro,value,source
 \vhxTLratemin,1.35,hx_ablation (TL rate/none)
 \vhxTLratemax,1.62,hx_ablation (TL rate/none)
 \vhxSIMCworse,2,hx_ablation (steps where the rule worsens SIMC)
-\vhxbcmin,0.84,"hx_ablation (BC T_t^cv / rate, all loops and steps)"
-\vhxbcmax,1.01,"hx_ablation (BC T_t^cv / rate, all loops and steps)"
+\vhxbcmin,0.84,"hx_ablation (BC T_t^sel / rate, all loops and steps)"
+\vhxbcmax,1.01,"hx_ablation (BC T_t^sel / rate, all loops and steps)"
 \vhxnrhohi,129,hx_rate_demand_grid (rho >= 1)
 \vhxnrhohihelp,104,"hx_rate_demand_grid (rho >= 1, R > 1)"
 \vhxbadloops,TL and SIMC,"hx_rate_demand_grid (rho >= 1, R <= 1)"
@@ -305,8 +305,8 @@ macro,value,source
 \vstickseverehunt,92,"stiction_full (share of hunting runs, policies other than SB)"
 \vsticksbmin,46,"stiction_full (SB/Rate, ZN and CC)"
 \vstickampmin,6.9,"stiction_full (Amp/Rate, ZN and CC)"
-\vstickbcmin,0.37,stiction_full (BC^cv/Rate)
-\vstickbcmax,1.61,stiction_full (BC^cv/Rate)
+\vstickbcmin,0.37,stiction_full (BC^sel/Rate)
+\vstickbcmax,1.61,stiction_full (BC^sel/Rate)
 \vstickSIMCmin,0.61,stiction_full (SIMC Rate/Amp = Rate/None)
 \vstickSIMCmax,3.50,stiction_full (SIMC Rate/Amp = Rate/None)
 \vposspurmin,49,"measured_position_full (spurious freezes, no band)"

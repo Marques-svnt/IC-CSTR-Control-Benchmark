@@ -7,8 +7,8 @@ Branch `jpc-v7`, criado a partir de `phase4/verification` (43aba62). Sem push e 
 | Tarefa | Estado | Commit | Observação |
 |---|---|---|---|
 | T1 Regra direcional e SIMC | feito | 0a1f18a, e5681a2 | Recomendação condicionada a ρ ≥ 1. ρ é a demanda de taxa do laço sem limite de slew dividida por S_max·Δt; é ex-ante (não usa IAE). ρ **não separa** SIMC dos demais (AMIGO a 320 L/min² ganha com ρ = 0,21); vale só como condição suficiente nesta planta. Legendas das Tabelas 8/S10 corrigidas. |
-| T2 Tt^cv na fronteira | feito | 285bc05 | ZN e CC na borda inferior (T_d), SIMC na superior (T_i). Mínimo livre: Δt para ZN/CC, 10·T_i (topo da grade) para SIMC. |
-| T3 Coluna BC(Tt^cv) | feito | 44980a7 | Coluna nas Tabelas 4, 5, 9, S12 e S13. No 2º ponto de operação, Tt^cv foi re-escolhido pelo mesmo critério. |
+| T2 Tt^sel na fronteira | feito | 285bc05 | ZN e CC na borda inferior (T_d), SIMC na superior (T_i). Mínimo livre: Δt para ZN/CC, 10·T_i (topo da grade) para SIMC. |
+| T3 Coluna BC(Tt^sel) | feito | 44980a7 | Coluna nas Tabelas 4, 5, 9, S12 e S13. No 2º ponto de operação, Tt^sel foi re-escolhido pelo mesmo critério. |
 | T4 "5 de 6 casos" | feito | 89eb942, e5681a2 | Restrito a ZN e CC. TL, SIMC e ITAE ótimo: mais viagem em 6 de 9 casos e overshoot nunca menor. |
 | T5 Proposição 1 | feito | 17acf29, e5681a2 | Índices discretos; (H3) mantida como hipótese, mas deduzida de (H2) e da Eq. (10). Hipóteses verificadas em `results/jpc/latch_check.csv`. I⋆ = 945/1050 e T(t_f)−T_sp = −16,72 K conferidos por script. Rodapé sobre a condição extra do código. |
 | T6 Zona morta | feito | 5ef4996 | O código corresponde ao texto (o anti-windup vê o comando u_act, não a posição); não foi preciso parar. Equação S (backlash), na ordem sat → taxa → folga. |
@@ -31,7 +31,7 @@ Divergências entre o pedido e os CSV (prevaleceu o CSV):
 - T1: razão do SIMC em S_max = 80 é 0,85 em precisão total (0,845 só com os valores arredondados da tabela).
 - T1 (Suplementar v6): "for SIMC the trigger never helps" estava errado; em 20 L/min² a razão é 1,05. Corrigido.
 - T2: o SIMC com Tt = Ti não "empata" com não ter anti-windup: é 6 % pior em −2 K, igual em −5 K e 12 % melhor em +5 K. O texto dá os números.
-- T3: com a coluna Tt^cv, "within 10 % of the best back-calculation" (S3, zona morta) deixou de valer; a regra de taxa fica até 19 % pior que BC(Tt^cv). Texto corrigido.
+- T3: com a coluna Tt^sel, "within 10 % of the best back-calculation" (S3, zona morta) deixou de valer; a regra de taxa fica até 19 % pior que BC(Tt^sel). Texto corrigido.
 - T10(d): as médias do Shapley mudaram um pouco em relação à rodada única da v6 (ex.: E_a/R do ZN em IAE 0,09 → 0,13; faixa de C_Af 0,43–0,59 → 0,43–0,61).
 
 ## 3. Referências
@@ -67,7 +67,7 @@ Superados: os riscos e pendências vigentes estão na seção 8.5.
 | Item | Estado | O que foi feito |
 |---|---|---|
 | 1 ρ | feito | ρ calculado fora da amostra em que foi observado: 2º ponto de operação e zonas mortas de 3 e 6 L/min, 17 casos (Tabela S `rate_demand_check`). Os 12 laços com ρ ≥ 1 melhoraram com o gatilho; com ρ < 1, AMIGO melhorou e SIMC piorou. O texto apresenta ρ ≥ 1 como heurística calibrada neste reator, sem ruído e baseada em modelo; "123 de 124" aparece como a amostra de onde a regra saiu, não como validação. |
-| 2 Ruído | feito | Sem anti-windup, BC(Tt^cv) e regra direcional, com σ = 0,01 e 0,05 K e 30 realizações (Tabela S `noise_policies`). **Achado:** com 0,05 K, o BC com Tt^cv escolhido sem ruído fica até 51 % pior que a regra para ZN, CC, AMIGO e ITAE ótimo, e melhor para TL e SIMC. A ordem das demais conclusões se mantém. Resumo, conclusão 3, Seção 4.7 e limitações agora dizem "sem ruído". |
+| 2 Ruído | feito | Sem anti-windup, BC(Tt^sel) e regra direcional, com σ = 0,01 e 0,05 K e 30 realizações (Tabela S `noise_policies`). **Achado:** com 0,05 K, o BC com Tt^sel escolhido sem ruído fica até 51 % pior que a regra para ZN, CC, AMIGO e ITAE ótimo, e melhor para TL e SIMC. A ordem das demais conclusões se mantém. Resumo, conclusão 3, Seção 4.7 e limitações agora dizem "sem ruído". |
 | 3 u_act | feito | Frases na Seção 2.3 e nas limitações: o controlador replica sat+taxa; posição medida não foi simulada. |
 | 4 Resumo | feito | 236 → 224 palavras. |
 | 5 AMIGO | feito | A macro saiu do modo matemático (Seção 4.5 e S3). |

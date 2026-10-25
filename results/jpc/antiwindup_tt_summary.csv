@@ -1,4 +1,4 @@
-Method,"\([T_d, T_i]\)",\(T_t^{\mathrm{cv}}\),cv: \(\pm 5\)~K,free \(T_t^{\mathrm{cv}}\),in range,free: \(\pm 5\)~K,"free, exact",exact: \(\pm 5\)~K,\(T_t^{\mathrm{mm}}\),mm,\(\sqrt{T_iT_d}\),\(T_i\)
+Method,"\([T_d, T_i]\)",\(T_t^{\mathrm{sel}}\),sel: \(\pm 5\)~K,free \(T_t^{\mathrm{sel}}\),in range,free: \(\pm 5\)~K,"free, exact",exact: \(\pm 5\)~K,\(T_t^{\mathrm{mm}}\),mm,\(\sqrt{T_iT_d}\),\(T_i\)
 Ziegler-Nichols,"[0.047, 0.187]",0.047,1.02,0.020,no,1.02,0.009,1.02,0.047,1.02,1.09,1.97
 Cohen-Coon,"[0.033, 0.217]",0.033,0.94,0.020,no,0.94,0.008,0.94,0.033,0.94,0.98,1.90
 Tyreus-Luyben,"[0.056, 0.779]",0.554,0.94,0.554,yes,0.94,0.554,0.93,0.554,0.94,1.37,1.01

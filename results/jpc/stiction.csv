@@ -1,4 +1,4 @@
-Method,"SB, none","Rate, none","BC$^{\mathrm{cv}}$, none","SB, moderate","Rate, moderate","BC$^{\mathrm{cv}}$, moderate","SB, severe","Rate, severe","BC$^{\mathrm{cv}}$, severe"
+Method,"SB, none","Rate, none","BC$^{\mathrm{sel}}$, none","SB, moderate","Rate, moderate","BC$^{\mathrm{sel}}$, moderate","SB, severe","Rate, severe","BC$^{\mathrm{sel}}$, severe"
 Ziegler-Nichols,271.30,0.94,0.88,272.16,1.96*,1.93*,274.68,3.08*,3.05*
 Cohen-Coon,269.85,1.02,0.82,269.54,2.00*,1.79*,271.22,3.23*,2.83*
 Tyreus-Luyben,1.26,0.92,0.83,2.39*,2.02*,1.98*,3.62*,3.20*,3.20*
