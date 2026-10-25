@@ -58,3 +58,29 @@ As DOIs de \[23\] (Padula e Visioli) e \[25\] (Reynoso-Jardón et al.) apontavam
 | "Sem parâmetro" qualificado; regime da regulação | Feito (Tab. 1, Sec. 4.3, Sec. 4.7) |
 | Separar curvas das Figs. 1 e 3 | Feito: dois painéis (regras empíricas e projetos robustos) |
 | Segunda planta de ação reversa | **Não feito** (declarado como trabalho futuro) |
+
+
+---
+
+# 4ª rodada — exigências consolidadas
+
+| # | Exigência | O que foi feito | Onde |
+|---|---|---|---|
+| 1 | Retrocálculo com T_t único por laço; ajustar resumo, destaque 3, conclusão 1; reportar T_t = T_i e √(T_i T_d) | Critério minimax (maior razão IAE_retrocálculo/IAE_direcional entre −2, −5, +5 K, em [T_d, T_i]) e critério de validação (escolha no degrau de −2 K, teste em ±5 K); piores razões: 1,02/0,94/0,94/1,00/0,90/1,01 (minimax); √(T_iT_d) até 1,37; T_i até 1,97. Conclusão: dentro de 2 % e até 10 % melhor; o melhor-T_t-por-degrau foi abandonado | Sec. 4.3, Tabs. 7–8, resumo, destaque 3, conclusão 1 |
+| 2 | Erro de modelo na mesma planta exata, com τ, estabilidade por canto | 18 cantos por ajuste (ganho, todas as constantes de tempo, atraso extra), estabilidade pelas raízes do polinômio característico (Padé 4); M_s só sobre cantos estáveis. **Nenhum canto instável**; pior M_s: 1,63 (ótimo FOPTD) e 2,06 (ótimo exato). "Colapsa" removido do resumo e da conclusão 3 | Sec. 4.5, Tab. `model_error_ms` |
+| 3 | Conclusão 4 e ρ² | Reescrita: ρ_s(TV) = +0,64 e +0,69 (AMIGO, SIMC; ρ² = 0,41 e 0,48), negativa para ZN e CC; ρ² do IAE = 0,18–0,66 | Sec. 4.10, conclusão 4 |
+| 4 | Sobol: só 1ª ordem na região factível; limitação | Dito no resumo e na Sec. 4.10: índices de 1ª ordem (RBD-FAST) recalculados; total-ordem indefinido em caixa truncada e com entradas dependentes | resumo, Sec. 4.10 |
+| 5 | Linguagem de generalidade | Prop. 1 geral; mapa, comparação e Sobol "do reator estudado" (introdução das conclusões, limitações) | conclusões, Sec. 4.11 |
+| 6 | Destaque 4 truncado; resumo | Causa: `%` sem escape em LaTeX comentava o resto da linha; destaques corrigidos (`\%`), desk-check passa. Resumo com 203 palavras (contagem sem comandos). **Não consegui abrir o guia do JPC**; limite não verificado | `highlights.tex`, `main.tex` |
+| 7 | Refs, DOI, carta | Refs verificadas por script no Crossref (sem mudanças nesta rodada). **Pendente (autor):** release com DOI (Zenodo) e envio da carta, que já declara a relação com os artigos irmãos | `cover_letter.md` |
+
+## Recomendadas
+
+| Recomendação | Situação |
+|---|---|
+| Segunda planta independente | **Não feita**; declarada como limitação e trabalho futuro |
+| Zona morta e atrito | Zona morta (3 e 6 L/min) simulada para as 7 políticas (Tab. `antiwindup_deadband`); **atrito não simulado** |
+| Razão não monotônica do AMIGO; mapa com ganhos reotimizados | Explicação com dados (a válvula nunca chega a um limite de amplitude; a discrepância comando–válvula cai de 111 a 41 L/min entre 45 e 60 L/min²) e Tab. `smax_retuned` (ITAE ótimo reotimizado em cada S_max) |
+| Sensibilidade para entradas dependentes | Efeitos de Shapley na região factível (Tab. `sobol_shapley`); sem IC (uma execução) |
+| Qualificar "sem parâmetros"; atraso de uma amostra; IC por bootstrap | "Sem parâmetros" qualificado (depende de S_max e Δt); atraso de uma amostra discutido na Sec. 3.2 (não variado); tabelas determinísticas não têm incerteza amostral (dito na Sec. 4.1) |
+| Condensar Sobol e tabelas repetidas | **Não feito**: o artigo cresceu para 25 páginas |
