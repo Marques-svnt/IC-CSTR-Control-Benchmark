@@ -1,0 +1,16 @@
+Method,step_K,rho,R
+Ziegler-Nichols,-2.0000,2.1168,1.0000
+Ziegler-Nichols,-5.0000,0.0000,1.0000
+Ziegler-Nichols,5.0000,13.7653,4.0233
+Cohen-Coon,-2.0000,1.5585,1.0000
+Cohen-Coon,-5.0000,0.0000,1.0000
+Cohen-Coon,5.0000,20.1201,3.7062
+Tyreus-Luyben,-2.0000,1.2394,0.9580
+Tyreus-Luyben,-5.0000,0.0000,1.0000
+Tyreus-Luyben,5.0000,8.6308,1.1484
+AMIGO,-2.0000,1.0854,1.0199
+AMIGO,-5.0000,0.0000,1.0000
+AMIGO,5.0000,3.7676,4.7017
+Skogestad SIMC,-2.0000,0.6641,0.8682
+Skogestad SIMC,-5.0000,0.4648,0.9999
+Skogestad SIMC,5.0000,1.6528,1.4419

@@ -712,6 +712,38 @@ def measured_position_numbers() -> None:
            "measured_position_full (largest IAE rise of BC with u_meas)", "{:.0f}")
 
 
+def c2_numbers() -> None:
+    """C2: operating point by the declared criterion (c2_candidates, c2_ablation, c2_rate_demand)."""
+    from src.sim_core.cstr_plant import CSTRPlant
+
+    cand = rows("c2_candidates")
+    chosen = min((r for r in cand if r["eligible"] == "True"), key=lambda r: float(r["slack"]))
+    q = float(chosen["q_j_ss"])
+    define("ctwoq", q, "c2_candidates (selected point)", "{:.0f}")
+    define("ctwoslack", float(chosen["slack"]), "c2_candidates")
+    plant = CSTRPlant()
+    t_ss = plant.find_steady_state(q_j=q).T
+    ureq = plant.required_coolant_flow(t_ss - 5.0)
+    if ureq <= 300.0:
+        raise ValueError("text states that the -5 K setpoint is beyond the valve at the C2 point")
+    define("ctwoureq", ureq, "CSTRPlant.required_coolant_flow(T_ss - 5) at the C2 point", "{:.0f}")
+    ab = rows("c2_ablation")
+    iae = {(r["Method"], r["Step"], c): num(r[c]) for r in ab for c in r if c not in ("Method", "Step")}
+    loops = ("Ziegler-Nichols", "Cohen-Coon", "AMIGO")
+    p5 = "$+5$ K"
+    define("ctwosbmin", min(iae[(n, p5, "Sign-blind amp.")] / iae[(n, p5, "None")] for n in loops), "c2_ablation")
+    define("ctwoampmin", min(iae[(n, p5, "Amp. direct.")] / iae[(n, p5, RATE)] for n in loops), "c2_ablation", "{:.1f}")
+    define("ctwoampmax", max(iae[(n, p5, "Amp. direct.")] / iae[(n, p5, RATE)] for n in loops), "c2_ablation", "{:.1f}")
+    rd = rows("c2_rate_demand")
+    hi = [r for r in rd if float(r["rho"]) >= 1.0]
+    define("ctworhohi", f"{len(hi)}", "c2_rate_demand (rho >= 1)")
+    define("ctworhohelp", f"{sum(float(r['R']) > 1.005 for r in hi)}", "c2_rate_demand (rho >= 1, R > 1.005)")
+    define("ctworhotie", f"{sum(abs(float(r['R']) - 1.0) <= 0.005 for r in hi)}", "c2_rate_demand (rho >= 1, |R - 1| <= 0.005)")
+    tl = next(r for r in rd if r["Method"] == "Tyreus-Luyben" and float(r["step_K"]) == -2.0)
+    define("ctwoTLrho", float(tl["rho"]), "c2_rate_demand")
+    define("ctwoTLR", float(tl["R"]), "c2_rate_demand")
+
+
 def predictive_and_exact_numbers() -> None:
     """Freeze test at k (predictor-corrector) and exact back-calculation factor (Tables S)."""
     pc = rows("predictive_clamping")
@@ -869,6 +901,7 @@ def main() -> None:
     hx_body = hx_numbers()
     stiction_numbers()
     measured_position_numbers()
+    c2_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
     load_cols, load_body = load_table()

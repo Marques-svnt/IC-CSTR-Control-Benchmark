@@ -316,6 +316,17 @@ macro,value,source
 \vposworstloop,SIMC,measured_position_full
 \vposbandpct,3,measured_position_full (largest |IAE change| with the band)
 \vposbcpct,10,measured_position_full (largest IAE rise of BC with u_meas)
+\vctwoq,250,c2_candidates (selected point)
+\vctwoslack,0.17,c2_candidates
+\vctwoureq,355,CSTRPlant.required_coolant_flow(T_ss - 5) at the C2 point
+\vctwosbmin,1.32,c2_ablation
+\vctwoampmin,3.7,c2_ablation
+\vctwoampmax,4.7,c2_ablation
+\vctworhohi,9,c2_rate_demand (rho >= 1)
+\vctworhohelp,6,"c2_rate_demand (rho >= 1, R > 1.005)"
+\vctworhotie,2,"c2_rate_demand (rho >= 1, |R - 1| <= 0.005)"
+\vctwoTLrho,1.24,c2_rate_demand
+\vctwoTLR,0.96,c2_rate_demand
 \vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
 \vpcZNfiveold,3.65,predictive_clamping
 \vpcZNfivenew,3.44,predictive_clamping

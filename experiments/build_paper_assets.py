@@ -1169,6 +1169,41 @@ def select_c2_point(plant) -> float:
     return float(tie.loc[tie.K.abs().idxmax(), "q_j_ss"])
 
 
+def run_c2_point(plant, tables_dir: Path) -> None:
+    """C2: the ablation, T_t^cv and rho at the operating point chosen by select_c2_point."""
+    q = select_c2_point(plant)
+    ss2, foptd2, loops = _second_op_loops(plant, q)
+    free_lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=np.inf)
+    rows, grid = [], []
+    for n, g in loops.items():
+        tt = _tt_cv(plant, ss2, g, q_j=q)
+        for i, st in enumerate(TT_STEPS):
+            row = {"Method": n if i == 0 else "", "Step": f"${st:+g}$ K"}
+            for lab, m in ABLATION_VARIANTS:
+                r = _step_run(plant, ss2, _variant_gains(lab, g, tt), m, st, q_j=q)
+                row[lab] = f"{r.metrics.iae:.2f}"
+            amp = _step_run(plant, ss2, g, AW.CLAMPING_POS_DIRECTIONAL, st, q_j=q).metrics.iae
+            rate = _step_run(plant, ss2, g, AW.CLAMPING, st, q_j=q).metrics.iae
+            free = _step_run(plant, ss2, g, AW.CLAMPING, st, q_j=q, limits=free_lim)
+            rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (exp02.BENCHMARK_LIMITS.max_slew_rate * SIM_DT)
+            row["\\(\\rho\\) / \\(R\\)"] = f"{rho:.2f} / {amp / rate:.2f}"
+            grid.append({"Method": n, "step_K": st, "rho": rho, "R": amp / rate})
+            rows.append(row)
+    pd.DataFrame(grid).to_csv(exp02.RESULTS_DIR / "c2_rate_demand.csv", index=False, float_format="%.4f")
+    exp02.export_latex_table(
+        data=rows, output_path=tables_dir / "c2_ablation.tex",
+        caption=(
+            f"Operating point chosen by the declared criterion (smallest slack to the upper stop): "
+            f"$q_{{j,ss}} = {q:g}$~L/min, $T_{{ss}} = {ss2.T:.2f}$~K, FOPTD $K = {foptd2.k_p:.4f}$~K/(L/min), "
+            f"$\\tau = {foptd2.tau:.3f}$~min, $\\theta = {foptd2.theta:.4f}$~min, analytical rules re-tuned "
+            "(Optimal ITAE not re-optimized). IAE (K$\\cdot$min) of the policies of "
+            "Table~\\ref{tab:antiwindup_ablation} on three steps, BC$^{\\mathrm{cv}}$ re-chosen here, and "
+            "$\\rho$ / $R$ at $S_{\\max} = 80$~L/min$^2$."
+        ),
+        label="tab:c2_ablation",
+    )
+
+
 def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
     """The rho >= 1 rule, defined on the nominal grid, checked on conditions it was not built on.
 
@@ -2102,6 +2137,7 @@ def remediate_jpc() -> Path:
     run_predictive_clamping(plant, ss, gains, tables_dir)
     run_exact_backcalc(plant, ss, gains, tables_dir)
     run_second_operating_point(SECOND_OP_Q_J, tables_dir)
+    run_c2_point(plant, tables_dir)
     run_exact_robustness(plant, ss, foptd, gains, tables_dir)
     stage("cost of the design-model constraint + joint 2-DOF")
     extra = run_robust_constraint_cost(plant, ss, foptd, gains, tables_dir)
