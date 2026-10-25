@@ -1183,7 +1183,7 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
             phi = np.array([r[0] for r in reps])
             r2 = np.array([r[1] for r in reps])
             row = {"Method": name, "Metric": m}
-            row |= {exp02.SOBOL_LABELS[nm]: f"{phi[:, i].mean():.2f} $\\pm$ {_ci95(phi[:, i]):.2f}"
+            row |= {exp02.SOBOL_LABELS[nm]: f"{round(phi[:, i].mean(), 2) + 0.0:.2f} $\\pm$ {_ci95(phi[:, i]):.2f}"
                     for i, nm in enumerate(names)}
             row["\\(R^2\\) (all four)"] = f"{r2.mean():.2f} $\\pm$ {_ci95(r2):.2f}"
             rows_shap.append(row)

@@ -606,6 +606,7 @@ def main() -> None:
     measurement_numbers()
     rate_trigger_numbers()
     predictive_and_exact_numbers()
+    shapley_numbers()
     load_cols, load_body = load_table()
 
     tables = PAPER / "tables"

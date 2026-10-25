@@ -229,6 +229,25 @@ macro,value,source
 \vexCCeuler,18.56,exact_backcalc
 \vexCCexact,0.82,exact_backcalc
 \vexCCTVeuler,802,exact_backcalc
+\vshapIAEeamin,0.03,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEeamax,0.20,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEuamin,0.33,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEuamax,0.39,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEcafmin,0.43,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEcafmax,0.61,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEthmin,0.00,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAEthmax,0.04,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAErtwomin,0.92,"sobol_shapley (mean over seeds, IAE)"
+\vshapIAErtwomax,0.97,"sobol_shapley (mean over seeds, IAE)"
+\vshapTVZNth,0.51,sobol_shapley (TV)
+\vshapTVCCth,0.37,sobol_shapley (TV)
+\vshapTVCCea,0.30,sobol_shapley (TV)
+\vshapTVgroupeamin,0.45,"sobol_shapley (TV, TL and optimal tunings)"
+\vshapTVgroupeamax,0.53,"sobol_shapley (TV, TL and optimal tunings)"
+\vshapTVSIMCcaf,0.71,sobol_shapley (TV)
+\vshapTVrtwomin,0.77,sobol_shapley (TV)
+\vshapTVrtwomax,0.97,sobol_shapley (TV)
+\vshaphwmax,0.01,sobol_shapley (largest 95 % half-width over seeds)
 \vloadZN,2.04,disturbance_rejection_table
 \vloadCC,1.98,disturbance_rejection_table
 \vloadTL,3.02,disturbance_rejection_table

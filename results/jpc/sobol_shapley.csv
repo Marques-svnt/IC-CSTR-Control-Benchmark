@@ -1,15 +1,15 @@
 Method,Metric,$E_a/R$,$UA$,$C_{Af}$,$\theta_{\mathrm{sensor}}$,\(R^2\) (all four)
-Ziegler-Nichols,IAE,0.09,0.39,0.48,0.04,0.94
-Ziegler-Nichols,TV,0.26,0.06,0.17,0.51,0.91
-Cohen-Coon,IAE,0.16,0.36,0.43,0.04,0.93
-Cohen-Coon,TV,0.30,0.11,0.20,0.38,0.90
-Tyreus-Luyben,IAE,0.04,0.41,0.54,0.01,0.95
-Tyreus-Luyben,TV,0.54,0.15,0.17,0.13,0.74
-AMIGO,IAE,0.02,0.42,0.55,0.01,0.97
-AMIGO,TV,0.25,0.18,0.45,0.11,0.83
-Skogestad SIMC,IAE,0.03,0.38,0.59,0.01,0.95
-Skogestad SIMC,TV,0.04,0.28,0.68,0.00,0.96
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),IAE,0.03,0.42,0.54,0.01,0.95
-Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),TV,0.50,0.16,0.21,0.13,0.70
-2-DOF Optimal ITAE,IAE,0.04,0.41,0.54,0.01,0.96
-2-DOF Optimal ITAE,TV,0.45,0.17,0.28,0.11,0.78
+Ziegler-Nichols,IAE,0.13 $\pm$ 0.00,0.36 $\pm$ 0.00,0.48 $\pm$ 0.00,0.03 $\pm$ 0.00,0.93 $\pm$ 0.01
+Ziegler-Nichols,TV,0.28 $\pm$ 0.00,0.05 $\pm$ 0.00,0.17 $\pm$ 0.00,0.51 $\pm$ 0.00,0.92 $\pm$ 0.00
+Cohen-Coon,IAE,0.20 $\pm$ 0.00,0.33 $\pm$ 0.00,0.43 $\pm$ 0.00,0.04 $\pm$ 0.00,0.92 $\pm$ 0.01
+Cohen-Coon,TV,0.30 $\pm$ 0.00,0.11 $\pm$ 0.00,0.22 $\pm$ 0.00,0.37 $\pm$ 0.00,0.91 $\pm$ 0.00
+Tyreus-Luyben,IAE,0.06 $\pm$ 0.00,0.37 $\pm$ 0.00,0.57 $\pm$ 0.00,0.00 $\pm$ 0.00,0.95 $\pm$ 0.00
+Tyreus-Luyben,TV,0.53 $\pm$ 0.00,0.15 $\pm$ 0.00,0.17 $\pm$ 0.00,0.14 $\pm$ 0.00,0.79 $\pm$ 0.00
+AMIGO,IAE,0.03 $\pm$ 0.00,0.39 $\pm$ 0.00,0.58 $\pm$ 0.00,-0.00 $\pm$ 0.00,0.96 $\pm$ 0.00
+AMIGO,TV,0.27 $\pm$ 0.00,0.16 $\pm$ 0.00,0.46 $\pm$ 0.00,0.10 $\pm$ 0.00,0.85 $\pm$ 0.00
+Skogestad SIMC,IAE,0.04 $\pm$ 0.00,0.36 $\pm$ 0.00,0.61 $\pm$ 0.00,-0.00 $\pm$ 0.00,0.97 $\pm$ 0.00
+Skogestad SIMC,TV,0.04 $\pm$ 0.00,0.25 $\pm$ 0.00,0.71 $\pm$ 0.00,-0.01 $\pm$ 0.00,0.97 $\pm$ 0.00
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),IAE,0.05 $\pm$ 0.00,0.38 $\pm$ 0.00,0.57 $\pm$ 0.00,-0.00 $\pm$ 0.00,0.95 $\pm$ 0.00
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),TV,0.50 $\pm$ 0.00,0.15 $\pm$ 0.00,0.21 $\pm$ 0.00,0.14 $\pm$ 0.00,0.77 $\pm$ 0.00
+2-DOF Optimal ITAE,IAE,0.06 $\pm$ 0.00,0.38 $\pm$ 0.00,0.57 $\pm$ 0.00,-0.00 $\pm$ 0.00,0.95 $\pm$ 0.00
+2-DOF Optimal ITAE,TV,0.45 $\pm$ 0.00,0.16 $\pm$ 0.00,0.29 $\pm$ 0.00,0.11 $\pm$ 0.00,0.82 $\pm$ 0.00
