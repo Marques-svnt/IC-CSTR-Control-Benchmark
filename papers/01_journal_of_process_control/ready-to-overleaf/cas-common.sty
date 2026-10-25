@@ -15,11 +15,11 @@
 %% given in the file `manifest.txt'.
 %% 
 
-% $Id: cas-common.sty 66 2021-05-11 14:17:42Z rishi $
+% $Id: cas-common.sty 94 2024-05-04 09:27:09Z rishi $
 
  \def\RCSfile{cas-common}%
- \def\RCSversion{2.3}%
- \def\RCSdate{2021/05/11}%
+ \def\RCSversion{2.4}%
+ \def\RCSdate{2024/05/04}%
 \NeedsTeXFormat{LaTeX2e}[1995/12/01]
 
 \pretolerance=-1
@@ -1537,7 +1537,7 @@
    \ifnum\theblind>0\relax
      \vspace*{\the\baselineskip}
    \else  
-     \seq_use:Nn \g_stm_prelimsau_seq { , }
+     \seq_use:Nn \g_stm_prelimsau_seq { ,~ }
    \fi  
    \vskip12pt
    \par 
@@ -1967,7 +1967,7 @@
 \def\lastpage{100}
 
 \AtEndDocument{%
-   \clearpage
+%   \clearpage
    \immediate\write\@auxout{\string\csxdef{lastpage}{\thepage}}
 }
 
@@ -2628,7 +2628,7 @@
 
 \xspaceaddexceptions{]}
 
-\ABD{\bibsep=0pt}
+\ABD{\@ifundefined{bibsep}{}{\bibsep=0pt}}
 %\ifbool{casfinallayout}
 %  {%
    \ABD{\gdef\bibfont{\fontsize{8pt}{10pt}\selectfont}%
@@ -2638,3 +2638,4 @@
 %  {}
 
 \endinput
+
