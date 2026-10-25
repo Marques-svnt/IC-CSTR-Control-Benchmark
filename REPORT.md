@@ -54,43 +54,13 @@ Divergências entre o pedido e os CSV (prevaleceu o CSV):
 7. **Espaço.** Para caber em 12 páginas, não cortei conteúdo. Tirei duplicações (números do SIMC já presentes na Seção 4.6 e na Tabela 9; exemplo do TL já na Tabela 7) e passei a Tabela 10 para uma coluna. O detalhe novo de T6, T7 e T8 está no Suplementar, com referência exata.
 8. **Fora do pedido, mas consequência do T1** (feito após o parecer do usuário): resumo e highlight 2 agora qualificam o gatilho de taxa ("restores fast loops; it worsens SIMC").
 
-## 5. Verificação final
+## 5. Verificação final (v7)
 
-1. **PDF** (template `cas-dc` 2.4, Elsevier):
-   - Texto principal com **12 páginas** de duas colunas ("Page 12 of 12"); o PDF tem 13 páginas por causa da página de highlights que o template insere.
-   - Resumo com 236 palavras pela minha contagem, que expande as macros (a sua contagem da v6 era 227).
-   - Highlights: 5 itens com 83, 77, 66, 79 e 71 caracteres, em `highlights.tex`.
-   - 6 palavras-chave.
-   - Referências em ordem de primeira citação (`check_citation_order.py`: 31 refs, ordem 1–31), com DOI quando há.
-   - Nenhuma referência indefinida em main e Suplementar; todo `\suppref` resolve.
-   - Desk-check Elsevier passou.
-   - Restam 4 caixas estouradas que já existiam na v6 (página de highlights, 1ª linha da introdução e duas de menos de 4 pt); não mexi nelas.
-   - Suplementar com 21 páginas.
-2. **Rerun do zero** (`build_paper_assets.py jpc-remediation`, 1398 s, depois `jpc_v6_numbers.py`):
-   - Todos os CSV de `results/jpc/` reproduzem exatamente os commitados. A única diferença, em `sobol_shapley`, é a formatação "−0.00" → "0.00".
-   - Os PNG das figuras são idênticos; os PDF das figuras mudam só nos metadados (mesmo tamanho; não foram commitados de novo).
-   - Todas as sementes são fixas: Sobol 2026, RBD-FAST 2026, ruído 100+k e 300+k, Shapley 0–29.
-   - `check_text_numbers.py` confirma que `generated/numbers.tex` reproduz a partir dos CSV.
-   - As tabelas do PDF são os arquivos `.tex` gerados, incluídos por `\input`.
-3. **Diff de números v6 × v7** (`results/jpc/v6_numbers.csv` contra `v7_numbers.csv`):
-   - Nenhuma das 161 macros da v6 mudou de valor nem foi removida.
-   - 98 macros novas, todas de T1 (ρ e SIMC), T2 (bordas), T3 (BC Tt^cv), T4 (TL, SIMC, ITAE), T5 (latch_check), T7/T8 (preditor-corretor e fator exato) e T10(d) (Shapley).
-   - Fora das macros, o único número de tabela que mudou foi o Shapley (S22), por causa das 30 sementes (T10d).
-4. **Grep** por "S1 a S5", "TODO", "XXX" e "placeholder":
-   - Só o placeholder do Zenodo, em `references.bib` e no data statement, ambos fora de escopo.
-   - "Supplementary" sem item: só a frase do data statement ("The tuning-specific analyses are in the Supplementary Material."), mantida pela regra 2.
-5. **Testes:**
-   - `pytest`: 157 passed, 1 xfailed (xfail pré-existente do TL).
-   - `ruff check .` limpo.
-   - Testes novos: `preview` da válvula, congelamento no instante k e propriedade (hypothesis) de que o retrocálculo exato nunca sobrecorrige.
+Superada: a verificação vigente é a da rodada 9 (seção 8.6).
 
-## 6. Riscos e pendências para o autor
+## 6. Riscos e pendências para o autor (v7)
 
-- [19]: conferir os autores no PDF ou na página do editor (seção 3).
-- O nome `jpc_v6_numbers.py` num manuscrito v7 vai parecer inconsistente; resolver junto com o data statement.
-- ρ precisa de uma simulação do laço sem o limite de slew. É ex-ante, mas depende do modelo, e a regra ρ ≥ 1 foi verificada em um único reator.
-- O intervalo do Shapley não é incerteza amostral; com uma única amostra Sobol, essa incerteza não foi estimada.
-- Build do LaTeX: o `\suppref` exige compilar o Suplementar e rodar `scripts/jpc_supp_refs.py` antes da compilação final do main. O pacote `ready-to-overleaf/` **não** foi atualizado para a v7.
+Superados: os riscos e pendências vigentes estão na seção 8.5.
 
 ## 7. Rodada editorial (revisão maior, 62–77)
 
@@ -176,3 +146,87 @@ Verificação final da rodada:
   5. caminho de medição (ruído, filtro) declarado.
 - **Método de leitura:** busca por palavras-chave no texto completo (saturation, rate, slew, windup, anti-windup, sampling, discret, Euler, noise, filter, reverse, direct acting) e leitura dos trechos encontrados. É uma codificação de um executor, sem segundo codificador.
 - **Saída:** `papers/01_journal_of_process_control/repository/literature_audit.csv` (lista completa) e uma tabela agregada no Suplementar.
+
+### 8.1 Itens da rodada 9
+
+| Item | Estado | Commit | Observação |
+|---|---|---|---|
+| Base v8 | feito | 2261b3b | Valores das macros da v8 em `results/jpc/v8_numbers.csv`; o script grava `v9_numbers.csv`. |
+| A1 | feito | 4f6e6f6 | "12 pares laço–condição de 5 laços"; 3 casos perto do limiar (ρ < 2), por macro. |
+| A2 | feito | 4f6e6f6, 982e7e0 | Highlight 4 e contribuição com "sem ruído"; o achado de ruído virou o highlight 5 (73 caracteres). |
+| A3 (a) | feito | 4f6e6f6 | ZN em 240 L/min² trava no batente **inferior** (5,38 min fechada, espelho da Proposição 1); reator a +54,2 K e ainda subindo em t_f. Diagnóstico em `smax_signblind_diagnostics.csv`. |
+| A3 (b) | feito | 4f6e6f6 | Diferenças da Tabela 6 de até 0,08, só no SIMC (piora); ≤ 0,01 nos demais. |
+| A3 (c) | feito | 4f6e6f6 | Símbolo R = IAE_amp/IAE_rate definido na primeira ocorrência da 4.5 e usado depois. |
+| A4 | **não feito** (pendência) | — | [19] continua inacessível; tentativas na seção 8.5. |
+| A5 | feito | 4f6e6f6, 982e7e0, 6dba845 | Resumo com 232 palavras (expressão matemática = 1 palavra). Das 4 caixas herdadas, 3 resolvidas; a dos highlights (123,6 pt) aparece num documento mínimo com o `cas-dc.cls` intocado, então é do template e só some alterando a classe. |
+| A6 | feito | 6360544 | `cover_letter_v9.md`, 601 palavras. |
+| B1 | feito | 0356731 | Tt sob ruído sobe para ZN, CC e AMIGO; o gap estreita (−2 K: 1,51 → 1,29) mas não fecha. |
+| B2 | feito | 0356731 | Hipótese sustentada: mesma fração de cortes nas duas políticas; o termo de rastreamento injeta 2,9–4,0 L/min por amostra e o integrador se desvia 5–7 vezes mais. |
+| B3 | feito | 0356731 | ρ sem filtro a 0,05 K erra 3 de 18 casos (SIMC ρ até 2,92); com filtro, 0 erros. |
+| B4 | feito | 0356731 | Com o filtro, o pior BC/regra cai de 1,50 para 1,15; sem anti-windup fica ≥ 19 vezes pior para ZN e CC. |
+| D2 | feito | 79c7c84 | (i) taxa antes da saturação: sem mudança (≤ 6,3 %). (ii) folga antes da taxa, (iii) derivada sobre a medição bruta com ruído e (iv) filtro por Euler: mudam ordenações. 9 das 11 trocas de política são entre a regra e os BCs; as conclusões principais não se invertem. |
+| C1 | feito | 2c0b44a, 949e2db | Trocador construído para o estudo. Verificações do pedido reproduzidas; r = θ/τ **medido = 0,34**. Ver seção 8.2. |
+| C3 | feito | dc43592 | Stiction de Choudhury (S, J) após a taxa: hunting em 86 % (moderada) e 92 % (severa) das rodadas das políticas que funcionam; latch e windup só-amplitude se mantêm; BC/regra fica errático (0,37–1,61). |
+| C4 | feito | fb36c16 | Posição medida sem banda: 49–54 % de congelamentos espúrios e +77 % de IAE (SIMC); com ε_u = 1,7 L/min: ≤ 16 % e IAE a até 3 % da base; BC perde até 10 %. |
+| C2 | feito | 02fd99e, 56164e0 | Critério escolheu 250 L/min (folga 0,167). −5 K é inviável ali (exige 355 L/min); em +5 K a ordenação se mantém; ρ ≥ 1 seguido de melhora em 6 de 9 casos (2 empates, 1 perda: TL). |
+| D1 | feito | 23a2828, 3b42532 | 66 candidatos; 12 lidos e contados; 14 só resumo (acesso bloqueado). Ver seção 8.2. |
+| Bloco 0 | feito | 982e7e0 | Enquadramento, contribuições, resumo, highlights, checklist (ordem dos limites e discretização do filtro, porque D2 mostrou efeito), conclusões. |
+| 12 páginas | feito | 6dba845 | Movidos para o Suplementar, com referência exata: Tabela 5 (cenários), Tabela 7 (viagem/overshoot), Fig. 1, Fig. 4, tabela de cargas (duplicava a S) e a frase do C2. Nenhum conteúdo cortado. |
+
+### 8.2 Divergências entre o pedido e os CSV (prevaleceu o CSV)
+
+- **C1, θ/τ:** o pedido estimava r ≈ 0,37; o medido é **0,341** (K = −0,2036 K/(L/min), τ = 0,657 min, θ = 0,224 min).
+- **C1, clamping cego:** o pedido supunha que o travamento da Proposição 1 seria "possível". Ele **não ocorre** nos degraus testados: as hipóteses não são atingidas porque ZN e CC oscilam pelo limite de taxa sem parar num batente. O clamping cego ainda fica 1,03–1,23 vezes pior que sem anti-windup.
+- **C1, heurística ρ:** não transfere. O gatilho piora o TL em todos os degraus e limites (R até 0,60, mesmo com ρ até 25); ρ ≥ 1 seguido de melhora em 104 de 129 casos.
+- **C2:** a verificação inicial de multiplicidade contava 2 estados em todos os candidatos, por causa do polo de u_req(T); corrigido (seção 8.0). Todos os candidatos são estáveis e têm estado único, o que confirma a sua verificação.
+- **C3:** as hipóteses de ciclo-limite e de preservação da ordenação foram medidas. Hunting quase sempre; a ordenação entre regra de taxa e BC **não** se preserva (razão 0,37–1,61); o latch e o windup só-amplitude se preservam.
+- **D1:** o protocolo pedia 12–15 artigos lidos; o máximo alcançável com as três strings registradas foi **12**. Não acrescentei strings depois de ver os resultados.
+- **A3(a):** o +54,2 K não é oscilação; é o travamento espelhado no batente inferior.
+
+### 8.3 Decisões em pontos ambíguos
+
+1. **C1:** o IAE é medido em y = T₂(t − 0,20), a saída definida da planta. Integração por RK4 de passo fixo (4 subpassos por amostra), registrada no código e no Suplementar. **Não afirmo** que o integrador da planta tenha efeito semelhante ao do Euler no BC; não foi testado (restrição 0.6).
+2. **C1:** o ITAE ótimo foi reotimizado no trocador sem a reotimização extra ("restart") usada em parte do CSTR. Segui o procedimento de `setup_controllers`, que é o que define o ITAE ótimo da Tabela 3.
+3. **C3:** horizonte de 20 min (em vez de 10) para dar tempo ao ciclo-limite. Critério de hunting declarado antes de ver os dados: pico a pico de T > 0,05 K **e** pelo menos 2 deslizamentos nos últimos 10 min. A válvula começa parada e a primeira partida exige S (tratada como reversão).
+4. **C3, SIMC:** o "sem anti-windup" do SIMC é aproximado pela política só-amplitude, que coincide com ela porque o SIMC não atinge a amplitude. A política "None" não está entre as 5 da Tabela 8.
+5. **C4:** "congelamento espúrio" = integrador parado numa amostra cuja anterior estava em regime linear segundo o modelo interno da válvula.
+6. **D2:** "muda" = um par (de laços sob uma política, ou de políticas num laço) inverte de posição com diferença > 1 % nas duas condições. Na variante (ii), o anti-windup continua vendo rate(sat(u_raw)), e só a entrada da planta muda.
+7. **D1:**
+   - Codificação feita por busca de palavras-chave no texto completo e leitura dos trechos, por um único leitor.
+   - Os itens 4 (Δt **e** método) e 5 exigem declaração explícita.
+   - Anti-windup é "não aplicável" para MPC.
+   - O artigo 1.25 (tanque de qualidade de água modelado como CSTR) foi excluído por não ser reator químico.
+8. **Tabela 8 da v8:** já tinha ido para o Suplementar na rodada anterior. Nesta rodada, a numeração do texto principal mudou de novo com as saídas acima.
+9. **Highlights:** saíram o do mapa de S_max e o de |K_p|(1+N), substituídos pela dependência da implementação e pelo achado de ruído; |K_p|(1+N) continua nas contribuições, na Seção 4.7 e nas conclusões.
+
+### 8.4 Evidência de cada frase do Bloco 0
+
+| Frase (onde) | Evidência |
+|---|---|
+| "in a short audit of 12 articles … none a slew-rate limit or the action of the loop … 2 of the 7 with integral action the anti-windup logic … 2 the sampling interval and the discretization" (Introdução e resumo) | Tabela S `literature_audit`; macros `\vlitcounted`, `\vlitactuatormodel`, `\vlitratelimit`, `\vlitloopsign`, `\vlitantiwindup`, `\vlitantiwindupapp`, `\vlitdtandmethod` |
+| "in a computational benchmark these choices can decide the ranking of controllers" (Introdução) | Tabela 4 (sign-blind, gatilho), Tabela 6 (constante do BC), Tabela S `order_variants` (macros `\vorderTworank`, `\vorderFourrank`) |
+| contribuição 1: Euler contra exato no rastreamento e no filtro, posição da folga mudam rankings; saturação/taxa não | Tabela S `exact_backcalc` (`\vexZNeuler`, `\vexZNexact`); `order_variants` (`\vorderOnedIAE`, `\vorderOnerank` = same; `\vorderTworank`, `\vorderFourrank` = changes) |
+| contribuição 2: hipóteses não atingidas na segunda planta | Tabela S `hx_ablation` (tempo em u_max = 0; checado em `hx_numbers`) |
+| resumo: "restores the high-gain loops but worsens slow ones such as SIMC" | Tabelas 4 e 8; Seção 4.5; macros `\vSIMC…`, `\vhxTLratemin` |
+| resumo: "with 0.05 K sensor noise it is up to 51 % worse" | Tabela S `noise_policies`; `\vnzbchimaxpct` |
+| resumo: "Explicit Euler discretization of the measurement filter and the position of the backlash change the rankings" | `order_variants`; `\vorderFourdIAE`, `\vorderTwodIAE` |
+| resumo: "heat exchanger … no latch and a loop where the rate-demand heuristic fails" | Tabela 9 (`v9_hx`) e S `hx_ablation`; `\vhxnrhohihelp`, `\vhxnrhohi`, `\vhxbadrhomax` |
+| checklist itens 2 e 5 (ordem; discretização do filtro) | `order_variants` |
+| A sentença "we do not claim a survey" foi substituída pelas contagens da auditoria, que a sustentam para a amostra lida; nenhum artigo é nomeado como exemplo negativo no texto principal. | `repository/literature_audit.csv` |
+
+### 8.5 Riscos e pendências para o autor
+
+- **[19] (A4):** volume e páginas 58(7) 388–393 vêm do Crossref e do OpenAlex. Os autores (I. Tejado, B. M. Vinagre) vêm dos registros ORCID, porque os metadados do DOI separam errado os nomes.
+  - Tentativas nesta rodada: página e PDF na ScienceDirect (bloqueio/403), doi.org → linkinghub (bloqueio), repositório da UEx (403), OpenAlex (sem texto completo em repositório), Semantic Scholar (429).
+  - **Confira no PDF da editora antes de submeter.**
+- **Script:** o nome `jpc_v6_numbers.py` continua fora de escopo (data statement).
+- **Caixa de 123,6 pt na página de highlights:** é do template `cas-dc` 2.4.
+- **D1:** amostra pequena (12), não sistemática, um único codificador; 14 candidatos só com resumo. As frases do texto se limitam aos artigos lidos.
+- **C1:** planta construída por nós. Os resultados no trocador são "consistent with" o mecanismo para os laços de alto ganho e contrariam a transferência de ρ e do latch.
+- **ρ:** continua heurística. Errou no trocador (TL) e no ponto de 250 L/min (TL em −2 K).
+- **Noise:** só σ = 0,01 e 0,05 K e um filtro (τ_m = 0,05 min).
+- **Pacote Overleaf:** atualizado e testado nesta rodada (seção 8.6).
+
+### 8.6 Verificação final da rodada 9
+
+(preenchida após o rerun do zero)
