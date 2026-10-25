@@ -26,3 +26,16 @@ Referência: `papers/review/parecer_r5.md` (5ª rodada, nota 73). "Obr." = exig�
 | Eqs. da prova da Prop. 1 e do retrocálculo (v5) | Overfull de 67 e 78 pt | Prova em duas linhas (`align*`); T_t padrão fora da equação |
 | Eq. de u_req (v5) | Overfull de 187 pt | Movida para S1 do suplementar |
 | Legenda da Tabela de ablação | Remetia à tabela de benchmark, que foi para o suplementar | → remete à tabela de banco de provas (`experiments/build_paper_assets.py`; CSV idêntico) |
+
+## Fase 2 — ajustes recomendados que dependem de código (branch `phase2/backcalc-tt`)
+
+| Exigência | O que mudou | Arquivos | Antes → depois |
+|---|---|---|---|
+| Rec. 1 (Tt^cv principal) | T_t^cv passa a ser o critério principal no resumo, no highlight 3, na §4.4 e na conclusão 3; T_t^mm fica como confirmação in-sample | `main.tex`, `highlights.tex`, `sections/04`, `05` | Highlight 3: "…one Tt per loop (minimax) is within 2%…" → "Back-calculation with Tt chosen on the design step matches directional clamping" (79 caracteres) |
+| Rec. 1 (curva fora de [Td, Ti]) | A escolha no degrau de projeto foi refeita sem a restrição de faixa. ZN, CC e SIMC têm o mínimo na borda da faixa; sem a restrição ele sai dela (ZN e CC em Δt = 0,020 min; SIMC em 10 T_i = 6,427 min, borda da varredura) e a pior razão em ±5 K não melhora em nenhum laço (maior queda 0,00; maior subida 0,08, SIMC) | `experiments/build_paper_assets.py` (`run_tt_curve`), `tables/antiwindup_tt_summary.tex` | Tabela com cabeçalhos curtos e três colunas novas (free T_t^cv, in range, free: ±5 K) |
+| Rec. 1 (TV e overshoot) | Nova tabela compara retrocálculo com T_t^cv e regra direcional em IAE, TV e M_p nos três degraus. Para ZN e CC o retrocálculo tem menor TV e menor overshoot em 5 de 6 casos (CC em +5 K: TV 241,9 → 101,2 L/min, M_p 40,8% → 11,3%); para o SIMC move mais a válvula (+20 a +38%) | `tables/antiwindup_tt_tvmp.tex`, `results/jpc/antiwindup_tt_tvmp.csv` | Nova Tabela 7 no texto principal |
+| Rec. 2 (erro de modelo com perturbações físicas) | **Não rodado:** o teste de erro de modelo foi para o suplementar S2 junto com o ótimo de malha exata; a frase da conclusão 3 que pedia qualificação saiu do texto principal | — | A hipótese do parecer (Ms_lin máx. 1,30 do ótimo exato nos seis cantos físicos) segue não verificada com o código dos autores |
+| Rec. 3 (IC dos Shapley) | **Não rodado:** Sobol e Shapley estão só no suplementar S6; o parecer diz que o corte elimina a exigência | — | — |
+| Regra 1 (divergência > 2%) | Nenhum valor já publicado mudou: `antiwindup_tt_sweep.csv` idêntico, colunas antigas da tabela-resumo idênticas | — | Sem divergência |
+
+Extensão após a Fase 2: 13 páginas (incluindo a de highlights).

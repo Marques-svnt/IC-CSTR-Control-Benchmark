@@ -353,7 +353,7 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     below dt/2, so the grid starts at 0.525 dt (plus the 0.1 T_t point of the earlier scan). The directional rule is the horizontal reference.
     """
     base = _one_dof(gains)
-    rows, summary, curves, direct = [], [], {}, {}
+    rows, summary, curves, direct, tvmp = [], [], {}, {}, []
     for name, g in base.items():
         grid = np.unique(np.concatenate([
             # lower end: below ~dt/2 the discrete update (1 - dt/T_t) I diverges (no IAE)
@@ -371,6 +371,18 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
         k_mm = int(np.argmin(np.where(inside, ratio.max(axis=0), np.inf)))  # minimax over steps
         k_cv = int(np.argmin(np.where(inside, ratio[0], np.inf)))  # chosen on the -2 K design step
         k_sq, k_ti = int(np.argmin(np.abs(grid - g.tt))), int(np.argmin(np.abs(grid - g.ti)))
+        k_free = int(np.argmin(ratio[0]))  # design-step choice without the [T_d, T_i] restriction
+        for i, step in enumerate(TT_STEPS):
+            bc = _step_run(plant, ss, replace(g, tt=float(grid[k_cv])), AW.BACK_CALCULATION, step).metrics
+            dr = _step_run(plant, ss, g, AW.CLAMPING, step).metrics
+            tvmp.append({
+                "Method": name if i == 0 else "",
+                "Step": f"${step:+g}$ K",
+                "IAE dir.": f"{dr.iae:.2f}", "IAE BC": f"{bc.iae:.2f}",
+                "TV dir. (L/min)": f"{dr.tv:.1f}", "TV BC (L/min)": f"{bc.tv:.1f}",
+                "\\(M_p\\) dir. (\\%)": f"{dr.overshoot_pct:.1f}",
+                "\\(M_p\\) BC (\\%)": f"{bc.overshoot_pct:.1f}",
+            })
         for i, step in enumerate(TT_STEPS):
             rows.append({
                 "Method": name if i == 0 else "",
@@ -383,25 +395,40 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
             })
         summary.append({
             "Method": name,
-            "\\([T_d, T_i]\\) (min)": f"[{g.td:.3f}, {g.ti:.3f}]",
-            "$T_t^{\\mathrm{mm}}$ (min)": f"{grid[k_mm]:.3f}",
-            "worst ratio, $T_t^{\\mathrm{mm}}$": f"{ratio[:, k_mm].max():.2f}",
-            "worst ratio, $\\sqrt{T_iT_d}$": f"{ratio[:, k_sq].max():.2f}",
-            "worst ratio, $T_t=T_i$": f"{ratio[:, k_ti].max():.2f}",
-            "$T_t^{\\mathrm{cv}}$ (min)": f"{grid[k_cv]:.3f}",
-            "worst ratio on $\\pm 5$~K, $T_t^{\\mathrm{cv}}$": f"{ratio[1:, k_cv].max():.2f}",
+            "\\([T_d, T_i]\\)": f"[{g.td:.3f}, {g.ti:.3f}]",
+            "\\(T_t^{\\mathrm{cv}}\\)": f"{grid[k_cv]:.3f}",
+            "cv: \\(\\pm 5\\)~K": f"{ratio[1:, k_cv].max():.2f}",
+            "free \\(T_t^{\\mathrm{cv}}\\)": f"{grid[k_free]:.3f}",
+            "in range": "yes" if inside[k_free] else "no",
+            "free: \\(\\pm 5\\)~K": f"{ratio[1:, k_free].max():.2f}",
+            "\\(T_t^{\\mathrm{mm}}\\)": f"{grid[k_mm]:.3f}",
+            "mm": f"{ratio[:, k_mm].max():.2f}",
+            "\\(\\sqrt{T_iT_d}\\)": f"{ratio[:, k_sq].max():.2f}",
+            "\\(T_i\\)": f"{ratio[:, k_ti].max():.2f}",
         })
     exp02.export_latex_table(
         data=summary,
         output_path=tables_dir / "antiwindup_tt_summary.tex",
         caption=(
-            "One tracking constant per loop. $T_t^{\\mathrm{mm}}$ minimizes, over the physical range "
-            "$[T_d, T_i]$, the largest IAE ratio (back-calculation over the directional rule, "
-            "Eq.~\\eqref{eq:clamping_antiwindup}) across the $-2$, $-5$ and $+5$~K steps; "
-            "$T_t^{\\mathrm{cv}}$ is chosen on the $-2$~K design step only and judged on $\\pm 5$~K. "
-            "Entries are the worst ratio over the steps (values above $1$: back-calculation is worse)."
+            "One tracking constant per loop (times in min). Ratios are the worst IAE of "
+            "back-calculation over that of the directional rule (Eq.~\\eqref{eq:clamping_antiwindup}); "
+            "above $1$, back-calculation is worse. $T_t^{\\mathrm{cv}}$: chosen inside $[T_d, T_i]$ on "
+            "the $-2$~K design step, judged on $\\pm 5$~K; free: the same choice without the range "
+            "restriction; $T_t^{\\mathrm{mm}}$: minimax over the $-2$, $-5$ and $+5$~K steps inside "
+            "$[T_d, T_i]$; last two columns: worst ratio over the three steps with the defaults "
+            "$T_t = \\sqrt{T_iT_d}$ and $T_t = T_i$."
         ),
         label="tab:antiwindup_tt_summary",
+    )
+    exp02.export_latex_table(
+        data=tvmp,
+        output_path=tables_dir / "antiwindup_tt_tvmp.tex",
+        caption=(
+            "Back-calculation with $T_t^{\\mathrm{cv}}$ (BC) against the directional rule (dir., "
+            "Eq.~\\eqref{eq:clamping_antiwindup}) on the three steps: IAE (K$\\cdot$min), valve travel "
+            "TV and overshoot $M_p$."
+        ),
+        label="tab:antiwindup_tt_tvmp",
     )
     exp02.export_latex_table(
         data=rows,

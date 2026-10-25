@@ -219,10 +219,10 @@ def back_calculation_numbers() -> None:
     """One T_t per loop (Table antiwindup_tt_summary)."""
     tab = rows("antiwindup_tt_summary")
     cols = {
-        "mm": "worst ratio, $T_t^{\\mathrm{mm}}$",
-        "sqrt": "worst ratio, $\\sqrt{T_iT_d}$",
-        "ti": "worst ratio, $T_t=T_i$",
-        "cv": "worst ratio on $\\pm 5$~K, $T_t^{\\mathrm{cv}}$",
+        "mm": "mm",
+        "sqrt": "\\(\\sqrt{T_iT_d}\\)",
+        "ti": "\\(T_i\\)",
+        "cv": "cv: \\(\\pm 5\\)~K",
     }
     for tag, col in cols.items():
         vals = [num(r[col]) for r in tab]
@@ -230,6 +230,33 @@ def back_calculation_numbers() -> None:
         define(f"tt{tag}min", min(vals), "antiwindup_tt_summary")
         define(f"tt{tag}maxpct", 100.0 * (max(vals) - 1.0), "antiwindup_tt_summary", "{:.0f}")
         define(f"tt{tag}minpct", 100.0 * (1.0 - min(vals)), "antiwindup_tt_summary", "{:.0f}")
+
+
+def back_calculation_detail() -> None:
+    """Unrestricted design-step choice and the TV/overshoot comparison at T_t^cv."""
+    tab = rows("antiwindup_tt_summary")
+    out = [SHORT[r["Method"]] for r in tab if r["in range"] == "no"]
+    define("ttoutside", ", ".join(out[:-1]) + " and " + out[-1] if len(out) > 1 else out[0],
+           "antiwindup_tt_summary (unrestricted T_t^cv outside [T_d, T_i])")
+    col_r, col_f = "cv: \\(\\pm 5\\)~K", "free: \\(\\pm 5\\)~K"
+    gain = [num(r[col_r]) - num(r[col_f]) for r in tab if r["in range"] == "no"]
+    define("ttfreemaxgain", max(gain), "antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)")
+    define("ttfreemaxloss", -min(gain), "antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)")
+    tv = rows("antiwindup_tt_tvmp")
+    emp = [r for r in tv if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
+    define("empTVlower", f"{sum(num(r['TV BC (L/min)']) < num(r['TV dir. (L/min)']) for r in emp)}",
+           "antiwindup_tt_tvmp (ZN and CC cases with lower TV under BC)")
+    define("empMplower", f"{sum(num(r['\\(M_p\\) BC (\\%)']) < num(r['\\(M_p\\) dir. (\\%)']) for r in emp)}",
+           "antiwindup_tt_tvmp (ZN and CC cases with lower overshoot under BC)")
+    define("empcases", f"{len(emp)}", "antiwindup_tt_tvmp")
+    cc5 = {"Method": "Cohen-Coon", "Step": "$+5$ K"}
+    for col, tag in (("TV dir. (L/min)", "CCfiveTVdir"), ("TV BC (L/min)", "CCfiveTVbc"),
+                     ("\\(M_p\\) dir. (\\%)", "CCfiveMpdir"), ("\\(M_p\\) BC (\\%)", "CCfiveMpbc")):
+        define(tag, num(cell("antiwindup_tt_tvmp", col, **cc5)), "antiwindup_tt_tvmp", "{:.1f}")
+    simc = [r for r in tv if r["Method"] == "Skogestad SIMC"]
+    inc = [100.0 * (num(r["TV BC (L/min)"]) / num(r["TV dir. (L/min)"]) - 1.0) for r in simc]
+    define("SIMCtvincmin", min(inc), "antiwindup_tt_tvmp", "{:.0f}")
+    define("SIMCtvincmax", max(inc), "antiwindup_tt_tvmp", "{:.0f}")
 
 
 def regime_map() -> list[list[str]]:
@@ -395,6 +422,7 @@ def main() -> None:
     ablation_numbers()
     proposition_numbers()
     back_calculation_numbers()
+    back_calculation_detail()
     smax_cols, smax_body = regime_map()
     pol, ext_body = robustness_extension()
     tb_body = testbed_table()

@@ -52,6 +52,18 @@ macro,value,source
 \vttcvmin,0.86,antiwindup_tt_summary
 \vttcvmaxpct,2,antiwindup_tt_summary
 \vttcvminpct,14,antiwindup_tt_summary
+\vttoutside,"ZN, CC and SIMC","antiwindup_tt_summary (unrestricted T_t^cv outside [T_d, T_i])"
+\vttfreemaxgain,0.00,antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)
+\vttfreemaxloss,0.08,antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)
+\vempTVlower,5,antiwindup_tt_tvmp (ZN and CC cases with lower TV under BC)
+\vempMplower,5,antiwindup_tt_tvmp (ZN and CC cases with lower overshoot under BC)
+\vempcases,6,antiwindup_tt_tvmp
+\vCCfiveTVdir,241.9,antiwindup_tt_tvmp
+\vCCfiveTVbc,101.2,antiwindup_tt_tvmp
+\vCCfiveMpdir,40.8,antiwindup_tt_tvmp
+\vCCfiveMpbc,11.3,antiwindup_tt_tvmp
+\vSIMCtvincmin,20,antiwindup_tt_tvmp
+\vSIMCtvincmax,38,antiwindup_tt_tvmp
 \vmapZNmin,7.9,smax_regime_map
 \vmapZNmax,38.3,smax_regime_map
 \vmapZNtwenty,7.9,smax_regime_map
