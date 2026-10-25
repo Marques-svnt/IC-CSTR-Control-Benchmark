@@ -123,3 +123,25 @@ Verificação final da rodada:
 - Desk-check passou.
 - Testes: 157 passed, 1 xfailed; `ruff` limpo.
 - Macros: nenhuma macro da v6 mudou; há 121 novas.
+
+## 8. Rodada 9 (v8 → v9), branch `jpc-v9`
+
+### 8.0 Registros feitos antes de simular (regra 8)
+
+**C1 — segunda planta.** Trocador de calor com casco bem misturado (um estado, T_c) e o tubo em duas células (T_1, T_2). **Não é contracorrente.** É um modelo construído para este estudo, não um benchmark publicado; Seborg [6], Shinskey [21] e Luyben [13] só motivam a estrutura.
+- **Equações:** as do pedido, com UA(q_c) = UA_0 (max(q_c, 5)/q_c,ss)^0,8. A saída é y(t) = T_2(t − 0,20 min), implementada como FIFO de 10 amostras com Δt = 0,02 min.
+- **Parâmetros:** os do pedido, sem alteração. V_p = 100 L, V_c = 40 L, q_p = 100 L/min, T_p,in = 390 K, T_c,in = 300 K, ρC_p = 500 cal/(L·K) dos dois lados, UA_0 = 6,0×10⁴ cal/(min·K), q_c,ss = u_bias = 100 L/min.
+- **Atuador e controlador:** o mesmo atuador ([0, 300] L/min, S_max = 80 L/min², Δt = 0,02 min), o mesmo PID e as mesmas políticas.
+- **Atraso:** não será ajustado para atingir um r = θ/τ desejado; r será medido e reportado.
+- **Métrica:** o IAE é calculado sobre y, a saída da planta incluindo o transporte de 0,20 min, porque é essa a variável definida como saída.
+- **Identificação:** degrau de +10 L/min em q_c.
+- **Sintonia:**
+  - ZN, CC, TL, AMIGO e SIMC (τ_c = 0,4 min) pelas mesmas fórmulas.
+  - ITAE ótimo **reotimizado** nesta planta pelo mesmo procedimento do CSTR: Nelder–Mead, ITAE do degrau de −2 K em 6 min, penalidade 10⁴ max(0, M_s^FOPTD − 1,6)², partidas no palpite padrão e nas regras analíticas com M_s ≤ 1,6.
+- **Degraus:** −2, −5 e +5 K. Antes de simular, confiro se cabem na faixa da válvula; se não couberem, ajusto e registro.
+- **Critério de escolha:** nenhum parâmetro é escolhido pelo resultado das políticas. Se a planta não reproduzir as verificações do pedido (autovalores, T_2,ss, T_2 em q_c = 300, sinal do ganho), registro a divergência e sigo com o modelo como especificado.
+
+**C2 — segundo ponto de operação do CSTR.**
+- **Candidatos:** q_j,ss ∈ {40, 55, 70, 200, 250} L/min. Descarto, com registro, qualquer ponto instável em malha aberta ou com estados múltiplos.
+- **Critério, aplicado antes de simular as políticas:** menor folga até o batente superior, (u_max − q_j,ss)/u_max. Em caso de empate prático (diferença de folga < 0,05), vence o de maior |K| do FOPTD.
+- **Protocolo:** re-identificar o FOPTD e re-sintonizar as regras analíticas, sem reotimizar o ITAE. Depois, 7 políticas em −2 e ±5 K, mais ρ.
