@@ -35,6 +35,9 @@
 \newcommand{\vZNloadnone}{26.65}  % antiwindup_scenarios
 \newcommand{\vCCloadsign}{72.02}  % antiwindup_scenarios
 \newcommand{\vCCloadnone}{26.14}  % antiwindup_scenarios
+\newcommand{\vsbZNlowtime}{5.38}  % smax_signblind_diagnostics
+\newcommand{\vsbZNlowerr}{+54.2}  % smax_signblind_diagnostics
+\newcommand{\vsbZNlowrate}{0.72}  % smax_signblind_diagnostics
 \newcommand{\vTinf}{377.94}  % CSTRPlant.find_steady_state(q_j=300)
 \newcommand{\vZNIstar}{945}  % u_max - u_bias + |Kp|(T_sp - T_inf); Kp from benchmark_table
 \newcommand{\vCCIstar}{1050}  % u_max - u_bias + |Kp|(T_sp - T_inf); Kp from benchmark_table
@@ -73,6 +76,9 @@
 \newcommand{\vttfreeCC}{0.020}  % antiwindup_tt_summary
 \newcommand{\vttfreexZN}{0.009}  % antiwindup_tt_summary (free choice, exact factor)
 \newcommand{\vttfreexCC}{0.008}  % antiwindup_tt_summary (free choice, exact factor)
+\newcommand{\vttfreediffmax}{0.08}  % antiwindup_tt_summary (largest |free - cv| of the +-5 K worst ratio)
+\newcommand{\vttfreediffloop}{SIMC}  % antiwindup_tt_summary
+\newcommand{\vttfreediffrest}{0.01}  % antiwindup_tt_summary (other loops)
 \newcommand{\vttfreexgain}{0.01}  % antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)
 \newcommand{\vttfreeSIMCovTi}{10}  % antiwindup_tt_summary (free T_t^cv / T_i)
 \newcommand{\vSIMCcvtwo}{1.15}  % antiwindup_tt_sweep
@@ -223,6 +229,10 @@
 \newcommand{\vchkloAMIGOmax}{1.75}  % rate_demand_check (rho < 1)
 \newcommand{\vchkloSIMCmin}{0.81}  % rate_demand_check (rho < 1)
 \newcommand{\vchkloSIMCmax}{0.87}  % rate_demand_check (rho < 1)
+\newcommand{\vchkhiloops}{5}  % rate_demand_check (loops with a rho >= 1 case)
+\newcommand{\vchkhilooplist}{ZN, CC, TL, AMIGO and Optimal ITAE}  % rate_demand_check
+\newcommand{\vchknear}{3}  % rate_demand_check (rho >= 1 cases with rho < 2)
+\newcommand{\vchknearlist}{AMIGO $\rho = 1.16$; Optimal ITAE $\rho = 1.62$ and $1.68$}  % rate_demand_check (cases near the threshold, rho < 2)
 \newcommand{\vnzbclomin}{0.90}  % noise_policies (IAE BC / IAE directional)
 \newcommand{\vnzbclomax}{1.09}  % noise_policies (IAE BC / IAE directional)
 \newcommand{\vnzbclomaxpct}{9}  % noise_policies
@@ -234,6 +244,113 @@
 \newcommand{\vnzSIMCdir}{1.44}  % noise_policies (sigma 0.05)
 \newcommand{\vnzSIMCnone}{1.13}  % noise_policies (sigma 0.05)
 \newcommand{\vnzempnonemin}{57}  % noise_policies (IAE none / IAE directional, ZN and CC)
+\newcommand{\vnzttchanged}{ZN, CC and AMIGO}  % noise_ttcv (loops whose T_t changes under noise)
+\newcommand{\vnzttbeforemax}{1.51}  % noise_ttcv (-2 K, BC/dir, noise-free T_t)
+\newcommand{\vnzttaftermax}{1.29}  % noise_ttcv (-2 K, BC/dir, noise T_t)
+\newcommand{\vnzttfiveaftermax}{1.19}  % noise_ttcv (+-5 K, BC/dir, noise T_t)
+\newcommand{\vmechcutmin}{0.87}  % noise_mechanism (ZN, CC)
+\newcommand{\vmechrmsratiomin}{5}  % noise_mechanism (ZN, CC)
+\newcommand{\vmechrmsratiomax}{7}  % noise_mechanism (ZN, CC)
+\newcommand{\vmechtrackmin}{2.9}  % noise_mechanism (ZN, CC)
+\newcommand{\vmechtrackmax}{4.0}  % noise_mechanism (ZN, CC)
+\newcommand{\vrhonzfreewrong}{0}  % rho_noise_grid (rho >= 1 but the trigger makes the loop worse)
+\newcommand{\vrhonzfreeSIMCmax}{0.52}  % rho_noise_grid
+\newcommand{\vrhonzrawwrong}{3}  % rho_noise_grid (rho >= 1 but the trigger makes the loop worse)
+\newcommand{\vrhonzrawSIMCmax}{2.92}  % rho_noise_grid
+\newcommand{\vrhonzfiltwrong}{0}  % rho_noise_grid (rho >= 1 but the trigger makes the loop worse)
+\newcommand{\vrhonzfiltSIMCmax}{0.84}  % rho_noise_grid
+\newcommand{\vrhonzcases}{18}  % rho_noise_grid
+\newcommand{\vextrawmax}{1.50}  % noise_policies_ext_full (BC/dir, 0.05 K, raw)
+\newcommand{\vextfiltmax}{1.15}  % noise_policies_ext_full (BC/dir, filtered)
+\newcommand{\vextempnonemin}{19}  % noise_policies_ext_full (none/dir, ZN and CC)
+\newcommand{\vorderOnedIAE}{6.3}  % order_variants
+\newcommand{\vorderOnerank}{same}  % order_variants
+\newcommand{\vorderTwodIAE}{44.2}  % order_variants
+\newcommand{\vorderTworank}{changes}  % order_variants
+\newcommand{\vorderThreedIAE}{13.9}  % order_variants
+\newcommand{\vorderThreerank}{same}  % order_variants
+\newcommand{\vorderThreeNoisydIAE}{58.0}  % order_variants
+\newcommand{\vorderThreeNoisyrank}{changes}  % order_variants
+\newcommand{\vorderFourdIAE}{24.2}  % order_variants
+\newcommand{\vorderFourrank}{changes}  % order_variants
+\newcommand{\vorderFourNoisydIAE}{21.5}  % order_variants
+\newcommand{\vorderFourNoisyrank}{changes}  % order_variants
+\newcommand{\vdtwopolflips}{11}  % order_variants_flips (policy-order swaps, all variants)
+\newcommand{\vdtwoworkflips}{9}  % order_variants_flips (swaps among Rate, BC, BC^cv)
+\newcommand{\vdtwosbmin}{22}  % order_variants_full (SB/Rate, ZN and CC, every variant)
+\newcommand{\vdtwoampmin}{3.9}  % order_variants_full (Amp/Rate, ZN and CC, every variant)
+\newcommand{\vhxK}{-0.204}  % hx_model
+\newcommand{\vhxtau}{0.657}  % hx_model
+\newcommand{\vhxtheta}{0.224}  % hx_model
+\newcommand{\vhxr}{0.34}  % hx_model
+\newcommand{\vhxTss}{355.9}  % hx_model
+\newcommand{\vhxTinf}{331.3}  % hx_model
+\newcommand{\vhxeigfast}{-6.29}  % hx_model
+\newcommand{\vhxeigslow}{-1.66}  % hx_model
+\newcommand{\vhxampratemin}{9}  % hx_ablation (Amp/Rate, ZN and CC, +-5 K)
+\newcommand{\vhxsbnonemin}{1.03}  % hx_ablation (SB/None, ZN and CC, +-5 K)
+\newcommand{\vhxsbnonemax}{1.23}  % hx_ablation (SB/None, ZN and CC, +-5 K)
+\newcommand{\vhxTLratemin}{1.35}  % hx_ablation (TL rate/none)
+\newcommand{\vhxTLratemax}{1.62}  % hx_ablation (TL rate/none)
+\newcommand{\vhxSIMCworse}{2}  % hx_ablation (steps where the rule worsens SIMC)
+\newcommand{\vhxbcmin}{0.84}  % hx_ablation (BC T_t^cv / rate, all loops and steps)
+\newcommand{\vhxbcmax}{1.01}  % hx_ablation (BC T_t^cv / rate, all loops and steps)
+\newcommand{\vhxnrhohi}{129}  % hx_rate_demand_grid (rho >= 1)
+\newcommand{\vhxnrhohihelp}{104}  % hx_rate_demand_grid (rho >= 1, R > 1)
+\newcommand{\vhxbadloops}{TL and SIMC}  % hx_rate_demand_grid (rho >= 1, R <= 1)
+\newcommand{\vhxbadrhomax}{25}  % hx_rate_demand_grid
+\newcommand{\vhxbadRmin}{0.60}  % hx_rate_demand_grid
+\newcommand{\vhxncases}{162}  % hx_rate_demand_grid
+\newcommand{\vstickmoderatehunt}{86}  % stiction_full (share of hunting runs, policies other than SB)
+\newcommand{\vstickseverehunt}{92}  % stiction_full (share of hunting runs, policies other than SB)
+\newcommand{\vsticksbmin}{46}  % stiction_full (SB/Rate, ZN and CC)
+\newcommand{\vstickampmin}{6.9}  % stiction_full (Amp/Rate, ZN and CC)
+\newcommand{\vstickbcmin}{0.37}  % stiction_full (BC^cv/Rate)
+\newcommand{\vstickbcmax}{1.61}  % stiction_full (BC^cv/Rate)
+\newcommand{\vstickSIMCmin}{0.61}  % stiction_full (SIMC Rate/Amp = Rate/None)
+\newcommand{\vstickSIMCmax}{3.50}  % stiction_full (SIMC Rate/Amp = Rate/None)
+\newcommand{\vposspurmin}{49}  % measured_position_full (spurious freezes, no band)
+\newcommand{\vposspurmax}{54}  % measured_position_full (spurious freezes, no band)
+\newcommand{\vposspurbandmax}{16}  % measured_position_full (spurious freezes, band)
+\newcommand{\vposworstpct}{77}  % measured_position_full (largest IAE rise, no band)
+\newcommand{\vposworstloop}{SIMC}  % measured_position_full
+\newcommand{\vposbandpct}{3}  % measured_position_full (largest |IAE change| with the band)
+\newcommand{\vposbcpct}{10}  % measured_position_full (largest IAE rise of BC with u_meas)
+\newcommand{\vctwoq}{250}  % c2_candidates (selected point)
+\newcommand{\vctwoslack}{0.17}  % c2_candidates
+\newcommand{\vctwoureq}{355}  % CSTRPlant.required_coolant_flow(T_ss - 5) at the C2 point
+\newcommand{\vctwosbmin}{1.32}  % c2_ablation
+\newcommand{\vctwoampmin}{3.7}  % c2_ablation
+\newcommand{\vctwoampmax}{4.7}  % c2_ablation
+\newcommand{\vctworhohi}{9}  % c2_rate_demand (rho >= 1)
+\newcommand{\vctworhohelp}{6}  % c2_rate_demand (rho >= 1, R > 1.005)
+\newcommand{\vctworhotie}{2}  % c2_rate_demand (rho >= 1, |R - 1| <= 0.005)
+\newcommand{\vctwoTLrho}{1.24}  % c2_rate_demand
+\newcommand{\vctwoTLR}{0.96}  % c2_rate_demand
+\newcommand{\vlitcandidates}{66}  % literature_audit (candidates screened)
+\newcommand{\vlitcounted}{12}  % literature_audit (full text read and included)
+\newcommand{\vlitabstract}{14}  % literature_audit (abstract only)
+\newcommand{\vlitactuatormodel}{11}  % literature_audit (actuator_model = yes)
+\newcommand{\vlitactuatormodelna}{0}  % literature_audit (actuator_model = not applicable)
+\newcommand{\vlitactuatormodelapp}{12}  % literature_audit (actuator_model applicable)
+\newcommand{\vlitratelimit}{0}  % literature_audit (rate_limit = yes)
+\newcommand{\vlitratelimitna}{0}  % literature_audit (rate_limit = not applicable)
+\newcommand{\vlitratelimitapp}{12}  % literature_audit (rate_limit applicable)
+\newcommand{\vlitbacklash}{0}  % literature_audit (backlash = yes)
+\newcommand{\vlitbacklashna}{0}  % literature_audit (backlash = not applicable)
+\newcommand{\vlitbacklashapp}{12}  % literature_audit (backlash applicable)
+\newcommand{\vlitantiwindup}{2}  % literature_audit (anti_windup = yes)
+\newcommand{\vlitantiwindupna}{5}  % literature_audit (anti_windup = not applicable)
+\newcommand{\vlitantiwindupapp}{7}  % literature_audit (anti_windup applicable)
+\newcommand{\vlitloopsign}{0}  % literature_audit (loop_sign = yes)
+\newcommand{\vlitloopsignna}{0}  % literature_audit (loop_sign = not applicable)
+\newcommand{\vlitloopsignapp}{12}  % literature_audit (loop_sign applicable)
+\newcommand{\vlitdtandmethod}{2}  % literature_audit (dt_and_method = yes)
+\newcommand{\vlitdtandmethodna}{0}  % literature_audit (dt_and_method = not applicable)
+\newcommand{\vlitdtandmethodapp}{12}  % literature_audit (dt_and_method applicable)
+\newcommand{\vlitmeasurementpath}{1}  % literature_audit (measurement_path = yes)
+\newcommand{\vlitmeasurementpathna}{0}  % literature_audit (measurement_path = not applicable)
+\newcommand{\vlitmeasurementpathapp}{12}  % literature_audit (measurement_path applicable)
 \newcommand{\vpcZNmaxpct}{5.9}  % predictive_clamping (largest |dIAE| over 3 steps)
 \newcommand{\vpcZNfiveold}{3.65}  % predictive_clamping
 \newcommand{\vpcZNfivenew}{3.44}  % predictive_clamping

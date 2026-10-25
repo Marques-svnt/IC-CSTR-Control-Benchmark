@@ -229,4 +229,24 @@ Verificação final da rodada:
 
 ### 8.6 Verificação final da rodada 9
 
-(preenchida após o rerun do zero)
+1. **PDF:**
+   - Texto principal em **12 páginas** ("Page 12 of 12"; 13 no PDF com a página de highlights).
+   - Resumo com 232 palavras, contando cada expressão matemática como uma palavra.
+   - Highlights: 5 itens, com 83, 77, 72, 80 e 73 caracteres.
+   - 6 palavras-chave.
+   - Referências 1–31 em ordem de primeira citação; nenhuma referência indefinida em main e Suplementar.
+   - Desk-check Elsevier passou.
+   - Única caixa estourada: a do template (123,6 pt), sem caixas novas. Suplementar com 25 páginas, sem caixas estouradas.
+2. **Rerun do zero** (`build_paper_assets.py jpc-remediation` com todas as etapas novas, 1464 s; depois `jpc_v6_numbers.py`):
+   - Todos os CSVs, tabelas e PNGs ficaram **idênticos** aos commitados (diff vazio).
+   - `generated/numbers.tex` reproduz a partir dos CSVs.
+3. **Diff de macros v8 × v9:** nenhuma das 282 macros da v8 mudou de valor ou foi removida; 117 novas (399 no total), cada uma ligada a um item da seção 8.1.
+4. **Consistência:**
+   - `check_main_supp_consistency.py`: 13 itens, sem divergência.
+   - `check_text_numbers.py`: só 0,525 (constante da grade de T_t) fora dos CSVs.
+5. **Testes:** `pytest` com 168 passed e 1 xfailed (o xfail do TL, pré-existente); `ruff check .` limpo. Testes novos:
+   - trocador de calor: estado estacionário, autovalores, ganho reverso por hypothesis, RK4;
+   - stiction: transparência, reversão com salto, posição dentro dos batentes por hypothesis;
+   - posição medida: congelamento espúrio sem banda e não com banda;
+   - variantes do D2: ordem `rate_sat`, ordem inválida, `d_measurement`.
+6. **Overleaf:** `ready-to-overleaf/` e `ready_to_overleaf.zip` atualizados; main e Suplementar compilam numa pasta limpa (12 + 1 e 25 páginas, sem referências indefinidas).

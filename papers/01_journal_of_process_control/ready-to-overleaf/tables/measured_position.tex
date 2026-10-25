@@ -1,0 +1,32 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Anti-windup fed with a measured valve position, $u_{\text{meas},k} = e^{-\Delta t/\tau_v}u_{\text{meas},k-1} + (1 - e^{-\Delta t/\tau_v})u_{\text{act},k} + \eta_k$ with $\tau_v = 0.01$~min and $\sigma_v = 0.3$~L/min (30 realizations), instead of the internal $u_{\text{act}}$: IAE (K$\cdot$min) and, in parentheses, the share of the samples in the linear regime in which the rate rule froze the integrator although no limit cut the command; $\varepsilon_u = 3\sigma_v + S_{\max}\tau_v = 1.7$~L/min.}
+\label{tab:measured_position}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Method & Step & Rate, $u_{\text{act}}$ & Rate, $u_{\text{meas}}$ & Rate, $u_{\text{meas}}$, $\varepsilon_u$ & BC$^{\mathrm{cv}}$, $u_{\text{act}}$ & BC$^{\mathrm{cv}}$, $u_{\text{meas}}$ \\
+\midrule
+Ziegler-Nichols & $-2$ K & 0.94 & 0.93 (54\%) & 0.94 (16\%) & 0.88 & 0.94 \\
+ & $-5$ K & 3.33 & 3.32 (52\%) & 3.33 (0\%) & 3.42 & 3.46 \\
+ & $+5$ K & 3.65 & 3.65 (52\%) & 3.67 (0\%) & 3.13 & 3.18 \\
+Cohen-Coon & $-2$ K & 1.02 & 1.02 (50\%) & 1.02 (0\%) & 0.82 & 0.90 \\
+ & $-5$ K & 3.44 & 3.43 (50\%) & 3.44 (5\%) & 3.25 & 3.32 \\
+ & $+5$ K & 4.39 & 4.38 (50\%) & 4.34 (1\%) & 2.91 & 2.98 \\
+Tyreus-Luyben & $-2$ K & 0.92 & 1.05 (50\%) & 0.92 (0\%) & 0.83 & 0.84 \\
+ & $-5$ K & 3.55 & 3.94 (50\%) & 3.53 (0\%) & 3.32 & 3.33 \\
+ & $+5$ K & 3.25 & 3.63 (50\%) & 3.25 (0\%) & 3.00 & 3.01 \\
+AMIGO & $-2$ K & 0.93 & 0.90 (50\%) & 0.93 (0\%) & 0.92 & 0.99 \\
+ & $-5$ K & 3.32 & 3.37 (50\%) & 3.32 (0\%) & 3.32 & 3.38 \\
+ & $+5$ K & 2.87 & 2.86 (50\%) & 2.88 (0\%) & 2.88 & 2.95 \\
+Skogestad SIMC & $-2$ K & 1.29 & 2.27 (50\%) & 1.25 (0\%) & 1.15 & 1.18 \\
+ & $-5$ K & 4.41 & 7.03 (50\%) & 4.34 (0\%) & 3.80 & 3.83 \\
+ & $+5$ K & 3.69 & 5.38 (49\%) & 3.60 (0\%) & 3.17 & 3.20 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & $-2$ K & 0.83 & 0.90 (50\%) & 0.83 (0\%) & 0.83 & 0.86 \\
+ & $-5$ K & 3.26 & 3.50 (50\%) & 3.26 (0\%) & 3.16 & 3.18 \\
+ & $+5$ K & 3.01 & 3.20 (50\%) & 3.01 (0\%) & 2.96 & 2.97 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
