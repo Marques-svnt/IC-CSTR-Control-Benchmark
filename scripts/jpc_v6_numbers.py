@@ -279,6 +279,11 @@ def back_calculation_detail() -> None:
     define("ttfreeCC", free["CC"], "antiwindup_tt_summary", "{:.3f}")
     simc = next(r for r in tab if r["Method"] == "Skogestad SIMC")
     ti_simc = float(simc["\\([T_d, T_i]\\)"].strip("[]").split(",")[1])
+    freex = {SHORT[r["Method"]]: float(r["free, exact"]) for r in tab}
+    define("ttfreexZN", freex["ZN"], "antiwindup_tt_summary (free choice, exact factor)", "{:.3f}")
+    define("ttfreexCC", freex["CC"], "antiwindup_tt_summary (free choice, exact factor)", "{:.3f}")
+    define("ttfreexgain", max(num(r["cv: \\(\\pm 5\\)~K"]) - num(r["exact: \\(\\pm 5\\)~K"]) for r in tab),
+           "antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)")
     define("ttfreeSIMCovTi", free["SIMC"] / ti_simc, "antiwindup_tt_summary (free T_t^cv / T_i)", "{:.0f}")
     for step, s in (("$-2$ K", "two"), ("$-5$ K", "m"), ("$+5$ K", "p")):
         m = {"Method": "Skogestad SIMC", "Step": step}
@@ -391,6 +396,10 @@ def robustness_extension() -> list[list[str]]:
         for n in SIX
     ]
     define("dbsixworstpct", 100.0 * (max(ratios) - 1.0), "antiwindup_deadband", "{:.0f}")
+    define("dbampratiomin", min(
+        num(cell("antiwindup_deadband", "Amp. direct.", **{"Deadband (L/min)": "6", "Method": n}))
+        / num(cell("antiwindup_deadband", RATE, **{"Deadband (L/min)": "6", "Method": n}))
+        for n in ("Ziegler-Nichols", "Cohen-Coon")), "antiwindup_deadband (amp-only / rate, ZN and CC)", "{:.0f}")
     ratios_cv = [
         num(cell("antiwindup_deadband", RATE, **{"Deadband (L/min)": "6", "Method": n}))
         / num(cell("antiwindup_deadband", BC_CV, **{"Deadband (L/min)": "6", "Method": n}))
@@ -454,6 +463,46 @@ def rate_trigger_numbers() -> None:
     define("rhohelplowratio", helped["ratio"], "rate_demand_grid")
     define("rhohelplowloop", SHORT[helped["Method"]], "rate_demand_grid")
     define("rhohelplowsmax", f"{helped['S_max']:.0f}", "rate_demand_grid")
+
+
+def rate_demand_check_numbers() -> None:
+    """The rho >= 1 rule on the second operating point and the deadbands (rate_demand_check)."""
+    tab = rows("rate_demand_check")
+    ratio = "\\(\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}\\)"
+    hi = [r for r in tab if num(r["\\(\\rho\\)"]) >= 1.0]
+    lo = [r for r in tab if num(r["\\(\\rho\\)"]) < 1.0]
+    define("chkcases", f"{len(tab)}", "rate_demand_check")
+    define("chkrhohi", f"{len(hi)}", "rate_demand_check (rho >= 1)")
+    define("chkrhohihelp", f"{sum(num(r[ratio]) > 1.0 for r in hi)}", "rate_demand_check (rho >= 1, ratio > 1)")
+    define("chkrholo", f"{len(lo)}", "rate_demand_check (rho < 1)")
+    for name in ("AMIGO", "Skogestad SIMC"):
+        vals = [num(r[ratio]) for r in lo if r["Method"] == name]
+        define(f"chklo{SHORT[name]}min", min(vals), "rate_demand_check (rho < 1)")
+        define(f"chklo{SHORT[name]}max", max(vals), "rate_demand_check (rho < 1)")
+    if {r["Method"] for r in lo} != {"AMIGO", "Skogestad SIMC"}:
+        raise ValueError("text names AMIGO and SIMC as the rho < 1 cases of the check")
+
+
+def noise_policy_numbers() -> None:
+    """Policies under sensor noise (noise_policies): does back-calculation keep up with the rule?"""
+    bc, dr = "IAE BC ($T_t^{\\mathrm{cv}}$)", "IAE Directional"
+    for sigma, tag in (("0.01", "lo"), ("0.05", "hi")):
+        sel = [r for r in rows("noise_policies") if r["\\(\\sigma\\) (K)"] == sigma]
+        ratio = {r["Method"]: num(r[bc]) / num(r[dr]) for r in sel}
+        define(f"nzbc{tag}min", min(ratio.values()), "noise_policies (IAE BC / IAE directional)")
+        define(f"nzbc{tag}max", max(ratio.values()), "noise_policies (IAE BC / IAE directional)")
+        define(f"nzbc{tag}maxpct", 100.0 * (max(ratio.values()) - 1.0), "noise_policies", "{:.0f}")
+        if tag == "hi":
+            worse = [SHORT[m] for m in SIX if ratio[m] > 1.0]
+            better = [SHORT[m] for m in SIX if ratio[m] < 1.0]
+            join = lambda xs: ", ".join(xs[:-1]) + " and " + xs[-1] if len(xs) > 1 else xs[0]  # noqa: E731
+            define("nzbcworse", join(worse), "noise_policies (BC worse than the rule, sigma 0.05)")
+            define("nzbcbetter", join(better), "noise_policies (BC better than the rule, sigma 0.05)")
+            simc = next(r for r in sel if r["Method"] == "Skogestad SIMC")
+            define("nzSIMCdir", num(simc[dr]), "noise_policies (sigma 0.05)")
+            define("nzSIMCnone", num(simc["IAE None"]), "noise_policies (sigma 0.05)")
+            emp = [num(r["IAE None"]) / num(r[dr]) for r in sel if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
+            define("nzempnonemin", min(emp), "noise_policies (IAE none / IAE directional, ZN and CC)", "{:.0f}")
 
 
 def predictive_and_exact_numbers() -> None:
@@ -600,11 +649,13 @@ def main() -> None:
     latch_check_numbers()
     back_calculation_numbers()
     back_calculation_detail()
-    smax_cols, smax_body = regime_map()
+    regime_map()
     pol, ext_body = robustness_extension()
     tb_body = testbed_table()
     measurement_numbers()
     rate_trigger_numbers()
+    rate_demand_check_numbers()
+    noise_policy_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
     load_cols, load_body = load_table()
@@ -630,17 +681,6 @@ def main() -> None:
             "hold, and the peak of the noise-to-valve gain $CS = C/(1+L)$, which equals "
             "$|K_p|(1+N)$ to within $0.3$~(L/min)/K. Units: $K_p$ and $\\|CS\\|_\\infty$ in (L/min)/K.",
             "tab:testbed",
-        ),
-        encoding="utf-8",
-    )
-    (tables / "v7_smax_ratio.tex").write_text(
-        booktabs(
-            ["Tuning", *smax_cols],
-            smax_body,
-            "Regime map: IAE of amplitude-only directional clamping over IAE of the rate-aware rule "
-            "on the $-2$~K step against the slew limit $S_{\\max}$ (L/min$^2$), gains fixed. Above $1$ the "
-            "rate trigger improves the loop; below $1$ it makes the loop worse.",
-            "tab:smax_ratio",
         ),
         encoding="utf-8",
     )
@@ -692,7 +732,7 @@ def main() -> None:
         w = csv.writer(fh)
         w.writerow(["macro", "value", "source"])
         w.writerows((f"\\v{n}", v, s) for n, v, s in MACROS)
-    print(f"{len(MACROS)} macros, 4 tables")
+    print(f"{len(MACROS)} macros, 3 tables")
 
 
 if __name__ == "__main__":

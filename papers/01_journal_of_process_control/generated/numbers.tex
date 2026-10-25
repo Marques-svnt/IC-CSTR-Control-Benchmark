@@ -71,6 +71,9 @@
 \newcommand{\vttcvupper}{SIMC}  % antiwindup_tt_summary (T_t^cv = T_i)
 \newcommand{\vttfreeZN}{0.020}  % antiwindup_tt_summary
 \newcommand{\vttfreeCC}{0.020}  % antiwindup_tt_summary
+\newcommand{\vttfreexZN}{0.009}  % antiwindup_tt_summary (free choice, exact factor)
+\newcommand{\vttfreexCC}{0.008}  % antiwindup_tt_summary (free choice, exact factor)
+\newcommand{\vttfreexgain}{0.01}  % antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)
 \newcommand{\vttfreeSIMCovTi}{10}  % antiwindup_tt_summary (free T_t^cv / T_i)
 \newcommand{\vSIMCcvtwo}{1.15}  % antiwindup_tt_sweep
 \newcommand{\vSIMCtitwo}{1.15}  % antiwindup_tt_sweep
@@ -145,6 +148,7 @@
 \newcommand{\vdbCCampsix}{23.01}  % antiwindup_deadband
 \newcommand{\vdbCCdirsix}{1.76}  % antiwindup_deadband
 \newcommand{\vdbsixworstpct}{10}  % antiwindup_deadband
+\newcommand{\vdbampratiomin}{13}  % antiwindup_deadband (amp-only / rate, ZN and CC)
 \newcommand{\vdbsixworstpctcv}{19}  % antiwindup_deadband (rate rule vs BC T_t^cv)
 \newcommand{\vopZNnone}{55.58}  % antiwindup_second_op
 \newcommand{\vopZNsign}{61.48}  % antiwindup_second_op
@@ -211,6 +215,25 @@
 \newcommand{\vrhohelplowratio}{1.14}  % rate_demand_grid
 \newcommand{\vrhohelplowloop}{AMIGO}  % rate_demand_grid
 \newcommand{\vrhohelplowsmax}{320}  % rate_demand_grid
+\newcommand{\vchkcases}{17}  % rate_demand_check
+\newcommand{\vchkrhohi}{12}  % rate_demand_check (rho >= 1)
+\newcommand{\vchkrhohihelp}{12}  % rate_demand_check (rho >= 1, ratio > 1)
+\newcommand{\vchkrholo}{5}  % rate_demand_check (rho < 1)
+\newcommand{\vchkloAMIGOmin}{1.75}  % rate_demand_check (rho < 1)
+\newcommand{\vchkloAMIGOmax}{1.75}  % rate_demand_check (rho < 1)
+\newcommand{\vchkloSIMCmin}{0.81}  % rate_demand_check (rho < 1)
+\newcommand{\vchkloSIMCmax}{0.87}  % rate_demand_check (rho < 1)
+\newcommand{\vnzbclomin}{0.90}  % noise_policies (IAE BC / IAE directional)
+\newcommand{\vnzbclomax}{1.09}  % noise_policies (IAE BC / IAE directional)
+\newcommand{\vnzbclomaxpct}{9}  % noise_policies
+\newcommand{\vnzbchimin}{0.85}  % noise_policies (IAE BC / IAE directional)
+\newcommand{\vnzbchimax}{1.51}  % noise_policies (IAE BC / IAE directional)
+\newcommand{\vnzbchimaxpct}{51}  % noise_policies
+\newcommand{\vnzbcworse}{ZN, CC, AMIGO and Optimal ITAE}  % noise_policies (BC worse than the rule, sigma 0.05)
+\newcommand{\vnzbcbetter}{TL and SIMC}  % noise_policies (BC better than the rule, sigma 0.05)
+\newcommand{\vnzSIMCdir}{1.44}  % noise_policies (sigma 0.05)
+\newcommand{\vnzSIMCnone}{1.13}  % noise_policies (sigma 0.05)
+\newcommand{\vnzempnonemin}{57}  % noise_policies (IAE none / IAE directional, ZN and CC)
 \newcommand{\vpcZNmaxpct}{5.9}  % predictive_clamping (largest |dIAE| over 3 steps)
 \newcommand{\vpcZNfiveold}{3.65}  % predictive_clamping
 \newcommand{\vpcZNfivenew}{3.44}  % predictive_clamping

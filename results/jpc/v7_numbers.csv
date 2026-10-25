@@ -71,6 +71,9 @@ macro,value,source
 \vttcvupper,SIMC,antiwindup_tt_summary (T_t^cv = T_i)
 \vttfreeZN,0.020,antiwindup_tt_summary
 \vttfreeCC,0.020,antiwindup_tt_summary
+\vttfreexZN,0.009,"antiwindup_tt_summary (free choice, exact factor)"
+\vttfreexCC,0.008,"antiwindup_tt_summary (free choice, exact factor)"
+\vttfreexgain,0.01,"antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^cv)"
 \vttfreeSIMCovTi,10,antiwindup_tt_summary (free T_t^cv / T_i)
 \vSIMCcvtwo,1.15,antiwindup_tt_sweep
 \vSIMCtitwo,1.15,antiwindup_tt_sweep
@@ -145,6 +148,7 @@ macro,value,source
 \vdbCCampsix,23.01,antiwindup_deadband
 \vdbCCdirsix,1.76,antiwindup_deadband
 \vdbsixworstpct,10,antiwindup_deadband
+\vdbampratiomin,13,"antiwindup_deadband (amp-only / rate, ZN and CC)"
 \vdbsixworstpctcv,19,antiwindup_deadband (rate rule vs BC T_t^cv)
 \vopZNnone,55.58,antiwindup_second_op
 \vopZNsign,61.48,antiwindup_second_op
@@ -211,6 +215,25 @@ macro,value,source
 \vrhohelplowratio,1.14,rate_demand_grid
 \vrhohelplowloop,AMIGO,rate_demand_grid
 \vrhohelplowsmax,320,rate_demand_grid
+\vchkcases,17,rate_demand_check
+\vchkrhohi,12,rate_demand_check (rho >= 1)
+\vchkrhohihelp,12,"rate_demand_check (rho >= 1, ratio > 1)"
+\vchkrholo,5,rate_demand_check (rho < 1)
+\vchkloAMIGOmin,1.75,rate_demand_check (rho < 1)
+\vchkloAMIGOmax,1.75,rate_demand_check (rho < 1)
+\vchkloSIMCmin,0.81,rate_demand_check (rho < 1)
+\vchkloSIMCmax,0.87,rate_demand_check (rho < 1)
+\vnzbclomin,0.90,noise_policies (IAE BC / IAE directional)
+\vnzbclomax,1.09,noise_policies (IAE BC / IAE directional)
+\vnzbclomaxpct,9,noise_policies
+\vnzbchimin,0.85,noise_policies (IAE BC / IAE directional)
+\vnzbchimax,1.51,noise_policies (IAE BC / IAE directional)
+\vnzbchimaxpct,51,noise_policies
+\vnzbcworse,"ZN, CC, AMIGO and Optimal ITAE","noise_policies (BC worse than the rule, sigma 0.05)"
+\vnzbcbetter,TL and SIMC,"noise_policies (BC better than the rule, sigma 0.05)"
+\vnzSIMCdir,1.44,noise_policies (sigma 0.05)
+\vnzSIMCnone,1.13,noise_policies (sigma 0.05)
+\vnzempnonemin,57,"noise_policies (IAE none / IAE directional, ZN and CC)"
 \vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
 \vpcZNfiveold,3.65,predictive_clamping
 \vpcZNfivenew,3.44,predictive_clamping

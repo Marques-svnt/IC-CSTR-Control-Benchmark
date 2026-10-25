@@ -421,6 +421,88 @@ def run_rate_demand(plant, ss, gains: dict, tables_dir: Path) -> None:
     )
 
 
+def run_noise_policies(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
+    """None, back-calculation with T_t^cv and the directional rule under sensor noise.
+
+    -2 K step, unfiltered measurement, N_SEEDS realizations per level with the seeds of the noise
+    campaign (100 + k); mean and 95 % half-width of IAE (true temperature) and TV.
+    """
+    policies = (("None", AW.NONE, False), (BC_CV, AW.BACK_CALCULATION, True),
+                ("Directional", AW.CLAMPING, False))
+    jobs = [(n, lab, m, cv, sigma, k) for n in _one_dof(gains) for lab, m, cv in policies
+            for sigma in (0.0, 0.01, 0.05) for k in (range(N_SEEDS) if sigma else [0])]
+
+    def one(name, lab, method, cv, sigma, k):
+        g = replace(gains[name], tt=tt_cv[name]) if cv else gains[name]
+        m = _step_run(plant, ss, g, method, noise_std=sigma, seed=100 + k).metrics
+        return name, lab, sigma, m.iae, m.tv
+
+    out = Parallel(n_jobs=-1)(delayed(one)(*j) for j in jobs)
+    rows = []
+    for name in _one_dof(gains):
+        for sigma in (0.0, 0.01, 0.05):
+            row = {"Method": name, "\\(\\sigma\\) (K)": f"{sigma:g}"}
+            for lab, _, _ in policies:
+                sel = [o for o in out if o[0] == name and o[1] == lab and o[2] == sigma]
+                iae, tv = (np.array([o[i] for o in sel]) for i in (3, 4))
+                hw = (lambda v: f" $\\pm$ {_ci95(v):.2f}") if sigma else (lambda v: "")
+                row[f"IAE {lab}"] = f"{iae.mean():.2f}{hw(iae)}"
+                row[f"TV {lab}"] = f"{tv.mean():.0f}"
+            rows.append(row)
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "noise_policies.tex",
+        caption=(
+            "Integrator policies under Gaussian sensor noise, $-2$~K step, unfiltered measurement, "
+            f"{N_SEEDS} realizations per level (seeds of the noise campaign): IAE on the true "
+            "temperature (K$\\cdot$min, mean $\\pm$ half-width of the $95\\%$ $t$-interval) and mean "
+            "TV (L/min). BC uses the $T_t^{\\mathrm{cv}}$ of Table~\\ref{tab:antiwindup_tt_summary}; "
+            "``Directional'' is Eq.~\\eqref{eq:clamping_antiwindup}."
+        ),
+        label="tab:noise_policies",
+    )
+
+
+def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
+    """The rho >= 1 rule, defined on the nominal grid, checked on conditions it was not built on.
+
+    Second operating point (re-tuned loops) and valve deadbands of 3 and 6 L/min, -2 K step,
+    S_max = 80 L/min^2. rho is computed exactly as in run_rate_demand, with the deadband (if any)
+    kept and only the slew limit removed.
+    """
+    ss2, _, loops2 = _second_op_loops(plant, SECOND_OP_Q_J)
+    cases = [(f"$q_{{j,ss}} = {SECOND_OP_Q_J:g}$", n, g, ss2, SECOND_OP_Q_J, 0.0) for n, g in loops2.items()]
+    cases += [(f"deadband {band:g} L/min", n, g, ss, 100.0, band)
+              for band in (3.0, 6.0) for n, g in _one_dof(gains).items()]
+    sim, rows = exp02.ClosedLoopSimulator(), []
+    for i, (label, name, g, s0, q_j, band) in enumerate(cases):
+        def run(method, limits):
+            pid = exp02.PIDController(g, limits, method, u_bias=q_j, y_ss=s0.T)
+            return sim.run(plant, _Deadband(pid, band), s0, (0.0, 10.0), SIM_DT,
+                           setpoint_func=lambda t: s0.T - 2.0)
+        lim = exp02.BENCHMARK_LIMITS
+        amp = run(AW.CLAMPING_POS_DIRECTIONAL, lim).metrics.iae
+        rate = run(AW.CLAMPING, lim).metrics.iae
+        free = run(AW.CLAMPING, replace(lim, max_slew_rate=np.inf))
+        rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (lim.max_slew_rate * SIM_DT)
+        rows.append({
+            "Condition": label if i == 0 or cases[i - 1][0] != label else "", "Method": name,
+            "\\(\\rho\\)": f"{rho:.2f}",
+            "\\(\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}\\)": f"{amp / rate:.2f}",
+        })
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "rate_demand_check.tex",
+        caption=(
+            "The rate-demand rule outside the conditions on which it was observed: $-2$~K step, "
+            "$S_{\\max} = 80$~L/min$^2$, at the second operating point (re-tuned loops) and with valve "
+            "deadbands of $3$ and $6$~L/min. $\\rho$ as in Table~\\ref{tab:rate_demand} (deadband kept, "
+            "slew limit removed); ratio above $1$: the rate trigger improves the loop."
+        ),
+        label="tab:rate_demand_check",
+    )
+
+
 def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) -> None:
     """IAE of back-calculation against T_t over [0.1 T_d, 10 T_i]; physical range [T_d, T_i].
 
@@ -443,6 +525,11 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
         k_cv = int(np.argmin(np.where(inside, ratio[0], np.inf)))  # chosen on the -2 K design step
         k_sq, k_ti = int(np.argmin(np.abs(grid - g.tt))), int(np.argmin(np.abs(grid - g.ti)))
         k_free = int(np.argmin(ratio[0]))  # design-step choice without the [T_d, T_i] restriction
+        exact = np.array([[  # same scan with the exact factor 1 - exp(-dt/T_t) (T8)
+            _step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION_EXACT, step).metrics.iae
+            for t in grid] for step in TT_STEPS])
+        ratio_x = exact / np.array([[direct[(name, st)]] for st in TT_STEPS])
+        k_fx = int(np.argmin(ratio_x[0]))
         for i, step in enumerate(TT_STEPS):
             bc = _step_run(plant, ss, replace(g, tt=float(grid[k_cv])), AW.BACK_CALCULATION, step).metrics
             dr = _step_run(plant, ss, g, AW.CLAMPING, step).metrics
@@ -472,6 +559,8 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
             "free \\(T_t^{\\mathrm{cv}}\\)": f"{grid[k_free]:.3f}",
             "in range": "yes" if inside[k_free] else "no",
             "free: \\(\\pm 5\\)~K": f"{ratio[1:, k_free].max():.2f}",
+            "free, exact": f"{grid[k_fx]:.3f}",
+            "exact: \\(\\pm 5\\)~K": f"{ratio_x[1:, k_fx].max():.2f}",
             "\\(T_t^{\\mathrm{mm}}\\)": f"{grid[k_mm]:.3f}",
             "mm": f"{ratio[:, k_mm].max():.2f}",
             "\\(\\sqrt{T_iT_d}\\)": f"{ratio[:, k_sq].max():.2f}",
@@ -493,7 +582,8 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
             "$[T_d, T_i]$; last two columns: worst ratio over the three steps with the defaults "
             "$T_t = \\sqrt{T_iT_d}$ and $T_t = T_i$. A $T_t^{\\mathrm{cv}}$ equal to $T_d$ or $T_i$ is a "
             "boundary solution of the restricted choice; ``in range'' tells whether the free choice "
-            "stays inside $[T_d, T_i]$."
+            "stays inside $[T_d, T_i]$; ``free, exact'': the free choice with the exact tracking factor "
+            "$1 - e^{-\\Delta t/T_t}$ instead of the Euler step of Eq.~\\eqref{eq:back_calculation}."
         ),
         label="tab:antiwindup_tt_summary",
     )
@@ -718,18 +808,23 @@ def run_latch_check(plant, ss, gains: dict) -> None:
     pd.DataFrame(out).to_csv(exp02.RESULTS_DIR / "latch_check.csv", index=False, float_format="%.4f")
 
 
-def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
-    """Ablation of the seven integrator policies at a second operating point (re-identified, re-tuned)."""
-    plant = exp02.CSTRPlant()
+def _second_op_loops(plant, q_j: float):
+    """Steady state, re-identified FOPTD and re-tuned analytical loops at a second operating point."""
     ss2 = plant.find_steady_state(q_j=q_j)
     foptd2 = exp02.identify_nominal_foptd(plant, ss2, q_j)
-    analytical = {
+    return ss2, foptd2, {
         "Ziegler-Nichols": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.ZIEGLER_NICHOLS_PID),
         "Cohen-Coon": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.COHEN_COON_PID),
         "Tyreus-Luyben": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.TYREUS_LUYBEN),
         "AMIGO": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.AMIGO),
         "Skogestad SIMC": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.SKOGESTAD_SIMC_PID, tau_c=0.4),
     }
+
+
+def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
+    """Ablation of the seven integrator policies at a second operating point (re-identified, re-tuned)."""
+    plant = exp02.CSTRPlant()
+    ss2, foptd2, analytical = _second_op_loops(plant, q_j)
     rows = []
     for name, g in analytical.items():
         row = {"Method": name, "\\(K_p\\)": f"{g.kp:.2f}"}
@@ -1281,6 +1376,8 @@ def remediate_jpc() -> Path:
     run_amigo_regime_diagnostics(plant, ss, gains)
     plot_mechanism(plant, ss, gains, figures_dir)
     run_latch_check(plant, ss, gains)
+    run_rate_demand_check(plant, ss, gains, tables_dir)
+    run_noise_policies(plant, ss, gains, tt_cv, tables_dir)
     run_predictive_clamping(plant, ss, gains, tables_dir)
     run_exact_backcalc(plant, ss, gains, tables_dir)
     run_second_operating_point(SECOND_OP_Q_J, tables_dir)
