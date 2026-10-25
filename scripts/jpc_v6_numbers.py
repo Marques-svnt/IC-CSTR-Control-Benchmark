@@ -744,6 +744,30 @@ def c2_numbers() -> None:
     define("ctwoTLR", float(tl["R"]), "c2_rate_demand")
 
 
+def literature_audit_numbers() -> list[list[str]]:
+    """D1: counts of the literature audit (repository/literature_audit.csv); returns the table."""
+    with open(PAPER / "repository" / "literature_audit.csv", newline="", encoding="utf-8") as fh:
+        rows_ = list(csv.DictReader(fh))
+    counted = [r for r in rows_ if r["status"] == "counted"]
+    define("litcandidates", f"{len(rows_)}", "literature_audit (candidates screened)")
+    define("litcounted", f"{len(counted)}", "literature_audit (full text read and included)")
+    define("litabstract", f"{sum(r['status'] == 'abstract only' for r in rows_)}", "literature_audit (abstract only)")
+    items = (("actuator_model", "Actuator limits declared (amplitude)"), ("rate_limit", "Slew-rate limit declared"),
+             ("backlash", "Backlash or deadband declared"), ("anti_windup", "Anti-windup logic declared"),
+             ("loop_sign", "Loop action (reverse or direct) stated"),
+             ("dt_and_method", "Sampling interval and discretization method stated"),
+             ("measurement_path", "Measurement noise or filter stated"))
+    body = []
+    for key, label in items:
+        vals = [r[key] for r in counted]
+        n = {v: vals.count(v) for v in ("yes", "no", "not applicable", "not verifiable")}
+        define(f"lit{key.replace('_', '')}", f"{n['yes']}", f"literature_audit ({key} = yes)")
+        define(f"lit{key.replace('_', '')}na", f"{n['not applicable']}", f"literature_audit ({key} = not applicable)")
+        body.append([label, *(str(n[v]) for v in ("yes", "no", "not applicable", "not verifiable"))])
+        define(f"lit{key.replace('_', '')}app", f"{len(vals) - n['not applicable']}", f"literature_audit ({key} applicable)")
+    return body
+
+
 def predictive_and_exact_numbers() -> None:
     """Freeze test at k (predictor-corrector) and exact back-calculation factor (Tables S)."""
     pc = rows("predictive_clamping")
@@ -902,6 +926,7 @@ def main() -> None:
     stiction_numbers()
     measured_position_numbers()
     c2_numbers()
+    lit_body = literature_audit_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
     load_cols, load_body = load_table()
@@ -941,6 +966,20 @@ def main() -> None:
             "re-optimized, BC$^{\\mathrm{cv}}$ with $T_t^{\\mathrm{cv}}$ chosen on this plant.",
             "tab:hx",
             group=" & \\multicolumn{5}{c}{$-5$~K step} & \\multicolumn{2}{c}{$-2$~K step}",
+        ),
+        encoding="utf-8",
+    )
+    (tables / "literature_audit.tex").write_text(
+        booktabs(
+            ["Item", "yes", "no", "not applicable", "not verifiable"],
+            lit_body,
+            "Short literature audit (not a systematic review): what the articles that compare control "
+            "strategies on a CSTR or equivalent reactor with an actuator constraint state about the "
+            "implementation, counted over the articles read in full. Protocol, search strings and the "
+            "list of every candidate are in \\texttt{repository/literature\\_audit.csv} and the "
+            "repository report; anti-windup is not applicable to predictive controllers.",
+            "tab:literature_audit",
+            env="table",
         ),
         encoding="utf-8",
     )
@@ -992,7 +1031,7 @@ def main() -> None:
         w = csv.writer(fh)
         w.writerow(["macro", "value", "source"])
         w.writerows((f"\\v{n}", v, s) for n, v, s in MACROS)
-    print(f"{len(MACROS)} macros, 4 tables")
+    print(f"{len(MACROS)} macros, 5 tables")
 
 
 if __name__ == "__main__":

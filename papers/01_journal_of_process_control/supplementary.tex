@@ -238,6 +238,11 @@ Table~\ref{tab:hx_gains} gives the identified model, the gains and $T_t^{\mathrm
 
 \input{tables/hx_smax_map}
 
+\section{Short literature audit}\label{supp:audit}
+To give a verifiable basis to any statement about how comparisons report their implementation, a short audit was run with a protocol registered before the search: OpenAlex, 2015--2026, three fixed search strings, inclusion of articles that compare control strategies on a CSTR or an equivalent chemical reactor with an actuator constraint in the methodology, candidates taken in the order of the database without regard to their results, and five items coded from the full text. Of $\vlitcandidates$ candidates, $\vlitcounted$ met the criteria and could be read in full; $\vlitabstract$ could be read only as abstracts, because the publisher blocked automated access, and are not counted. Table~\ref{tab:literature_audit} gives the counts; the full list with the reason for every exclusion is in \texttt{repository/literature\_audit.csv}. The sample is small, not systematic and coded by one reader, so it supports statements about these articles only.
+
+\input{tables/literature_audit}
+
 \bibliographystyle{elsarticle-num}
 \bibliography{references}
 \end{document}

@@ -327,6 +327,30 @@ macro,value,source
 \vctworhotie,2,"c2_rate_demand (rho >= 1, |R - 1| <= 0.005)"
 \vctwoTLrho,1.24,c2_rate_demand
 \vctwoTLR,0.96,c2_rate_demand
+\vlitcandidates,66,literature_audit (candidates screened)
+\vlitcounted,12,literature_audit (full text read and included)
+\vlitabstract,14,literature_audit (abstract only)
+\vlitactuatormodel,11,literature_audit (actuator_model = yes)
+\vlitactuatormodelna,0,literature_audit (actuator_model = not applicable)
+\vlitactuatormodelapp,12,literature_audit (actuator_model applicable)
+\vlitratelimit,0,literature_audit (rate_limit = yes)
+\vlitratelimitna,0,literature_audit (rate_limit = not applicable)
+\vlitratelimitapp,12,literature_audit (rate_limit applicable)
+\vlitbacklash,0,literature_audit (backlash = yes)
+\vlitbacklashna,0,literature_audit (backlash = not applicable)
+\vlitbacklashapp,12,literature_audit (backlash applicable)
+\vlitantiwindup,2,literature_audit (anti_windup = yes)
+\vlitantiwindupna,5,literature_audit (anti_windup = not applicable)
+\vlitantiwindupapp,7,literature_audit (anti_windup applicable)
+\vlitloopsign,0,literature_audit (loop_sign = yes)
+\vlitloopsignna,0,literature_audit (loop_sign = not applicable)
+\vlitloopsignapp,12,literature_audit (loop_sign applicable)
+\vlitdtandmethod,2,literature_audit (dt_and_method = yes)
+\vlitdtandmethodna,0,literature_audit (dt_and_method = not applicable)
+\vlitdtandmethodapp,12,literature_audit (dt_and_method applicable)
+\vlitmeasurementpath,1,literature_audit (measurement_path = yes)
+\vlitmeasurementpathna,0,literature_audit (measurement_path = not applicable)
+\vlitmeasurementpathapp,12,literature_audit (measurement_path applicable)
 \vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
 \vpcZNfiveold,3.65,predictive_clamping
 \vpcZNfivenew,3.44,predictive_clamping
