@@ -157,7 +157,17 @@ Full versions of the results condensed in Section~\ref{subsec:ablation} of the m
 
 \input{tables/rate_demand}
 
-\paragraph{Valve deadband.} A deadband (backlash) of $3$ and $6$~L/min between controller and plant (Table~\ref{tab:antiwindup_deadband}; the anti-windup logic sees the command, not the backlash position) raises every IAE (AMIGO with the rate-aware rule: $0.93$, $1.22$, $1.54$), but the ordering persists: sign-blind clamping still latches ZN and CC (IAE $105.66$ and $102.78$ at $3$~L/min), amplitude-only clamping leaves them at $23.44$ and $22.12$ against $1.28$ and $1.36$ with the rate-aware rule, and at $6$~L/min the rate-aware rule stays within $\vdbsixworstpct\%$ of back-calculation with $T_t = \sqrt{T_iT_d}$ (CC: $1.76$ against $1.60$; SIMC: $1.92$ against $1.75$) but is up to $\vdbsixworstpctcv\%$ worse than back-calculation with $T_t^{\mathrm{cv}}$. Stiction was not modelled.
+\paragraph{Valve deadband.} The deadband is a backlash (play) operator of width $b$ placed after the amplitude and slew limits, exactly as \texttt{\_Deadband} in \texttt{experiments/build\_paper\_assets.py} implements it:
+\begin{equation}
+    p_k = \begin{cases}
+        u_{\text{act},k} - b/2, & u_{\text{act},k} > p_{k-1} + b/2, \\
+        u_{\text{act},k} + b/2, & u_{\text{act},k} < p_{k-1} - b/2, \\
+        p_{k-1}, & \text{otherwise},
+    \end{cases}
+    \qquad p_0 = u_{\text{bias}},
+    \label{eq:backlash}
+\end{equation}
+with $u_{\text{act},k} = \operatorname{rate}(\operatorname{sat}(u_{\text{raw},k}))$ as in Algorithm~\ref{alg:integrator}; the plant receives $q_j = p_k$ on $[t_k, t_{k+1})$. The composition is therefore saturation, then slew limit, then backlash, and the operator has one state, the position $p_{k-1}$ (besides the slew limiter's own state $u_{\text{act},k-1}$). Once the valve has moved, $p_k \in [u_{\min} + b/2, u_{\max} - b/2]$, so the plant never receives $u_{\max}$ itself. The anti-windup logic uses $u_{\text{raw}}$ and $u_{\text{act}}$ of the controller, whose output block contains the amplitude and slew limits; the backlash is a mechanical defect outside the controller, which has no position feedback, so $u_{\text{act}}$ includes the slew limit but not the backlash, and $p_k$ is never seen by the integrator logic. A deadband of $3$ and $6$~L/min (Table~\ref{tab:antiwindup_deadband}) raises every IAE (AMIGO with the rate-aware rule: $0.93$, $1.22$, $1.54$), but the ordering persists: sign-blind clamping still latches ZN and CC (IAE $105.66$ and $102.78$ at $3$~L/min), amplitude-only clamping leaves them at $23.44$ and $22.12$ against $1.28$ and $1.36$ with the rate-aware rule, and at $6$~L/min the rate-aware rule stays within $\vdbsixworstpct\%$ of back-calculation with $T_t = \sqrt{T_iT_d}$ (CC: $1.76$ against $1.60$; SIMC: $1.92$ against $1.75$) but is up to $\vdbsixworstpctcv\%$ worse than back-calculation with $T_t^{\mathrm{cv}}$. Stiction was not modelled.
 
 \input{tables/antiwindup_deadband}
 

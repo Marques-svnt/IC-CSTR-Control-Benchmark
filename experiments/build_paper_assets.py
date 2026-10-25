@@ -817,8 +817,8 @@ def run_deadband_test(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> 
         output_path=tables_dir / "antiwindup_deadband.tex",
         caption=(
             "IAE (K$\\cdot$min) of the seven integrator policies on the $-2$~K step with a valve "
-            "deadband (backlash) of $0$, $3$ and $6$~L/min between the controller and the plant; "
-            "the anti-windup logic sees the command, not the backlash position. Valve $[0, 300]$~L/min, "
+            "deadband (backlash, Eq.~\\eqref{eq:backlash}) of $0$, $3$ and $6$~L/min after the amplitude "
+            "and slew limits; the anti-windup logic sees $u_{\\text{act}}$, not the backlash position. Valve $[0, 300]$~L/min, "
             "$S_{\\max} = 80$~L/min$^2$; BC with $T_t = \\sqrt{T_iT_d}$ and with the $T_t^{\\mathrm{cv}}$ of "
             "Table~\\ref{tab:antiwindup_tt_summary}. Stiction is not modelled."
         ),
