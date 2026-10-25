@@ -211,6 +211,23 @@
 \newcommand{\vrhohelplowratio}{1.14}  % rate_demand_grid
 \newcommand{\vrhohelplowloop}{AMIGO}  % rate_demand_grid
 \newcommand{\vrhohelplowsmax}{320}  % rate_demand_grid
+\newcommand{\vpcZNmaxpct}{5.9}  % predictive_clamping (largest |dIAE| over 3 steps)
+\newcommand{\vpcZNfiveold}{3.65}  % predictive_clamping
+\newcommand{\vpcZNfivenew}{3.44}  % predictive_clamping
+\newcommand{\vpcCCmaxpct}{7.1}  % predictive_clamping (largest |dIAE| over 3 steps)
+\newcommand{\vpcCCfiveold}{4.39}  % predictive_clamping
+\newcommand{\vpcCCfivenew}{4.08}  % predictive_clamping
+\newcommand{\vpcrestmaxpct}{1.4}  % predictive_clamping (largest |dIAE| of TL, AMIGO, SIMC, Optimal ITAE)
+\newcommand{\vpcttcvmin}{0.87}  % antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)
+\newcommand{\vpcttcvmax}{1.01}  % antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)
+\newcommand{\vexZNratio}{2.14}  % exact_backcalc
+\newcommand{\vexZNeuler}{18.56}  % exact_backcalc
+\newcommand{\vexZNexact}{0.87}  % exact_backcalc
+\newcommand{\vexZNTVeuler}{802}  % exact_backcalc
+\newcommand{\vexCCratio}{2.36}  % exact_backcalc
+\newcommand{\vexCCeuler}{18.56}  % exact_backcalc
+\newcommand{\vexCCexact}{0.82}  % exact_backcalc
+\newcommand{\vexCCTVeuler}{802}  % exact_backcalc
 \newcommand{\vloadZN}{2.04}  % disturbance_rejection_table
 \newcommand{\vloadCC}{1.98}  % disturbance_rejection_table
 \newcommand{\vloadTL}{3.02}  % disturbance_rejection_table

@@ -45,6 +45,10 @@ class AntiWindupMethod(str, Enum):
     CLAMPING_POS_AGNOSTIC = "clamping_pos_agnostic"  # freeze whenever u_raw leaves [u_min, u_max]
     CLAMPING_RATE_AGNOSTIC = "clamping_rate_agnostic"  # freeze whenever amplitude or slew cuts u
     CLAMPING_POS_DIRECTIONAL = "clamping_pos_directional"  # directional, amplitude excess only
+    # Directional amplitude+rate rule tested at sample k on the trial command (no one-sample delay)
+    CLAMPING_PREDICTIVE = "clamping_predictive"
+    # Back-calculation with the exact ZOH factor 1 - exp(-dt/Tt) instead of explicit Euler dt/Tt
+    BACK_CALCULATION_EXACT = "back_calculation_exact"
 
 
 @dataclass
@@ -246,6 +250,14 @@ class PIDController:
             if sat_excess * (i_gain * e_trap) > 0.0:
                 should_integrate = False
 
+        if self.anti_windup == AntiWindupMethod.CLAMPING_PREDICTIVE:
+            # Predictor-corrector: trial command with the increment, through the valve map at k
+            push = i_gain * e_trap
+            u_trial = self.u_bias + p_term + self._integral_state + push * dt + d_term
+            u_trial_act, _ = self.valve.preview(u_trial, dt)
+            if (u_trial - u_trial_act) * push > 0.0:
+                should_integrate = False
+
         if self._is_saturated:
             u_unc = self._last_u_unconstrained
             pos_excess = u_unc - min(max(u_unc, self.limits.u_min), self.limits.u_max)
@@ -267,11 +279,16 @@ class PIDController:
         if should_integrate:
             # Integração trapezoidal discreta de maior precisão
             delta_i = i_gain * e_trap * dt
-            if self.anti_windup == AntiWindupMethod.BACK_CALCULATION:
+            if self.anti_windup in (
+                AntiWindupMethod.BACK_CALCULATION, AntiWindupMethod.BACK_CALCULATION_EXACT
+            ):
                 # Correção por recálculo: rastreia a discrepância entre saída real e calculada
                 tracking_error = self._last_u_applied - self._last_u_unconstrained
                 tt = self.gains.tt or self.gains.ti
-                delta_i += (tracking_error / tt) * dt
+                if self.anti_windup == AntiWindupMethod.BACK_CALCULATION_EXACT:
+                    delta_i += (1.0 - np.exp(-dt / tt)) * tracking_error
+                else:
+                    delta_i += (tracking_error / tt) * dt
 
             self._integral_state += delta_i
 

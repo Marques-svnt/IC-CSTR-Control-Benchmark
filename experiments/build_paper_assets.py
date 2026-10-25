@@ -615,6 +615,67 @@ def plot_mechanism(plant, ss, gains: dict, figures_dir: Path) -> None:
     exp02.save_grouped(fig, figures_dir / "fig_mechanism")
 
 
+def run_predictive_clamping(plant, ss, gains: dict, tables_dir: Path) -> None:
+    """Directional rule with the residual at k-1 (Eq. 11) against a predictor-corrector test at k.
+
+    The predictor-corrector forms the trial command u_bias + P_k + I_{k-1} + dI_k + D_k, passes it
+    through the valve map from u_act,{k-1}, and freezes if (trial - mapped trial) dI_k > 0.
+    """
+    rows = []
+    for name, g in _one_dof(gains).items():
+        for i, step in enumerate(TT_STEPS):
+            old = _step_run(plant, ss, g, AW.CLAMPING, step).metrics
+            new = _step_run(plant, ss, g, AW.CLAMPING_PREDICTIVE, step).metrics
+            rows.append({
+                "Method": name if i == 0 else "", "Step": f"${step:+g}$ K",
+                "IAE, \\(k-1\\)": f"{old.iae:.3f}", "IAE, \\(k\\)": f"{new.iae:.3f}",
+                "TV, \\(k-1\\)": f"{old.tv:.1f}", "TV, \\(k\\)": f"{new.tv:.1f}",
+                "\\(M_p\\), \\(k-1\\)": f"{old.overshoot_pct:.1f}",
+                "\\(M_p\\), \\(k\\)": f"{new.overshoot_pct:.1f}",
+                "\\(\\Delta\\)IAE (\\%)": f"{100.0 * (new.iae / old.iae - 1.0):+.2f}",
+            })
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "predictive_clamping.tex",
+        caption=(
+            "Directional rule with the freeze decision taken on the residual of the previous sample "
+            "(Eq.~\\eqref{eq:clamping_antiwindup}, ``$k-1$'') and on a predictor-corrector trial at the "
+            "current sample (``$k$''): IAE (K$\\cdot$min), TV (L/min) and overshoot (\\%) on the three "
+            "steps, valve $[0, 300]$~L/min, $S_{\\max} = 80$~L/min$^2$."
+        ),
+        label="tab:predictive_clamping",
+    )
+
+
+def run_exact_backcalc(plant, ss, gains: dict, tables_dir: Path) -> None:
+    """Back-calculation at T_t = 0.1 sqrt(T_i T_d): explicit Euler (Eq. 12) against the exact factor."""
+    rows = []
+    for name, g in _one_dof(gains).items():
+        g01 = replace(g, tt=0.1 * g.tt)
+        for i, step in enumerate(TT_STEPS):
+            eul = _step_run(plant, ss, g01, AW.BACK_CALCULATION, step).metrics
+            ex = _step_run(plant, ss, g01, AW.BACK_CALCULATION_EXACT, step).metrics
+            rows.append({
+                "Method": name if i == 0 else "",
+                "\\(T_t\\) (min)": f"{g01.tt:.4f}" if i == 0 else "",
+                "\\(\\Delta t/T_t\\)": f"{SIM_DT / g01.tt:.2f}" if i == 0 else "",
+                "Step": f"${step:+g}$ K",
+                "IAE Euler": f"{eul.iae:.2f}", "IAE exact": f"{ex.iae:.2f}",
+                "TV Euler (L/min)": f"{eul.tv:.1f}", "TV exact (L/min)": f"{ex.tv:.1f}",
+            })
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "exact_backcalc.tex",
+        caption=(
+            "Back-calculation at $T_t = 0.1\\sqrt{T_iT_d}$, below the physical range: tracking term "
+            "discretized by explicit Euler, $(\\Delta t/T_t)(u_{\\text{act},k-1} - u_{\\text{raw},k-1})$ "
+            "(Eq.~\\eqref{eq:back_calculation}), and by the exact zero-order-hold factor "
+            "$(1 - e^{-\\Delta t/T_t})(u_{\\text{act},k-1} - u_{\\text{raw},k-1})$; IAE in K$\\cdot$min."
+        ),
+        label="tab:exact_backcalc",
+    )
+
+
 def run_latch_check(plant, ss, gains: dict) -> None:
     """Checks the hypotheses of Proposition 1 on the sign-blind latch of ZN and CC (CSV only).
 
@@ -1208,6 +1269,8 @@ def remediate_jpc() -> Path:
     run_amigo_regime_diagnostics(plant, ss, gains)
     plot_mechanism(plant, ss, gains, figures_dir)
     run_latch_check(plant, ss, gains)
+    run_predictive_clamping(plant, ss, gains, tables_dir)
+    run_exact_backcalc(plant, ss, gains, tables_dir)
     run_second_operating_point(SECOND_OP_Q_J, tables_dir)
     run_exact_robustness(plant, ss, foptd, gains, tables_dir)
     stage("cost of the design-model constraint + joint 2-DOF")

@@ -1,10 +1,14 @@
 """Unit and integration tests for PID controller architectures and anti-windup schemes."""
 
+import math
+
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from src.classical_control.closed_loop import ClosedLoopSimulator
 from src.classical_control.pid_controller import AntiWindupMethod, PIDController, PIDGains
-from src.sim_core.actuators import ActuatorLimits
+from src.sim_core.actuators import ActuatorLimits, ValveActuator
 from src.sim_core.cstr_plant import CSTRPlant, CSTRState
 
 
@@ -99,6 +103,43 @@ class TestAntiWindupStrategies:
         # Output remains saturated, but integral is bounded by tracking difference
         assert pid_bc._is_saturated is True
         assert pid_bc._integral_state < 30.0
+
+
+    def test_valve_preview_does_not_move_the_valve(self) -> None:
+        """preview returns what apply would return, without changing the valve position."""
+        valve = ValveActuator(ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0), 100.0)
+        assert valve.preview(400.0, dt=0.02) == (pytest.approx(101.6), True)
+        assert valve.current_position == pytest.approx(100.0)
+        assert valve.apply(400.0, dt=0.02) == (pytest.approx(101.6), True)
+
+    def test_predictive_clamping_freezes_one_sample_earlier(self) -> None:
+        """The k-1 residual lets one increment through after the cut; the trial at k does not."""
+        limits = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0)
+        gains = PIDGains(kp=-20.0, ti=0.5, td=0.0)
+        out = {}
+        for method in (AntiWindupMethod.CLAMPING, AntiWindupMethod.CLAMPING_PREDICTIVE):
+            pid = PIDController(
+                gains=gains, actuator_limits=limits, anti_windup=method, u_bias=100.0
+            )
+            pid.reset(initial_measurement=400.0)
+            out[method] = pid.compute(setpoint=398.0, measurement=400.0, dt=0.02)[1]["i"]
+        # first sample: the slew limit cuts the kick; only the predictive rule freezes already
+        assert out[AntiWindupMethod.CLAMPING] > 0.0  # Kp < 0, e < 0: the increment opens the valve
+        assert out[AntiWindupMethod.CLAMPING_PREDICTIVE] == pytest.approx(0.0)
+
+    @given(tt=st.floats(min_value=0.005, max_value=5.0), excess=st.floats(-500.0, 500.0))
+    def test_exact_back_calculation_never_overcorrects(self, tt: float, excess: float) -> None:
+        """Exact tracking moves I by (1 - exp(-dt/Tt)) of the residual: never past it, any Tt."""
+        limits = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0)
+        gains = PIDGains(kp=-20.0, ti=1e9, td=0.0, tt=tt)
+        pid = PIDController(
+            gains=gains, actuator_limits=limits,
+            anti_windup=AntiWindupMethod.BACK_CALCULATION_EXACT, u_bias=100.0,
+        )
+        pid._last_u_unconstrained, pid._last_u_applied = 100.0 + excess, 100.0
+        _, diag = pid.compute(setpoint=400.0, measurement=400.0, dt=0.02)
+        assert abs(diag["i"]) <= abs(excess) + 1e-9
+        assert diag["i"] == pytest.approx(-(1.0 - math.exp(-0.02 / tt)) * excess, abs=1e-9)
 
 
 class TestClosedLoopIntegration:

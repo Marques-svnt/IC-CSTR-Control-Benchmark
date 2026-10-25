@@ -92,6 +92,23 @@ class ValveActuator:
         Raises:
             ValueError: Se o passo de amostragem dt for menor ou igual a zero.
         """
+        u_actual, is_saturated = self.preview(u_desired, dt)
+        self._current_position = u_actual
+        return self._current_position, is_saturated
+
+    def preview(self, u_desired: float, dt: float) -> Tuple[float, bool]:
+        """What `apply` would return for `u_desired`, without moving the valve.
+
+        Args:
+            u_desired: Ação de controle requisitada pelo controlador [L/min].
+            dt: Intervalo de amostragem [min].
+
+        Returns:
+            Tuple[float, bool]: posição limitada (amplitude, depois slew rate) e a flag de corte.
+
+        Raises:
+            ValueError: Se o passo de amostragem dt for menor ou igual a zero.
+        """
         if dt <= 0:
             raise ValueError(f"O passo temporal dt deve ser positivo, obtido {dt}")
 
@@ -121,8 +138,7 @@ class ValveActuator:
         else:
             u_actual = u_clamped
 
-        self._current_position = u_actual
-        return self._current_position, is_saturated
+        return u_actual, is_saturated
 
     def reset(self, position: float) -> None:
         """Reinicia a posição interna da válvula para um valor pré-especificado.

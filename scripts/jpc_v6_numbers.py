@@ -455,6 +455,44 @@ def rate_trigger_numbers() -> None:
     define("rhohelplowsmax", f"{helped['S_max']:.0f}", "rate_demand_grid")
 
 
+def predictive_and_exact_numbers() -> None:
+    """Freeze test at k (predictor-corrector) and exact back-calculation factor (Tables S)."""
+    pc = rows("predictive_clamping")
+    dpc = "\\(\\Delta\\)IAE (\\%)"
+    worst = {}
+    for r in pc:
+        worst[r["Method"]] = max(worst.get(r["Method"], 0.0), abs(num(r[dpc])))
+    for name in ("Ziegler-Nichols", "Cohen-Coon"):
+        define(f"pc{SHORT[name]}maxpct", worst[name], "predictive_clamping (largest |dIAE| over 3 steps)", "{:.1f}")
+        for col, tag in (("IAE, \\(k-1\\)", "old"), ("IAE, \\(k\\)", "new")):
+            define(f"pc{SHORT[name]}five{tag}", num(cell("predictive_clamping", col, Method=name, Step="$+5$ K")),
+                   "predictive_clamping", "{:.2f}")
+    define("pcrestmaxpct", max(v for n, v in worst.items() if n not in ("Ziegler-Nichols", "Cohen-Coon")),
+           "predictive_clamping (largest |dIAE| of TL, AMIGO, SIMC, Optimal ITAE)", "{:.1f}")
+    simc = [r for r in pc if r["Method"] == "Skogestad SIMC"]
+    none = [num(cell("antiwindup_ablation", "None", Method="Skogestad SIMC"))] + [
+        num(cell("antiwindup_scenarios", "None", Scenario=sc, Method="Skogestad SIMC"))
+        for sc in ("$-5$ K step", "$+5$ K step")
+    ]
+    if not all(num(r["IAE, \\(k\\)"]) > n for r, n in zip(simc, none)):
+        raise ValueError("text states that SIMC stays worse than no anti-windup with the test at k")
+    tv = rows("antiwindup_tt_tvmp")
+    ratios = {}
+    for r, p in zip(tv, pc, strict=True):
+        if (r["Method"], r["Step"]) != (p["Method"], p["Step"]):
+            raise ValueError("antiwindup_tt_tvmp and predictive_clamping rows are not aligned")
+        if r["Step"] != "$-2$ K":
+            ratios[r["Method"]] = max(ratios.get(r["Method"], 0.0), num(r["IAE BC"]) / num(p["IAE, \\(k\\)"]))
+    define("pcttcvmin", min(ratios.values()), "antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)")
+    define("pcttcvmax", max(ratios.values()), "antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)")
+    for name in ("Ziegler-Nichols", "Cohen-Coon"):
+        m = {"Method": name, "Step": "$-2$ K"}
+        define(f"ex{SHORT[name]}ratio", num(cell("exact_backcalc", "\\(\\Delta t/T_t\\)", **m)), "exact_backcalc")
+        define(f"ex{SHORT[name]}euler", num(cell("exact_backcalc", "IAE Euler", **m)), "exact_backcalc")
+        define(f"ex{SHORT[name]}exact", num(cell("exact_backcalc", "IAE exact", **m)), "exact_backcalc")
+        define(f"ex{SHORT[name]}TVeuler", num(cell("exact_backcalc", "TV Euler (L/min)", **m)), "exact_backcalc", "{:.0f}")
+
+
 def testbed_table() -> list[list[str]]:
     """Gains, nominal metrics and robustness of the six feedback loops."""
     body = []
@@ -538,6 +576,7 @@ def main() -> None:
     tb_body = testbed_table()
     measurement_numbers()
     rate_trigger_numbers()
+    predictive_and_exact_numbers()
     load_cols, load_body = load_table()
 
     tables = PAPER / "tables"

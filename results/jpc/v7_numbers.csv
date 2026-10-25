@@ -211,6 +211,23 @@ macro,value,source
 \vrhohelplowratio,1.14,rate_demand_grid
 \vrhohelplowloop,AMIGO,rate_demand_grid
 \vrhohelplowsmax,320,rate_demand_grid
+\vpcZNmaxpct,5.9,predictive_clamping (largest |dIAE| over 3 steps)
+\vpcZNfiveold,3.65,predictive_clamping
+\vpcZNfivenew,3.44,predictive_clamping
+\vpcCCmaxpct,7.1,predictive_clamping (largest |dIAE| over 3 steps)
+\vpcCCfiveold,4.39,predictive_clamping
+\vpcCCfivenew,4.08,predictive_clamping
+\vpcrestmaxpct,1.4,"predictive_clamping (largest |dIAE| of TL, AMIGO, SIMC, Optimal ITAE)"
+\vpcttcvmin,0.87,antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)
+\vpcttcvmax,1.01,antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)
+\vexZNratio,2.14,exact_backcalc
+\vexZNeuler,18.56,exact_backcalc
+\vexZNexact,0.87,exact_backcalc
+\vexZNTVeuler,802,exact_backcalc
+\vexCCratio,2.36,exact_backcalc
+\vexCCeuler,18.56,exact_backcalc
+\vexCCexact,0.82,exact_backcalc
+\vexCCTVeuler,802,exact_backcalc
 \vloadZN,2.04,disturbance_rejection_table
 \vloadCC,1.98,disturbance_rejection_table
 \vloadTL,3.02,disturbance_rejection_table
