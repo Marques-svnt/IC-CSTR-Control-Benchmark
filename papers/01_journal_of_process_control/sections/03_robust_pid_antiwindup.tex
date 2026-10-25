@@ -27,7 +27,8 @@ Let the loop be reverse-acting ($K_p < 0$) and the open-loop-stable plant have s
 Consider an instant at which the valve is at $u_{\max}$ and $I \ge I^\star + |K_p|\delta + \bar D$. Since $e \le T_{sp} - T_\infty + \delta$ and $|D| \le \bar D$,
 \begin{align*}
 u_{\text{raw}} &= u_{\text{bias}} - |K_p|\,e + I + D \\
-&\ge u_{\text{bias}} - |K_p|\,(T_{sp} - T_\infty + \delta) + I^\star + |K_p|\delta = u_{\max},
+&\ge u_{\text{bias}} - |K_p|\,(T_{sp} - T_\infty + \delta) \\
+&\quad + I^\star + |K_p|\delta = u_{\max},
 \end{align*}
 and $e > 0$ by hypothesis, so the rule freezes $I$; $u_{\text{act}}$ stays at $u_{\max}$ and the plant, being stable, converges to $T_\infty$ under the constant input. The inequality is thus reproduced at the next sample, and the claim follows by induction on the sample index.
 \end{proof}

@@ -1,0 +1,469 @@
+Method,step_K,T_t_min,IAE
+Ziegler-Nichols,-2.0000,0.0093,18.5564
+Ziegler-Nichols,-2.0000,0.0105,1.4853
+Ziegler-Nichols,-2.0000,0.0136,1.0167
+Ziegler-Nichols,-2.0000,0.0176,0.9451
+Ziegler-Nichols,-2.0000,0.0200,0.8692
+Ziegler-Nichols,-2.0000,0.0228,0.8697
+Ziegler-Nichols,-2.0000,0.0296,0.8712
+Ziegler-Nichols,-2.0000,0.0384,0.8742
+Ziegler-Nichols,-2.0000,0.0467,0.8797
+Ziegler-Nichols,-2.0000,0.0497,0.8818
+Ziegler-Nichols,-2.0000,0.0644,0.8969
+Ziegler-Nichols,-2.0000,0.0834,0.9372
+Ziegler-Nichols,-2.0000,0.0935,0.9685
+Ziegler-Nichols,-2.0000,0.1081,1.0268
+Ziegler-Nichols,-2.0000,0.1401,1.1913
+Ziegler-Nichols,-2.0000,0.1815,1.5631
+Ziegler-Nichols,-2.0000,0.1869,1.6648
+Ziegler-Nichols,-2.0000,0.2352,2.5214
+Ziegler-Nichols,-2.0000,0.3048,8.4774
+Ziegler-Nichols,-2.0000,0.3949,15.5234
+Ziegler-Nichols,-2.0000,0.5117,22.3406
+Ziegler-Nichols,-2.0000,0.6631,28.6749
+Ziegler-Nichols,-2.0000,0.8592,33.9268
+Ziegler-Nichols,-2.0000,1.1133,41.0050
+Ziegler-Nichols,-2.0000,1.4426,45.8047
+Ziegler-Nichols,-2.0000,1.8692,54.3654
+Ziegler-Nichols,-5.0000,0.0093,48.5564
+Ziegler-Nichols,-5.0000,0.0105,5.5112
+Ziegler-Nichols,-5.0000,0.0136,3.7699
+Ziegler-Nichols,-5.0000,0.0176,3.5766
+Ziegler-Nichols,-5.0000,0.0200,3.3834
+Ziegler-Nichols,-5.0000,0.0228,3.3855
+Ziegler-Nichols,-5.0000,0.0296,3.3888
+Ziegler-Nichols,-5.0000,0.0384,3.4001
+Ziegler-Nichols,-5.0000,0.0467,3.4153
+Ziegler-Nichols,-5.0000,0.0497,3.4214
+Ziegler-Nichols,-5.0000,0.0644,3.4672
+Ziegler-Nichols,-5.0000,0.0834,3.5629
+Ziegler-Nichols,-5.0000,0.0935,3.6296
+Ziegler-Nichols,-5.0000,0.1081,3.7377
+Ziegler-Nichols,-5.0000,0.1401,4.1106
+Ziegler-Nichols,-5.0000,0.1815,4.7349
+Ziegler-Nichols,-5.0000,0.1869,4.9225
+Ziegler-Nichols,-5.0000,0.2352,6.2899
+Ziegler-Nichols,-5.0000,0.3048,9.8330
+Ziegler-Nichols,-5.0000,0.3949,17.1785
+Ziegler-Nichols,-5.0000,0.5117,22.5374
+Ziegler-Nichols,-5.0000,0.6631,28.0751
+Ziegler-Nichols,-5.0000,0.8592,33.6471
+Ziegler-Nichols,-5.0000,1.1133,40.9224
+Ziegler-Nichols,-5.0000,1.4426,45.2644
+Ziegler-Nichols,-5.0000,1.8692,53.6827
+Ziegler-Nichols,5.0000,0.0093,48.5433
+Ziegler-Nichols,5.0000,0.0105,5.1606
+Ziegler-Nichols,5.0000,0.0136,3.4200
+Ziegler-Nichols,5.0000,0.0176,3.2286
+Ziegler-Nichols,5.0000,0.0200,3.0376
+Ziegler-Nichols,5.0000,0.0228,3.0441
+Ziegler-Nichols,5.0000,0.0296,3.0548
+Ziegler-Nichols,5.0000,0.0384,3.0863
+Ziegler-Nichols,5.0000,0.0467,3.1348
+Ziegler-Nichols,5.0000,0.0497,3.1518
+Ziegler-Nichols,5.0000,0.0644,3.3014
+Ziegler-Nichols,5.0000,0.0834,3.5251
+Ziegler-Nichols,5.0000,0.0935,3.6542
+Ziegler-Nichols,5.0000,0.1081,3.9709
+Ziegler-Nichols,5.0000,0.1401,4.8002
+Ziegler-Nichols,5.0000,0.1815,7.1318
+Ziegler-Nichols,5.0000,0.1869,7.1991
+Ziegler-Nichols,5.0000,0.2352,14.7933
+Ziegler-Nichols,5.0000,0.3048,24.3379
+Ziegler-Nichols,5.0000,0.3949,32.2035
+Ziegler-Nichols,5.0000,0.5117,41.9604
+Ziegler-Nichols,5.0000,0.6631,52.2092
+Ziegler-Nichols,5.0000,0.8592,67.1413
+Ziegler-Nichols,5.0000,1.1133,72.1735
+Ziegler-Nichols,5.0000,1.4426,79.7481
+Ziegler-Nichols,5.0000,1.8692,89.4609
+Cohen-Coon,-2.0000,0.0085,18.5564
+Cohen-Coon,-2.0000,0.0105,1.4991
+Cohen-Coon,-2.0000,0.0137,0.9747
+Cohen-Coon,-2.0000,0.0179,0.8985
+Cohen-Coon,-2.0000,0.0200,0.8221
+Cohen-Coon,-2.0000,0.0234,0.8225
+Cohen-Coon,-2.0000,0.0305,0.8230
+Cohen-Coon,-2.0000,0.0331,0.8233
+Cohen-Coon,-2.0000,0.0398,0.8249
+Cohen-Coon,-2.0000,0.0520,0.8299
+Cohen-Coon,-2.0000,0.0678,0.8433
+Cohen-Coon,-2.0000,0.0847,0.8740
+Cohen-Coon,-2.0000,0.0886,0.8824
+Cohen-Coon,-2.0000,0.1156,0.9659
+Cohen-Coon,-2.0000,0.1509,1.1785
+Cohen-Coon,-2.0000,0.1970,1.5123
+Cohen-Coon,-2.0000,0.2169,1.8112
+Cohen-Coon,-2.0000,0.2572,2.6592
+Cohen-Coon,-2.0000,0.3357,8.6130
+Cohen-Coon,-2.0000,0.4383,15.3543
+Cohen-Coon,-2.0000,0.5722,22.2239
+Cohen-Coon,-2.0000,0.7469,28.6749
+Cohen-Coon,-2.0000,0.9751,34.5982
+Cohen-Coon,-2.0000,1.2729,41.1155
+Cohen-Coon,-2.0000,1.6616,46.2835
+Cohen-Coon,-2.0000,2.1692,53.9904
+Cohen-Coon,-5.0000,0.0085,48.5564
+Cohen-Coon,-5.0000,0.0105,5.4554
+Cohen-Coon,-5.0000,0.0137,3.6323
+Cohen-Coon,-5.0000,0.0179,3.4376
+Cohen-Coon,-5.0000,0.0200,3.2430
+Cohen-Coon,-5.0000,0.0234,3.2444
+Cohen-Coon,-5.0000,0.0305,3.2491
+Cohen-Coon,-5.0000,0.0331,3.2504
+Cohen-Coon,-5.0000,0.0398,3.2560
+Cohen-Coon,-5.0000,0.0520,3.2771
+Cohen-Coon,-5.0000,0.0678,3.3194
+Cohen-Coon,-5.0000,0.0847,3.3864
+Cohen-Coon,-5.0000,0.0886,3.4088
+Cohen-Coon,-5.0000,0.1156,3.5660
+Cohen-Coon,-5.0000,0.1509,3.9484
+Cohen-Coon,-5.0000,0.1970,4.6053
+Cohen-Coon,-5.0000,0.2169,4.9894
+Cohen-Coon,-5.0000,0.2572,5.8113
+Cohen-Coon,-5.0000,0.3357,10.1619
+Cohen-Coon,-5.0000,0.4383,16.5896
+Cohen-Coon,-5.0000,0.5722,22.5374
+Cohen-Coon,-5.0000,0.7469,28.0751
+Cohen-Coon,-5.0000,0.9751,33.6472
+Cohen-Coon,-5.0000,1.2729,41.3800
+Cohen-Coon,-5.0000,1.6616,45.7875
+Cohen-Coon,-5.0000,2.1692,54.7444
+Cohen-Coon,5.0000,0.0085,48.5433
+Cohen-Coon,5.0000,0.0105,5.0945
+Cohen-Coon,5.0000,0.0137,3.2785
+Cohen-Coon,5.0000,0.0179,3.0859
+Cohen-Coon,5.0000,0.0200,2.8935
+Cohen-Coon,5.0000,0.0234,2.8991
+Cohen-Coon,5.0000,0.0305,2.9068
+Cohen-Coon,5.0000,0.0331,2.9122
+Cohen-Coon,5.0000,0.0398,2.9340
+Cohen-Coon,5.0000,0.0520,2.9868
+Cohen-Coon,5.0000,0.0678,3.0998
+Cohen-Coon,5.0000,0.0847,3.2758
+Cohen-Coon,5.0000,0.0886,3.3332
+Cohen-Coon,5.0000,0.1156,3.6907
+Cohen-Coon,5.0000,0.1509,4.4569
+Cohen-Coon,5.0000,0.1970,6.6517
+Cohen-Coon,5.0000,0.2169,8.3570
+Cohen-Coon,5.0000,0.2572,14.2958
+Cohen-Coon,5.0000,0.3357,22.6045
+Cohen-Coon,5.0000,0.4383,32.2035
+Cohen-Coon,5.0000,0.5722,42.2344
+Cohen-Coon,5.0000,0.7469,53.3309
+Cohen-Coon,5.0000,0.9751,68.2629
+Cohen-Coon,5.0000,1.2729,72.4770
+Cohen-Coon,5.0000,1.6616,81.1189
+Cohen-Coon,5.0000,2.1692,90.1880
+Tyreus-Luyben,-2.0000,0.0105,2.3704
+Tyreus-Luyben,-2.0000,0.0146,1.9541
+Tyreus-Luyben,-2.0000,0.0200,1.8151
+Tyreus-Luyben,-2.0000,0.0203,1.8086
+Tyreus-Luyben,-2.0000,0.0209,1.8062
+Tyreus-Luyben,-2.0000,0.0283,1.7773
+Tyreus-Luyben,-2.0000,0.0394,1.7345
+Tyreus-Luyben,-2.0000,0.0548,1.6798
+Tyreus-Luyben,-2.0000,0.0562,1.6742
+Tyreus-Luyben,-2.0000,0.0763,1.6042
+Tyreus-Luyben,-2.0000,0.1061,1.5074
+Tyreus-Luyben,-2.0000,0.1477,1.3927
+Tyreus-Luyben,-2.0000,0.2055,1.2633
+Tyreus-Luyben,-2.0000,0.2093,1.2558
+Tyreus-Luyben,-2.0000,0.2860,1.1222
+Tyreus-Luyben,-2.0000,0.3980,0.9738
+Tyreus-Luyben,-2.0000,0.5539,0.8297
+Tyreus-Luyben,-2.0000,0.7708,0.8690
+Tyreus-Luyben,-2.0000,0.7791,0.8711
+Tyreus-Luyben,-2.0000,1.0727,0.9591
+Tyreus-Luyben,-2.0000,1.4927,1.0311
+Tyreus-Luyben,-2.0000,2.0773,1.0900
+Tyreus-Luyben,-2.0000,2.8908,1.1365
+Tyreus-Luyben,-2.0000,4.0229,1.1723
+Tyreus-Luyben,-2.0000,5.5983,1.1957
+Tyreus-Luyben,-2.0000,7.7907,1.2134
+Tyreus-Luyben,-5.0000,0.0105,7.1308
+Tyreus-Luyben,-5.0000,0.0146,5.3671
+Tyreus-Luyben,-5.0000,0.0200,4.9798
+Tyreus-Luyben,-5.0000,0.0203,4.9797
+Tyreus-Luyben,-5.0000,0.0209,4.9796
+Tyreus-Luyben,-5.0000,0.0283,4.9773
+Tyreus-Luyben,-5.0000,0.0394,4.9733
+Tyreus-Luyben,-5.0000,0.0548,4.9553
+Tyreus-Luyben,-5.0000,0.0562,4.9529
+Tyreus-Luyben,-5.0000,0.0763,4.9067
+Tyreus-Luyben,-5.0000,0.1061,4.8117
+Tyreus-Luyben,-5.0000,0.1477,4.6556
+Tyreus-Luyben,-5.0000,0.2055,4.4315
+Tyreus-Luyben,-5.0000,0.2093,4.4175
+Tyreus-Luyben,-5.0000,0.2860,4.1369
+Tyreus-Luyben,-5.0000,0.3980,3.7527
+Tyreus-Luyben,-5.0000,0.5539,3.3228
+Tyreus-Luyben,-5.0000,0.7708,3.2975
+Tyreus-Luyben,-5.0000,0.7791,3.3036
+Tyreus-Luyben,-5.0000,1.0727,3.7129
+Tyreus-Luyben,-5.0000,1.4927,4.0519
+Tyreus-Luyben,-5.0000,2.0773,4.3683
+Tyreus-Luyben,-5.0000,2.8908,4.6403
+Tyreus-Luyben,-5.0000,4.0229,4.8200
+Tyreus-Luyben,-5.0000,5.5983,4.9659
+Tyreus-Luyben,-5.0000,7.7907,5.0764
+Tyreus-Luyben,5.0000,0.0105,6.9007
+Tyreus-Luyben,5.0000,0.0146,5.1397
+Tyreus-Luyben,5.0000,0.0200,4.7520
+Tyreus-Luyben,5.0000,0.0203,4.7519
+Tyreus-Luyben,5.0000,0.0209,4.7517
+Tyreus-Luyben,5.0000,0.0283,4.7503
+Tyreus-Luyben,5.0000,0.0394,4.7439
+Tyreus-Luyben,5.0000,0.0548,4.7230
+Tyreus-Luyben,5.0000,0.0562,4.7203
+Tyreus-Luyben,5.0000,0.0763,4.6655
+Tyreus-Luyben,5.0000,0.1061,4.5545
+Tyreus-Luyben,5.0000,0.1477,4.3768
+Tyreus-Luyben,5.0000,0.2055,4.0905
+Tyreus-Luyben,5.0000,0.2093,4.0738
+Tyreus-Luyben,5.0000,0.2860,3.6534
+Tyreus-Luyben,5.0000,0.3980,3.1887
+Tyreus-Luyben,5.0000,0.5539,3.0025
+Tyreus-Luyben,5.0000,0.7708,3.2923
+Tyreus-Luyben,5.0000,0.7791,3.2934
+Tyreus-Luyben,5.0000,1.0727,3.8068
+Tyreus-Luyben,5.0000,1.4927,4.1721
+Tyreus-Luyben,5.0000,2.0773,4.8739
+Tyreus-Luyben,5.0000,2.8908,5.3356
+Tyreus-Luyben,5.0000,4.0229,5.6550
+Tyreus-Luyben,5.0000,5.5983,6.4088
+Tyreus-Luyben,5.0000,7.7907,6.4543
+AMIGO,-2.0000,0.0105,1.3941
+AMIGO,-2.0000,0.0121,1.1567
+AMIGO,-2.0000,0.0140,1.0780
+AMIGO,-2.0000,0.0186,1.0065
+AMIGO,-2.0000,0.0200,0.9597
+AMIGO,-2.0000,0.0248,0.9592
+AMIGO,-2.0000,0.0331,0.9579
+AMIGO,-2.0000,0.0441,0.9533
+AMIGO,-2.0000,0.0448,0.9528
+AMIGO,-2.0000,0.0588,0.9450
+AMIGO,-2.0000,0.0783,0.9348
+AMIGO,-2.0000,0.1043,0.9256
+AMIGO,-2.0000,0.1210,0.9233
+AMIGO,-2.0000,0.1390,0.9237
+AMIGO,-2.0000,0.1852,0.9354
+AMIGO,-2.0000,0.2468,0.9632
+AMIGO,-2.0000,0.3268,1.0037
+AMIGO,-2.0000,0.3289,1.0048
+AMIGO,-2.0000,0.4382,1.0556
+AMIGO,-2.0000,0.5839,1.1101
+AMIGO,-2.0000,0.7781,1.1627
+AMIGO,-2.0000,1.0367,1.2168
+AMIGO,-2.0000,1.3814,1.2703
+AMIGO,-2.0000,1.8407,1.3184
+AMIGO,-2.0000,2.4526,1.3676
+AMIGO,-2.0000,3.2680,1.4147
+AMIGO,-5.0000,0.0105,5.0497
+AMIGO,-5.0000,0.0121,3.9185
+AMIGO,-5.0000,0.0140,3.7233
+AMIGO,-5.0000,0.0186,3.4997
+AMIGO,-5.0000,0.0200,3.3328
+AMIGO,-5.0000,0.0248,3.3326
+AMIGO,-5.0000,0.0331,3.3317
+AMIGO,-5.0000,0.0441,3.3307
+AMIGO,-5.0000,0.0448,3.3306
+AMIGO,-5.0000,0.0588,3.3285
+AMIGO,-5.0000,0.0783,3.3250
+AMIGO,-5.0000,0.1043,3.3209
+AMIGO,-5.0000,0.1210,3.3194
+AMIGO,-5.0000,0.1390,3.3197
+AMIGO,-5.0000,0.1852,3.3356
+AMIGO,-5.0000,0.2468,3.3932
+AMIGO,-5.0000,0.3268,3.5091
+AMIGO,-5.0000,0.3289,3.5130
+AMIGO,-5.0000,0.4382,3.8111
+AMIGO,-5.0000,0.5839,4.2930
+AMIGO,-5.0000,0.7781,4.8917
+AMIGO,-5.0000,1.0367,5.7665
+AMIGO,-5.0000,1.3814,6.7900
+AMIGO,-5.0000,1.8407,8.1527
+AMIGO,-5.0000,2.4526,10.0544
+AMIGO,-5.0000,3.2680,12.1017
+AMIGO,5.0000,0.0105,4.6431
+AMIGO,5.0000,0.0121,3.5087
+AMIGO,5.0000,0.0140,3.3133
+AMIGO,5.0000,0.0186,3.0891
+AMIGO,5.0000,0.0200,2.9218
+AMIGO,5.0000,0.0248,2.9209
+AMIGO,5.0000,0.0331,2.9196
+AMIGO,5.0000,0.0441,2.9166
+AMIGO,5.0000,0.0448,2.9163
+AMIGO,5.0000,0.0588,2.9117
+AMIGO,5.0000,0.0783,2.9026
+AMIGO,5.0000,0.1043,2.8889
+AMIGO,5.0000,0.1210,2.8818
+AMIGO,5.0000,0.1390,2.8776
+AMIGO,5.0000,0.1852,2.8977
+AMIGO,5.0000,0.2468,3.1203
+AMIGO,5.0000,0.3268,3.6116
+AMIGO,5.0000,0.3289,3.6118
+AMIGO,5.0000,0.4382,4.2588
+AMIGO,5.0000,0.5839,5.3675
+AMIGO,5.0000,0.7781,7.4379
+AMIGO,5.0000,1.0367,11.5166
+AMIGO,5.0000,1.3814,22.4572
+AMIGO,5.0000,1.8407,40.7871
+AMIGO,5.0000,2.4526,52.7304
+AMIGO,5.0000,3.2680,65.5216
+Skogestad SIMC,-2.0000,0.0105,2.4102
+Skogestad SIMC,-2.0000,0.0141,2.2180
+Skogestad SIMC,-2.0000,0.0145,2.2190
+Skogestad SIMC,-2.0000,0.0199,2.1355
+Skogestad SIMC,-2.0000,0.0200,2.1324
+Skogestad SIMC,-2.0000,0.0275,1.9682
+Skogestad SIMC,-2.0000,0.0308,1.9195
+Skogestad SIMC,-2.0000,0.0379,1.8689
+Skogestad SIMC,-2.0000,0.0522,1.7708
+Skogestad SIMC,-2.0000,0.0720,1.6714
+Skogestad SIMC,-2.0000,0.0992,1.5740
+Skogestad SIMC,-2.0000,0.1367,1.4812
+Skogestad SIMC,-2.0000,0.1408,1.4725
+Skogestad SIMC,-2.0000,0.1885,1.3921
+Skogestad SIMC,-2.0000,0.2598,1.3100
+Skogestad SIMC,-2.0000,0.3580,1.2406
+Skogestad SIMC,-2.0000,0.4935,1.1851
+Skogestad SIMC,-2.0000,0.6427,1.1543
+Skogestad SIMC,-2.0000,0.6802,1.1491
+Skogestad SIMC,-2.0000,0.9375,1.1264
+Skogestad SIMC,-2.0000,1.2921,1.1123
+Skogestad SIMC,-2.0000,1.7809,1.1036
+Skogestad SIMC,-2.0000,2.4546,1.0984
+Skogestad SIMC,-2.0000,3.3831,1.0952
+Skogestad SIMC,-2.0000,4.6629,1.0931
+Skogestad SIMC,-2.0000,6.4268,1.0917
+Skogestad SIMC,-5.0000,0.0105,6.9728
+Skogestad SIMC,-5.0000,0.0141,6.1728
+Skogestad SIMC,-5.0000,0.0145,6.1240
+Skogestad SIMC,-5.0000,0.0199,5.8152
+Skogestad SIMC,-5.0000,0.0200,5.8069
+Skogestad SIMC,-5.0000,0.0275,5.6637
+Skogestad SIMC,-5.0000,0.0308,5.6358
+Skogestad SIMC,-5.0000,0.0379,5.5727
+Skogestad SIMC,-5.0000,0.0522,5.4587
+Skogestad SIMC,-5.0000,0.0720,5.3208
+Skogestad SIMC,-5.0000,0.0992,5.1559
+Skogestad SIMC,-5.0000,0.1367,4.9619
+Skogestad SIMC,-5.0000,0.1408,4.9435
+Skogestad SIMC,-5.0000,0.1885,4.7406
+Skogestad SIMC,-5.0000,0.2598,4.4985
+Skogestad SIMC,-5.0000,0.3580,4.2461
+Skogestad SIMC,-5.0000,0.4935,3.9955
+Skogestad SIMC,-5.0000,0.6427,3.7993
+Skogestad SIMC,-5.0000,0.6802,3.7590
+Skogestad SIMC,-5.0000,0.9375,3.6195
+Skogestad SIMC,-5.0000,1.2921,3.5767
+Skogestad SIMC,-5.0000,1.7809,3.5815
+Skogestad SIMC,-5.0000,2.4546,3.6064
+Skogestad SIMC,-5.0000,3.3831,3.6370
+Skogestad SIMC,-5.0000,4.6629,3.6663
+Skogestad SIMC,-5.0000,6.4268,3.6916
+Skogestad SIMC,5.0000,0.0105,6.2603
+Skogestad SIMC,5.0000,0.0141,5.4603
+Skogestad SIMC,5.0000,0.0145,5.4116
+Skogestad SIMC,5.0000,0.0199,5.1028
+Skogestad SIMC,5.0000,0.0200,5.0944
+Skogestad SIMC,5.0000,0.0275,4.9512
+Skogestad SIMC,5.0000,0.0308,4.9233
+Skogestad SIMC,5.0000,0.0379,4.8601
+Skogestad SIMC,5.0000,0.0522,4.7456
+Skogestad SIMC,5.0000,0.0720,4.6068
+Skogestad SIMC,5.0000,0.0992,4.4401
+Skogestad SIMC,5.0000,0.1367,4.2437
+Skogestad SIMC,5.0000,0.1408,4.2254
+Skogestad SIMC,5.0000,0.1885,4.0193
+Skogestad SIMC,5.0000,0.2598,3.7737
+Skogestad SIMC,5.0000,0.3580,3.5181
+Skogestad SIMC,5.0000,0.4935,3.2797
+Skogestad SIMC,5.0000,0.6427,3.1722
+Skogestad SIMC,5.0000,0.6802,3.1612
+Skogestad SIMC,5.0000,0.9375,3.1543
+Skogestad SIMC,5.0000,1.2921,3.2010
+Skogestad SIMC,5.0000,1.7809,3.2662
+Skogestad SIMC,5.0000,2.4546,3.3321
+Skogestad SIMC,5.0000,3.3831,3.3908
+Skogestad SIMC,5.0000,4.6629,3.4392
+Skogestad SIMC,5.0000,6.4268,3.4770
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0105,1.6424
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0122,1.3569
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0142,1.2606
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0193,1.1597
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0200,1.1304
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0262,1.1293
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0317,1.1260
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0355,1.1219
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0482,1.1073
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0653,1.0809
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.0886,1.0431
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.1202,0.9922
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.1215,0.9900
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.1630,0.9283
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.2210,0.8535
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.2997,0.8329
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.4065,0.8862
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.4652,0.9178
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.5513,0.9610
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,0.7476,1.0404
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,1.0139,1.1103
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,1.3751,1.1669
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,1.8648,1.2208
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,2.5291,1.2550
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,3.4299,1.3108
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-2.0000,4.6516,1.3694
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0105,5.5634
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0122,4.2686
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0142,3.9977
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0193,3.6543
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0200,3.6072
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0262,3.6060
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0317,3.6051
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0355,3.6044
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0482,3.5998
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0653,3.5910
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.0886,3.5716
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.1202,3.5291
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.1215,3.5270
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.1630,3.4508
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.2210,3.3277
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.2997,3.1615
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.4065,3.3007
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.4652,3.4399
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.5513,3.6259
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,0.7476,4.0422
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,1.0139,4.5577
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,1.3751,5.3223
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,1.8648,6.0727
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,2.5291,6.9611
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,3.4299,7.6751
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),-5.0000,4.6516,8.5035
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0105,5.3558
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0122,4.0592
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0142,3.7875
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0193,3.4448
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0200,3.3974
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0262,3.3964
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0317,3.3946
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0355,3.3931
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0482,3.3881
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0653,3.3762
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.0886,3.3484
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.1202,3.2924
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.1215,3.2894
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.1630,3.1929
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.2210,2.9667
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.2997,2.9568
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.4065,3.3077
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.4652,3.5608
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.5513,4.0515
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,0.7476,5.1779
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,1.0139,6.4463
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,1.3751,9.2633
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,1.8648,12.7563
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,2.5291,22.2554
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,3.4299,34.8362
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$),5.0000,4.6516,44.5694

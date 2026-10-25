@@ -346,6 +346,21 @@ def run_smax_map(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     exp02.save_grouped(fig, figures_dir / "fig_smax_map")
 
 
+def run_amigo_regime_diagnostics(plant, ss, gains: dict) -> None:
+    """Amplitude-only clamping of AMIGO against S_max: IAE, largest valve opening and discrepancy.
+
+    Backs the explanation of the non-monotone AMIGO ratio of the regime map (CSV only).
+    """
+    g, out = gains["AMIGO"], []
+    for smax in SMAX_GRID:
+        lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
+        res = _step_run(plant, ss, g, AW.CLAMPING_POS_DIRECTIONAL, limits=lim)
+        out.append({"S_max": smax, "IAE": round(res.metrics.iae, 2),
+                    "max_u_act": round(float(res.u_applied.max()), 1),
+                    "max_abs_u_raw_minus_u_act": round(float(np.max(np.abs(res.u_unconstrained - res.u_applied))), 0)})
+    pd.DataFrame(out).to_csv(exp02.RESULTS_DIR / "smax_amigo_diagnostics.csv", index=False)
+
+
 def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) -> None:
     """IAE of back-calculation against T_t over [0.1 T_d, 10 T_i]; physical range [T_d, T_i].
 
@@ -406,6 +421,10 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
             "\\(\\sqrt{T_iT_d}\\)": f"{ratio[:, k_sq].max():.2f}",
             "\\(T_i\\)": f"{ratio[:, k_ti].max():.2f}",
         })
+    pd.DataFrame(
+        [{"Method": n, "step_K": st, "T_t_min": t, "IAE": v}
+         for (n, st), (grid_, iae_) in curves.items() for t, v in zip(grid_, iae_)]
+    ).to_csv(exp02.RESULTS_DIR / "antiwindup_tt_curve.csv", index=False, float_format="%.4f")
     exp02.export_latex_table(
         data=summary,
         output_path=tables_dir / "antiwindup_tt_summary.tex",
@@ -1053,6 +1072,7 @@ def remediate_jpc() -> Path:
     run_aw_scenarios(plant, ss, gains, tables_dir)
     run_tt_curve(plant, ss, gains, tables_dir, figures_dir)
     run_smax_map(plant, ss, gains, tables_dir, figures_dir)
+    run_amigo_regime_diagnostics(plant, ss, gains)
     plot_mechanism(plant, ss, gains, figures_dir)
     run_second_operating_point(SECOND_OP_Q_J, tables_dir)
     run_exact_robustness(plant, ss, foptd, gains, tables_dir)

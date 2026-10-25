@@ -1,6 +1,7 @@
 \documentclass[a4paper,fleqn]{cas-dc}
 \usepackage[numbers]{natbib}
 \usepackage{siunitx}
+\usepackage{xurl}
 \usepackage{amsthm}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
@@ -66,11 +67,13 @@ Anti-windup \sep Actuator rate saturation \sep Conditional integration \sep Back
 The simulation code, controllers, campaign scripts, random seeds and the CSV files behind every table and figure are archived on Zenodo \cite{andrade2026software} (DOI to be assigned on deposit; placeholder in the reference) and developed at \url{https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark}. Every number in the text is generated from those CSV files by \texttt{scripts/jpc\_v6\_numbers.py}. The tuning-specific analyses are in the Supplementary Material.
 
 \section*{CRediT authorship contribution statement}
+\sloppy
 \textbf{Gabriel Marques de Andrade:} Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data Curation, Writing -- Original Draft, Writing -- Review \& Editing, Visualization. \textbf{Elilton Rodrigues Edwards:} Supervision, Methodology, Writing -- Review \& Editing.
 
 \section*{Declaration of generative AI and AI-assisted technologies in the writing process}
 During the preparation of this work the authors used Claude (Anthropic) as an AI-assisted coding and language-editing tool. After using this tool, the authors reviewed and edited the content as needed, verified that every reported number is produced by the released code, and take full responsibility for the content of the publication.
 
+\fussy
 \section*{Declaration of competing interest}
 The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 

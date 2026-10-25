@@ -2,12 +2,16 @@
 An irreversible, exothermic, liquid-phase reaction $A \rightarrow B$ takes place in a CSTR cooled by a jacket \cite{luyben2007chemical, seborg2010process}. The jacket is modelled as a dynamic lumped thermal capacity rather than as an instantaneous heat sink \cite{uppal1974dynamic}. Species and energy balances give
 \begin{align}
     \frac{dC_A}{dt} &= \frac{q}{V}(C_{Af} - C_A) - r_A, \label{eq:cstr_ca} \\
-    \frac{dT}{dt}   &= \frac{q}{V}(T_f - T) + \frac{(-\Delta H)}{\rho C_p} r_A - \frac{UA}{V \rho C_p}(T - T_j), \label{eq:cstr_t} \\
+    \frac{dT}{dt}   &= \frac{q}{V}(T_f - T) + \frac{(-\Delta H)}{\rho C_p} r_A \nonumber \\
+                    &\quad - \frac{UA}{V \rho C_p}(T - T_j), \label{eq:cstr_t} \\
     \frac{dT_j}{dt} &= \frac{q_j}{V_j}(T_{jf} - T_j) + \frac{UA}{V_j \rho_j C_{pj}}(T - T_j), \label{eq:cstr_tj}
 \end{align}
-with first-order Arrhenius kinetics $r_A = k_0 \exp(-E/(R\,T))\,C_A$. The state is $\mathbf{x} = [C_A, T, T_j]^\top$, the manipulated input is the coolant flow $u = q_j$ and the controlled output is the reactor temperature $y = T$. Densities, heat capacities and $UA$ are constant, as in the standard benchmark literature \cite{uppal1974dynamic, seborg2010process}. The parameters are listed in Table~\ref{tab:cstr_parameters}. At $q_{j,ss} = 100$~L/min the steady state is
+with first-order Arrhenius kinetics $r_A = k(T)\,C_A$, $k(T) = k_0 \exp(-E/(R\,T))$. The state is $\mathbf{x} = [C_A, T, T_j]^\top$, the manipulated input is the coolant flow $u = q_j$ and the controlled output is the reactor temperature $y = T$. Densities, heat capacities and $UA$ are constant, as in the standard benchmark literature \cite{uppal1974dynamic, seborg2010process}. The parameters are listed in Table~\ref{tab:cstr_parameters}. At $q_{j,ss} = 100$~L/min the steady state is
 \begin{equation}
-    C_{A,ss} = 0.0502~\text{mol/L}, \quad T_{ss} = 396.65~\text{K}, \quad T_{j,ss} = 348.33~\text{K},
+    \begin{gathered}
+    C_{A,ss} = 0.0502~\text{mol/L}, \quad T_{ss} = 396.65~\text{K}, \\
+    T_{j,ss} = 348.33~\text{K},
+    \end{gathered}
     \label{eq:nominal_ss}
 \end{equation}
 a high-conversion point ($X_A \approx 95\%$) close to the maximum heat release of the reactor.
@@ -16,6 +20,7 @@ a high-conversion point ($X_A \approx 95\%$) close to the maximum heat release o
 \centering
 \caption{Nominal parameters of the CSTR.}\label{tab:cstr_parameters}
 \footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{llrl}
 \toprule
 Parameter & Symbol & Value & Unit \\
