@@ -280,7 +280,7 @@ def run_aw_scenarios(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> N
         caption=(
             "IAE (K$\\cdot$min) of the seven integrator policies of Table~\\ref{tab:antiwindup_ablation} "
             "on a $-5$~K step, a $+5$~K step ($10$~min) and the noise-free load profile of "
-            "Section~\\ref{subsec:load_results} ($15$~min); valve $[0, 300]$~L/min, "
+            "Section~\\ref{supp:loadfull} ($15$~min); valve $[0, 300]$~L/min, "
             "$S_{\\max} = 80$~L/min$^2$; BC with $T_t = \\sqrt{T_iT_d}$ and with the $T_t^{\\mathrm{sel}}$ of "
             "Table~\\ref{tab:antiwindup_tt_summary}."
         ),
@@ -1911,7 +1911,7 @@ def run_load_replicated(plant, ss, pids: dict, tables_dir: Path) -> None:
         data=rows,
         output_path=tables_dir / "load_replicated.tex",
         caption=(
-            f"Load profile of Section~\\ref{{subsec:load_results}} with {N_SEEDS} independent noise "
+            f"Load profile of Section~\\ref{{supp:loadfull}} with {N_SEEDS} independent noise "
             f"realizations ($\\sigma = {LOAD_SIGMA:g}$~K), without ($\\tau_m = 0$) and with "
             f"($\\tau_m = {MEASUREMENT_TAU_F:g}$~min) measurement filter: mean $\\pm$ half-width of the "
             f"$95\\%$ $t$-interval. Errors are measured on the true temperature; the TV ceiling is "
