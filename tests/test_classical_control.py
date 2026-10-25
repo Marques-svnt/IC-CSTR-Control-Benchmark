@@ -422,3 +422,30 @@ def test_slave_gain_schedule_off_by_default_and_floored() -> None:
 def test_slave_gain_schedule_rejects_reference_below_supply() -> None:
     with pytest.raises(ValueError):
         CascadePIDGains(PIDGains(kp=0.1, ti=1.0), PIDGains(kp=-4.0, ti=0.5), t_j_ref=300.5)
+
+
+class TestExactLoopPerturbationHelpers:
+    """Stability and M_s of the perturbed exact loop used by the model-error table."""
+
+    def test_nominal_zn_is_stable_with_the_tabulated_peak(self) -> None:
+        from experiments.build_paper_assets import _stability_and_ms
+        from src.classical_control.pid_controller import PIDGains
+        from src.sim_core.cstr_plant import CSTRPlant
+
+        plant = CSTRPlant()
+        ss = plant.find_steady_state(q_j=100.0)
+        zn = PIDGains(kp=-44.56, ti=0.187, td=0.047)
+        stable, ms = _stability_and_ms(plant, ss, zn, 1.0, 1.0, 0.0)
+        assert stable
+        assert ms == pytest.approx(1.57, abs=0.02)
+
+    def test_large_loop_gain_is_reported_unstable(self) -> None:
+        from experiments.build_paper_assets import _stability_and_ms
+        from src.classical_control.pid_controller import PIDGains
+        from src.sim_core.cstr_plant import CSTRPlant
+
+        plant = CSTRPlant()
+        ss = plant.find_steady_state(q_j=100.0)
+        zn = PIDGains(kp=-44.56, ti=0.187, td=0.047)
+        stable, _ = _stability_and_ms(plant, ss, zn, 40.0, 1.0, 0.0)
+        assert not stable

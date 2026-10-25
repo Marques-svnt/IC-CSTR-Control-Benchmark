@@ -39,7 +39,6 @@ from experiments.exp_01b_nmpc_oracle_comparison import (
     run_mhe_tuning_sensitivity,
     run_nmpc_oracle_benchmark,
 )
-from src.classical_control.foptd import FOPTDModel
 from src.classical_control.tuning_optimization import (
     OptimizationCriterion,
     calculate_maximum_sensitivity_foptd,
@@ -354,41 +353,64 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     below dt/2, so the grid starts at 0.525 dt (plus the 0.1 T_t point of the earlier scan). The directional rule is the horizontal reference.
     """
     base = _one_dof(gains)
-    rows, curves = [], {}
-    for step in TT_STEPS:
-        for k, (name, g) in enumerate(base.items()):
-            grid = np.unique(np.concatenate([
-                # lower end: below ~dt/2 the discrete update (1 - dt/T_t) I diverges (no IAE)
-                np.geomspace(max(0.1 * g.td, 0.525 * SIM_DT), 10.0 * g.ti, 21),
-                [g.td, g.tt, g.ti, SIM_DT, 0.1 * g.tt],
-            ]))
-            iae = np.array([
+    rows, summary, curves, direct = [], [], {}, {}
+    for name, g in base.items():
+        grid = np.unique(np.concatenate([
+            # lower end: below ~dt/2 the discrete update (1 - dt/T_t) I diverges (no IAE)
+            np.geomspace(max(0.1 * g.td, 0.525 * SIM_DT), 10.0 * g.ti, 21),
+            [g.td, g.tt, g.ti, SIM_DT, 0.1 * g.tt],
+        ]))
+        for step in TT_STEPS:
+            curves[(name, step)] = (grid, np.array([
                 _step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION, step).metrics.iae
                 for t in grid
-            ])
-            curves[(name, step)] = (grid, iae)
-            inside = (grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)
-            j = int(np.argmin(np.where(inside, iae, np.inf)))
-            at = lambda t: iae[int(np.argmin(np.abs(grid - t)))]  # noqa: E731
+            ]))
+            direct[(name, step)] = _step_run(plant, ss, g, AW.CLAMPING, step).metrics.iae
+        inside = (grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)
+        ratio = np.array([curves[(name, st)][1] / direct[(name, st)] for st in TT_STEPS])  # 3 x n
+        k_mm = int(np.argmin(np.where(inside, ratio.max(axis=0), np.inf)))  # minimax over steps
+        k_cv = int(np.argmin(np.where(inside, ratio[0], np.inf)))  # chosen on the -2 K design step
+        k_sq, k_ti = int(np.argmin(np.abs(grid - g.tt))), int(np.argmin(np.abs(grid - g.ti)))
+        for i, step in enumerate(TT_STEPS):
             rows.append({
-                "Step": f"${step:+g}$ K" if k == 0 else "",
-                "Method": name,
-                "\\([T_d, T_i]\\) (min)": f"[{g.td:.3f}, {g.ti:.3f}]",
-                "best $T_t$ (min)": f"{grid[j]:.3f}",
-                "IAE best": f"{iae[j]:.2f}",
-                "IAE $\\sqrt{T_iT_d}$": f"{at(g.tt):.2f}",
-                "IAE $T_t=T_i$": f"{at(g.ti):.2f}",
-                "IAE dir.": f"{_step_run(plant, ss, g, AW.CLAMPING, step).metrics.iae:.2f}",
+                "Method": name if i == 0 else "",
+                "Step": f"${step:+g}$ K",
+                "IAE dir.": f"{direct[(name, step)]:.2f}",
+                "IAE $T_t^{\\mathrm{mm}}$": f"{curves[(name, step)][1][k_mm]:.2f}",
+                "IAE $\\sqrt{T_iT_d}$": f"{curves[(name, step)][1][k_sq]:.2f}",
+                "IAE $T_t=T_i$": f"{curves[(name, step)][1][k_ti]:.2f}",
+                "IAE $T_t^{\\mathrm{cv}}$": f"{curves[(name, step)][1][k_cv]:.2f}",
             })
+        summary.append({
+            "Method": name,
+            "\\([T_d, T_i]\\) (min)": f"[{g.td:.3f}, {g.ti:.3f}]",
+            "$T_t^{\\mathrm{mm}}$ (min)": f"{grid[k_mm]:.3f}",
+            "worst ratio, $T_t^{\\mathrm{mm}}$": f"{ratio[:, k_mm].max():.2f}",
+            "worst ratio, $\\sqrt{T_iT_d}$": f"{ratio[:, k_sq].max():.2f}",
+            "worst ratio, $T_t=T_i$": f"{ratio[:, k_ti].max():.2f}",
+            "$T_t^{\\mathrm{cv}}$ (min)": f"{grid[k_cv]:.3f}",
+            "worst ratio on $\\pm 5$~K, $T_t^{\\mathrm{cv}}$": f"{ratio[1:, k_cv].max():.2f}",
+        })
+    exp02.export_latex_table(
+        data=summary,
+        output_path=tables_dir / "antiwindup_tt_summary.tex",
+        caption=(
+            "One tracking constant per loop. $T_t^{\\mathrm{mm}}$ minimizes, over the physical range "
+            "$[T_d, T_i]$, the largest IAE ratio (back-calculation over the directional rule, "
+            "Eq.~\\eqref{eq:clamping_antiwindup}) across the $-2$, $-5$ and $+5$~K steps; "
+            "$T_t^{\\mathrm{cv}}$ is chosen on the $-2$~K design step only and judged on $\\pm 5$~K. "
+            "Entries are the worst ratio over the steps (values above $1$: back-calculation is worse)."
+        ),
+        label="tab:antiwindup_tt_summary",
+    )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "antiwindup_tt_sweep.tex",
         caption=(
-            "Back-calculation against the tracking constant. For each step: the best $T_t$ in the "
-            "physical range $[T_d, T_i]$, the IAE (K$\\cdot$min) there, at the default "
-            "$T_t = \\sqrt{T_iT_d}$, at $T_t = T_i$ (the value associated with conditioning "
-            "techniques \\cite{peng1996nonlinear}) and with the directional rule (``dir.'', "
-            "Eq.~\\eqref{eq:clamping_antiwindup}). The full curves are in Fig.~\\ref{fig:tt_curve}."
+            "IAE (K$\\cdot$min) of the directional rule (``dir.'') and of back-calculation with "
+            "$T_t^{\\mathrm{mm}}$ and $T_t^{\\mathrm{cv}}$ (Table~\\ref{tab:antiwindup_tt_summary}), "
+            "$T_t = \\sqrt{T_iT_d}$ and $T_t = T_i$ (the value associated with conditioning "
+            "techniques \\cite{peng1996nonlinear}). The full curves are in Fig.~\\ref{fig:tt_curve}."
         ),
         label="tab:antiwindup_tt_sweep",
     )
@@ -403,8 +425,7 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
             grid, iae = curves[(name, step)]
             ax.plot(grid, iae, color=colors[step], marker="o", markersize=2.2, linewidth=1.0,
                     label=f"back-calc., {step:+g} K")
-            ax.axhline(_step_run(plant, ss, g, AW.CLAMPING, step).metrics.iae, color=colors[step],
-                       linestyle="--", linewidth=0.8)
+            ax.axhline(direct[(name, step)], color=colors[step], linestyle="--", linewidth=0.8)
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_title(name.split(" (")[0], fontsize=8.0)
@@ -499,52 +520,198 @@ def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
     )
 
 
-def run_model_error_test(plant, ss, foptd, gains: dict, extra: dict, tables_dir: Path) -> None:
-    """Worst-case M_s over +/-20 % errors of K, tau, theta (FOPTD) and of the exact loop (K, delay)."""
-    designs = {
-        exp02.OPT_ITAE: gains[exp02.OPT_ITAE],
-        NAME_EXACT: extra[NAME_EXACT],
-        "AMIGO": gains["AMIGO"],
-        "Skogestad SIMC": gains["Skogestad SIMC"],
-    }
-    corners = [
-        FOPTDModel(k_p=foptd.k_p * a, tau=foptd.tau * b, theta=foptd.theta * c)
-        for a in (0.8, 1.0, 1.2) for b in (0.8, 1.0, 1.2) for c in (0.8, 1.0, 1.2)
-    ]
+def _loop_polys(plant, ss, g, k_scale: float, t_scale: float, extra_delay: float):
+    """Polynomials of L(s) = k G(t_scale s) C(s) P(s): exact 3-state plant, PID, Pade-4 delay.
+
+    t_scale > 1 slows every plant pole and zero (all time constants, tau included); the
+    half-sample zero-order-hold delay plus `extra_delay` is a 4th-order Pade approximation.
+    Returns (num, den, parts) with numpy polynomial coefficients, highest power first.
+    """
+    from math import factorial
+
+    from scipy.signal import ss2tf
+
+    a, b = plant.linearize(ss, 100.0)
+    num_p, den_p = ss2tf(a, b, np.array([[0.0, 1.0, 0.0]]), np.zeros((1, 1)))
+    num_p = np.trim_zeros(num_p[0], "f") * k_scale
+    scale = lambda c: c * t_scale ** np.arange(len(c) - 1, -1, -1)  # noqa: E731
+    num_p, den_p = scale(num_p), scale(den_p)
+    tau_f = g.td / g.n_filter if g.td > 0 else 0.0
+    # C(s) = Kp [(Ti s)(tau_f s + 1) + (tau_f s + 1) + Ti Td s^2] / (Ti s (tau_f s + 1))
+    num_c = g.kp * np.polyadd(np.polyadd(np.polymul([g.ti, 0.0], [tau_f, 1.0]), [tau_f, 1.0]),
+                              [g.ti * g.td, 0.0, 0.0])
+    den_c = np.polymul([g.ti, 0.0], [tau_f, 1.0])
+    theta = SIM_DT / 2.0 + extra_delay
+    n = 4  # diagonal Pade: sum_k c_k (-theta s)^k / sum_k c_k (theta s)^k
+    c = [factorial(2 * n - k) * factorial(n) / (factorial(2 * n) * factorial(k) * factorial(n - k))
+         for k in range(n + 1)]
+    num_d = np.array([c[k] * (-theta) ** k for k in range(n, -1, -1)])
+    den_d = np.array([c[k] * theta ** k for k in range(n, -1, -1)])
+    return (num_p, den_p), (num_c, den_c), (num_d, den_d), theta
+
+
+def _stability_and_ms(plant, ss, g, k_scale, t_scale, extra_delay):
+    """(stable?, M_s) of one perturbed exact loop; M_s is meaningful only if stable."""
+    (np_, dp), (nc, dc), (nd, dd), theta = _loop_polys(plant, ss, g, k_scale, t_scale, extra_delay)
+    char = np.polyadd(np.polymul(np.polymul(dp, dc), dd), np.polymul(np.polymul(np_, nc), nd))
+    stable = bool(np.max(np.roots(char).real) < -1e-9)
     w = np.logspace(-3, 3, 4000)
+    s = 1j * w
+    loop = (np.polyval(np_, s) / np.polyval(dp, s)) * (np.polyval(nc, s) / np.polyval(dc, s)) * np.exp(-s * theta)
+    return stable, float(np.max(np.abs(1.0 / (1.0 + loop))))
+
+
+def run_model_error_test(plant, ss, foptd, gains: dict, extra: dict, tables_dir: Path) -> None:
+    """Same exact plant, same perturbations for every tuning: stability of each corner and M_s.
+
+    Corners: loop gain x {0.8, 1, 1.2}, all plant time constants (tau included) x {0.8, 1, 1.2}
+    and an extra delay of {0, 0.2 theta_FOPTD}; 18 loops per tuning. M_s is reported only over
+    the stable corners.
+    """
+    designs = {**_one_dof(gains), NAME_EXACT: extra[NAME_EXACT]}
     rows = []
     for name, g in designs.items():
-        ms_f = [calculate_maximum_sensitivity_foptd(m, g) for m in corners]
-        ms_l = []
-        for k_scale in (0.8, 1.0, 1.2):
-            for extra_delay in (0.0, 0.2 * foptd.theta):
-                loop = k_scale * loop_gain_linearized(
-                    plant, ss, 100.0, g, w, theta=SIM_DT / 2.0 + extra_delay
-                )
-                ms_l.append(float(np.max(np.abs(1.0 / (1.0 + loop)))))
+        res = [
+            _stability_and_ms(plant, ss, g, k, t, d)
+            for k in (0.8, 1.0, 1.2) for t in (0.8, 1.0, 1.2) for d in (0.0, 0.2 * foptd.theta)
+        ]
+        ms_stable = [m for ok, m in res if ok]
         rows.append({
             "Tuning": name,
-            "\\(M_s^{\\mathrm{FOPTD}}\\) nominal": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
-            "worst of $27$ corners": f"{max(ms_f):.2f}",
             "\\(M_s^{\\mathrm{lin}}\\) nominal": f"{_ms_lin(plant, ss, g):.2f}",
-            "worst ($K\\pm20\\%$, $+0.2\\theta$)": f"{max(ms_l):.2f}",
+            "unstable corners (of 18)": str(sum(not ok for ok, _ in res)),
+            "worst \\(M_s\\), stable corners": f"{max(ms_stable):.2f}" if ms_stable else "--",
         })
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "model_error_ms.tex",
         caption=(
-            "Sensitivity peak under model error: on the FOPTD, the largest $M_s$ over the $27$ "
-            "corners of $K$, $\\tau$, $\\theta$ scaled by $0.8$, $1$, $1.2$; on the exact loop, the "
-            "largest $M_s$ with the loop gain scaled by $0.8$ or $1.2$ and an extra delay of "
-            "$0.2\\,\\theta_{\\mathrm{FOPTD}}$. Deadband and stiction are not modelled."
+            "Robustness to model error on the exact plant, identical for every tuning: loop gain, "
+            "all plant time constants ($\\tau$ included) scaled by $0.8$, $1$ and $1.2$ and an extra "
+            "delay of $0$ or $0.2\\,\\theta_{\\mathrm{FOPTD}}$ ($18$ loops each). Stability is decided by "
+            "the roots of the closed-loop polynomial (4th-order Pad\\'e delay); $M_s$ is reported over "
+            "the stable corners only. Deadband and stiction are not part of this test."
         ),
         label="tab:model_error",
     )
 
 
-def _itae6(plant, ss, g) -> float:
+class _Deadband:
+    """Valve backlash between controller and plant.
+
+    The position follows the command only after the command has moved by more than half the
+    band; the anti-windup still sees the command, not the position.
+    """
+
+    def __init__(self, pid, band: float) -> None:
+        self.pid, self.band, self.u_bias = pid, band, pid.u_bias
+        self.pos = pid.u_bias
+
+    def reset(self, *args, **kwargs) -> None:
+        self.pid.reset(*args, **kwargs)
+        self.pos = self.pid.u_bias
+
+    def compute(self, setpoint, measurement, dt):
+        u, diag = self.pid.compute(setpoint=setpoint, measurement=measurement, dt=dt)
+        half = 0.5 * self.band
+        if u > self.pos + half:
+            self.pos = u - half
+        elif u < self.pos - half:
+            self.pos = u + half
+        return self.pos, diag
+
+
+def run_deadband_test(plant, ss, gains: dict, tables_dir: Path) -> None:
+    """IAE of the seven policies on the -2 K step with a valve deadband of 0, 3 and 6 L/min."""
+    sim = exp02.ClosedLoopSimulator()
+    rows = []
+    for band in (0.0, 3.0, 6.0):
+        for k, (name, g) in enumerate(_one_dof(gains).items()):
+            row = {"Deadband (L/min)": f"{band:g}" if k == 0 else "", "Method": name}
+            for label, method in ABLATION_VARIANTS:
+                pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T)
+                res = sim.run(
+                    plant, _Deadband(pid, band), ss, (0.0, 10.0), SIM_DT,
+                    setpoint_func=lambda t: ss.T - 2.0,
+                )
+                row[label] = f"{res.metrics.iae:.2f}"
+            rows.append(row)
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "antiwindup_deadband.tex",
+        caption=(
+            "IAE (K$\\cdot$min) of the seven integrator policies on the $-2$~K step with a valve "
+            "deadband (backlash) of $0$, $3$ and $6$~L/min between the controller and the plant; "
+            "the anti-windup logic sees the command, not the backlash position. Stiction is not modelled."
+        ),
+        label="tab:antiwindup_deadband",
+    )
+
+
+def run_smax_retuned(plant, ss, foptd, gains: dict, tables_dir: Path) -> None:
+    """Optimal ITAE re-optimized at every S_max: does the rate trigger still matter?"""
+    opt = gains[exp02.OPT_ITAE]
+    ok = lambda g: calculate_maximum_sensitivity_foptd(foptd, g) <= 1.6 + 1e-3  # noqa: E731
+    rows = []
+    for smax in SMAX_GRID:
+        lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
+        g = _multistart(plant, ss, [opt, None], ok, limits=lim, foptd=foptd, ms_model="foptd")
+        amp = _step_run(plant, ss, g, AW.CLAMPING_POS_DIRECTIONAL, limits=lim).metrics.iae
+        rate = _step_run(plant, ss, g, AW.CLAMPING, limits=lim).metrics.iae
+        rows.append({
+            "\\(S_{\\max}\\) (L/min$^2$)": f"{smax:g}",
+            "\\(K_p\\)": f"{g.kp:.1f}", "\\(T_i\\) (min)": f"{g.ti:.3f}", "\\(T_d\\) (min)": f"{g.td:.3f}",
+            "IAE amp.-only": f"{amp:.2f}", "IAE rate-aware": f"{rate:.2f}",
+            "ratio": f"{amp / rate:.1f}",
+        })
+    exp02.export_latex_table(
+        data=rows,
+        output_path=tables_dir / "smax_retuned.tex",
+        caption=(
+            "Optimal ITAE ($M_s^{\\mathrm{FOPTD}} \\le 1.6$) re-optimized at each slew-rate limit "
+            "(multi-start from the $S_{\\max} = 80$ optimum and the default guess, one restart): "
+            "gains and IAE ($-2$~K step) of amplitude-only directional clamping and of the rate-aware "
+            "rule. Compare with the fixed-gain map of Table~\\ref{tab:smax_map}."
+        ),
+        label="tab:smax_retuned",
+    )
+
+
+def _shapley_effects(x: np.ndarray, y: np.ndarray, seed: int = 0) -> tuple[np.ndarray, float]:
+    """Shapley effects of dependent inputs from given data (random-forest conditional means).
+
+    v(S) = cross-validated R^2 of E[Y | X_S] (an estimate of Var(E[Y|X_S])/Var(Y), biased low),
+    exact Shapley weights over the 2^d subsets, normalized by v(all). Returns (effects, v(all)).
+    """
+    from itertools import combinations
+    from math import factorial
+
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.model_selection import cross_val_predict
+
+    d = x.shape[1]
+    var = float(np.var(y))
+    v: dict[tuple, float] = {(): 0.0}
+    for r in range(1, d + 1):
+        for sub in combinations(range(d), r):
+            model = RandomForestRegressor(
+                n_estimators=60, min_samples_leaf=5, random_state=seed, n_jobs=-1
+            )
+            pred = cross_val_predict(model, x[:, sub], y, cv=5)
+            v[sub] = max(0.0, 1.0 - float(np.mean((y - pred) ** 2)) / var)
+    phi = np.zeros(d)
+    for i in range(d):
+        others = [j for j in range(d) if j != i]
+        for r in range(d):
+            w = factorial(r) * factorial(d - r - 1) / factorial(d)
+            for sub in combinations(others, r):
+                phi[i] += w * (v[tuple(sorted((*sub, i)))] - v[tuple(sorted(sub))])
+    return phi / v[tuple(range(d))], v[tuple(range(d))]
+
+
+def _itae6(plant, ss, g, limits=None) -> float:
     """Design objective: ITAE of the -2 K step over 6 min on the benchmark valve."""
-    return _step_run(plant, ss, g, step=-2.0, t_end=6.0).metrics.itae
+    return _step_run(plant, ss, g, step=-2.0, t_end=6.0, limits=limits).metrics.itae
 
 
 def _ms_lin(plant, ss, g) -> float:
@@ -552,21 +719,21 @@ def _ms_lin(plant, ss, g) -> float:
     return linearized_robustness(plant, ss, 100.0, g, theta=SIM_DT / 2.0)["ms"]
 
 
-def _multistart(plant, ss, starts, feasible, **kw):
+def _multistart(plant, ss, starts, feasible, limits=None, **kw):
     """Best feasible Nelder-Mead optimum over `starts`, restarted once from the winner."""
 
     def tune(g0):
         return tune_by_optimization(
             plant=plant, nominal_state=ss, q_j_ss=100.0, target_dT=-2.0, initial_gains=g0,
             criterion=OptimizationCriterion.ITAE, max_ms=1.6, t_sim=6.0, dt=SIM_DT,
-            limits=exp02.BENCHMARK_LIMITS, **kw,
+            limits=limits or exp02.BENCHMARK_LIMITS, **kw,
         )
 
     best = None
     for round_starts in (starts, None):
         pool = [tune(g0) for g0 in (round_starts if round_starts is not None else [best])]
         pool = [g for g in pool if feasible(g)] + ([best] if best else [])
-        best = min(pool, key=lambda g: _itae6(plant, ss, g))
+        best = min(pool, key=lambda g: _itae6(plant, ss, g, limits))
     return best
 
 
@@ -763,6 +930,26 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
                     f"{sub['S1'][i]:.2f} $\\pm$ {sub['S1_conf'][i]:.2f}"
                 )
             rows_feas.append(row)
+    rows_shap = []
+    for name, (_, outs) in raw.items():
+        for m in ("IAE", "TV"):
+            phi, r2 = _shapley_effects(samples[feasible], np.array([o[m] for o in outs])[feasible])
+            row = {"Method": name, "Metric": m}
+            row |= {exp02.SOBOL_LABELS[nm]: f"{phi[i]:.2f}" for i, nm in enumerate(names)}
+            row["\\(R^2\\) (all four)"] = f"{r2:.2f}"
+            rows_shap.append(row)
+    exp02.export_latex_table(
+        data=rows_shap,
+        output_path=tables_dir / "sobol_shapley.tex",
+        caption=(
+            "Shapley effects of the four uncertain factors on the feasible region "
+            "($u_{\\mathrm{req}} \\le u_{\\max}$), where the truncated box makes the inputs "
+            "dependent: shares of the explained variance (sum to one), from cross-validated "
+            "random-forest conditional means; the last column is the cross-validated $R^2$ of the "
+            "model with all four factors. Single run, no interval."
+        ),
+        label="tab:sobol_shapley",
+    )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "sobol_margin_test.tex",
@@ -847,6 +1034,9 @@ def remediate_jpc() -> Path:
     for name, g in extra.items():
         logger.info("TUNING %s: %s", name, g)
     run_model_error_test(plant, ss, foptd, gains, extra, tables_dir)
+    run_deadband_test(plant, ss, gains, tables_dir)
+    stage("S_max re-optimization")
+    run_smax_retuned(plant, ss, foptd, gains, tables_dir)
     stage("out-of-sample steps")
     run_out_of_sample(plant, ss, {**gains, **extra}, tables_dir, base=tuple(gains))
     stage("load disturbance: deterministic and replicated")
