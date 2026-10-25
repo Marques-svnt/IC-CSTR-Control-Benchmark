@@ -4,7 +4,7 @@ Itens que não posso decidir, verificar ou executar sem você. Atualizado a cada
 
 ## Fase 1
 
-1. **Títulos e periódicos dos artigos companheiros** (carta, parágrafo "Relation to the companion manuscripts"). O rascunho usa os títulos que estão nos `.bib` dos Artigos 2 e 3; confirme os títulos e periódicos vigentes.
+1. ~~Títulos e periódicos dos artigos companheiros~~ — confirmados pelo autor; marca removida da carta.
 2. **Carta: enquadramento "control applications".** Confirme se quer submeter sob esse rótulo; é a leitura dos revisores, não do editor.
 3. **ORCID do segundo autor** (Elilton Rodrigues Edwards): não está no repositório; não vou inventar.
 4. **Constantes do modelo no texto principal** (parâmetros da Tabela 2, estado estacionário 396,65 K, autovalores, G_true, FOPTD): são da v5 e vêm do código, mas não são macros geradas dos CSV; se quiser a regra 2 também para elas, preciso gerar um CSV de constantes do modelo.
