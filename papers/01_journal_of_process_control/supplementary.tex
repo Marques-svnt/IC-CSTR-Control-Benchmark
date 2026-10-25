@@ -47,12 +47,12 @@ so the heat that the reactor can reject is bounded by $Q_{r,\max}(T) = q \rho C_
 \end{equation}
 with $k(T) = k_0\exp(-E/(R\,T))$. The setpoint is attainable at steady state only if $u_{\mathrm{req}} \le u_{\max}$; Section~\ref{subsec:sobol_results} uses $u_{\mathrm{req}}$ as the heat-removal demand of a perturbed plant. Conversely, a valve held at the upper stop settles the reactor at $T_\infty = T_{eq}(u_{\max})$, the steady temperature at full cooling ($377.94$~K for the nominal plant); $T_\infty$ is the offset equilibrium used in Section~\ref{subsec:clamping_rule}.
 
-\section{Tuning study: design-model constraint, setpoint weighting and trade-offs}\label{supp:tuning}
+\section{Tuning study: optimal ITAE design and design-model robustness}\label{supp:tuning}
 These analyses concern the tunings themselves, not the anti-windup logic, and are not used by the conclusions of the main text. The two tunings below complete the test bed of the main text.
 \begin{enumerate}
     \item \textbf{2-DOF AMIGO}: the AMIGO gains with setpoint weights $\beta = 0.5$, $\gamma = 0$ (Section~\ref{subsec:two_dof}), the use for which AMIGO is intended in servo tasks \cite{astrom2004revisiting}.
     \item \textbf{Optimal ITAE ($M_s^{\mathrm{FOPTD}} \le 1.6$)}: Nelder--Mead minimization of the ITAE of a $-2$~K step on the nonlinear plant and the benchmark valve, with the penalty $10^4\max(0, M_s - 1.6)^2$ and $M_s$ evaluated on the identified dead-time loop of Eq.~\eqref{eq:foptd}; the superscript records that the bound is imposed on the design model, not on the exact loop (Section~\ref{subsec:constraint_cost}). Evaluating $M_s$ on the delay-free Jacobian instead would return values close to one for almost any gain and silently disable the constraint. Because the simplex is local, it is started from a default guess and from every analytical tuning already inside the robust set (AMIGO, SIMC). The default start stops at a PI-like local optimum ($T_d = 0$, $\mathrm{ITAE} = 0.34$~K$\cdot$min$^2$); the analytical starts reach $0.20$--$0.21$~K$\cdot$min$^2$. The retained optimum has $M_s^{\mathrm{FOPTD}} = 1.60$: the constraint is active on the design model, and the derivative action is kept because it buys the phase margin that allows a higher proportional gain at the same $M_s$.
-    \item \textbf{2-DOF Optimal ITAE}: the optimal gains with the setpoint weights fixed at $\beta = 0.5$, $\gamma = 0$. It is a 2-DOF \emph{variant}, not an optimized 2-DOF design; the joint optimization of gains and weights is reported in Section~\ref{subsec:constraint_cost}.
+    \item \textbf{2-DOF Optimal ITAE}: the optimal gains with the setpoint weights fixed at $\beta = 0.5$, $\gamma = 0$. It is a 2-DOF \emph{variant}, not an optimized 2-DOF design.
 \end{enumerate}
 
 \subsection{Two-degree-of-freedom setpoint weighting}
@@ -103,36 +103,13 @@ The Optimal ITAE tuning bounds $M_s$ on the identified dead-time model, whose ap
 
 \input{tables/robust_constraint_cost}
 
-The exact-loop optimum is interior: it stops at $M_s^{\mathrm{lin}} = 1.20$ ($\mathrm{PM} = 75.5^\circ$), so the exact bound is not active and it is the valve, not robustness, that caps the speed of the loop. Relaxing the design model to the exact loop lowers the design ITAE from $0.204$ to $0.181$~K$\cdot$min$^2$ ($-11.3\%$) and the IAE from $0.827$ to $0.799$~K$\cdot$min ($-3.4\%$), with overshoot $0.7\%$, at the price of a $1.76$ times higher proportional gain: the high-frequency gain rises from $259$ to $456$~L/min/K ($+76\%$) and the valve travel from $48.6$ to $59.6$~L/min ($+22.6\%$). The gain does not carry over outside the design step: the ITAE on the $-5$ and $+5$~K steps is $2.3\%$ and $3.3\%$ \emph{higher} than that of the FOPTD-bounded tuning (Table~\ref{tab:out_of_sample}). The 11\% ITAE of the exact-loop optimum is therefore an in-sample gain with no counterpart outside the design step, and it is paid for in noise gain: the FOPTD-bounded tuning has $43\%$ lower high-frequency gain ($259$ against $456$~L/min/K). The phrase ``fastest robust PID'' is not used for either tuning, because the speed of the first is capped by the proxy and that of the second by the rate limit.
-
-Optimizing the setpoint weights jointly with the gains returns the 1-DOF controller. Under the FOPTD bound the optimum has $\beta = 1.00$ and $\gamma = 0.00$ with the same ITAE ($0.204$); under the exact bound $\beta = 0.98$ and $\gamma = 0.09$ with the same ITAE ($0.181$) and a $12\%$ higher proportional gain. Setpoint weighting does not help a tracking objective that has no cost on the valve; the fixed weight $\beta = 0.5$ of the 2-DOF variant is a deliberate trade of $+31.1\%$ IAE for $-48.6\%$ valve travel and no overshoot, not an optimum, and it is called a variant, not ``optimal'', in the remainder of the paper.
+The exact-loop optimum is interior: it stops at $M_s^{\mathrm{lin}} = 1.20$ ($\mathrm{PM} = 75.5^\circ$), so the exact bound is not active and it is the valve, not robustness, that caps the speed of the loop. Relaxing the design model to the exact loop lowers the design ITAE from $0.204$ to $0.181$~K$\cdot$min$^2$ ($-11.3\%$) and the IAE from $0.827$ to $0.799$~K$\cdot$min ($-3.4\%$), with overshoot $0.7\%$, at the price of a $1.76$ times higher proportional gain: the high-frequency gain rises from $259$ to $456$~L/min/K ($+76\%$) and the valve travel from $48.6$ to $59.6$~L/min ($+22.6\%$). The gain does not carry over outside the design step: the ITAE on the $-5$ and $+5$~K steps is $2.3\%$ and $3.3\%$ \emph{higher} than that of the FOPTD-bounded tuning (last two columns of Table~\ref{tab:constraint_cost}). The 11\% ITAE of the exact-loop optimum is therefore an in-sample gain with no counterpart outside the design step, and it is paid for in noise gain: the FOPTD-bounded tuning has $43\%$ lower high-frequency gain ($259$ against $456$~L/min/K). The phrase ``fastest robust PID'' is not used for either tuning, because the speed of the first is capped by the proxy and that of the second by the rate limit.
 
 \paragraph{Model error.} The margin of the exact-loop optimum is also more exposed to model error (Table~\ref{tab:model_error}). The test is like-for-like: the same exact plant and the same $18$ perturbations for every tuning (loop gain and all plant time constants, $\tau$ included, scaled by $0.8$, $1$ and $1.2$, and an extra delay of $0$ or $0.2\,\theta_{\mathrm{FOPTD}}$), with the stability of every corner decided from the closed-loop polynomial and $M_s$ taken over the stable corners only. No tuning has an unstable corner. The worst $M_s$ is $1.63$ for the FOPTD-bounded optimum ($1.31$ nominal), $2.06$ for the exact-loop optimum ($1.20$ nominal), $2.84$ and $3.42$ for ZN and CC, $1.42$ for TL, $1.59$ for AMIGO and $1.20$ for SIMC: its peak rises by $72\%$ over the nominal value against $24\%$ for the FOPTD-bounded one, but it stays stable at every corner and better than ZN and CC. Deadband (Section~\ref{subsec:ablation}) was simulated for the anti-windup policies and not for $M_s$; stiction was not simulated.
 
 \input{tables/model_error_ms}
 
-\subsection{Out-of-sample setpoint steps}
-\label{subsec:oos}
-The Optimal ITAE gains were fitted on the $-2$~K step, so their advantage in Table~\ref{tab:classical_benchmark} is in-sample. Table~\ref{tab:out_of_sample} evaluates every tuning on steps of $-5$, $-1$, $+1$, $+2$ and $+5$~K with the same valve, anti-windup and horizon ($10$~min; the optimizer used $6$~min).
-
-\input{tables/out_of_sample_itae}
-
-The optimum generalizes to steps of both signs up to $5$~K in the cooling direction and $2$~K in the heating direction: among the eight benchmark tunings it has the lowest ITAE at $-5$ ($1.292$), $-1$ ($0.065$), $+1$ ($0.063$) and $+2$~K ($0.192$). At $+5$~K it ranks third ($1.200$), behind AMIGO ($0.969$) and 2-DOF AMIGO ($1.136$), so the in-sample optimum is not uniformly optimal for the largest heating step. The tunings that were re-optimized in Section~\ref{subsec:constraint_cost} do not change the picture: the exact-loop optimum wins in-sample ($0.181$) and at $+1$~K ($0.062$) but loses to the FOPTD-bounded one at $-5$, $-1$, $+2$ and $+5$~K, and the jointly optimized 2-DOF designs coincide with their 1-DOF counterparts to within $0.02$~K$\cdot$min$^2$.
-
-\subsection{Tracking error versus valve travel}
-\label{subsec:pareto_results}
-The trade-off between tracking accuracy and actuator wear was mapped by sweeping the SIMC closed-loop time constant over $\tau_c \in [0.015, 2.5]$~min ($45$ logarithmically spaced points) and by minimizing $\lambda\,\mathrm{IAE}/\mathrm{IAE}_0 + (1 - \lambda)\,\mathrm{TV}/\mathrm{TV}_0$ for $\lambda \in [0.05, 0.95]$ (Fig.~\ref{fig:pareto_iae_tv}, Table~\ref{tab:pareto_tradeoff}).
-
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=0.92\textwidth]{figures/fig4_pareto_iae_tv.pdf}
-    \caption{(a) SIMC $\tau_c$-sweep locus (colour: $M_s$), scalarized optimal front ($\lambda$-opt) and the discrete tunings in the $(\mathrm{TV}, \mathrm{IAE})$ plane (logarithmic TV axis); (b) $M_s$ and IAE as functions of $\tau_c$.}
-    \label{fig:pareto_iae_tv}
-\end{figure*}
-
-\input{tables/pareto_tradeoff_table}
-
-Along the SIMC locus the error decreases monotonically as $\tau_c$ shrinks ($1.90$, $1.27$, $1.08$, $0.95$ and $0.83$~K$\cdot$min for $\tau_c = 0.78$, $0.39$, $0.24$, $0.10$ and $0.03$~min) while $M_s$ rises from $1.07$ to $1.79$ and the travel from $10.9$ to $54.2$~L/min: speed is bought with robustness, and with a correct anti-windup the rate limit creates no interior optimum. For $\tau_c \ge 0.78$~min the travel reaches its floor of $10.9$~L/min, the net change of steady-state coolant flow required by the new setpoint. The scalarized front lies slightly below the SIMC locus, so a free PID improves on SIMC by a small margin at equal travel. SIMC, 2-DOF AMIGO and 2-DOF Optimal ITAE lie close to the front; AMIGO, TL and Optimal ITAE sit on its high-gain branch; ZN and CC are dominated, with more error and more travel than Optimal ITAE at $2.6$ to $2.8$ times its design $M_s$.
+\paragraph{Moved to the repository.} The out-of-sample ITAE of every tuning, the tracking-error versus valve-travel locus of SIMC (with its figure and table) and the joint optimization of gains and setpoint weights are not used by the main text; they are in \texttt{papers/01\_journal\_of\_process\_control/repository/S2\_tuning\_extended.tex} of the code repository, generated by the same scripts.
 
 \section{Anti-windup: full tables and discussion}\label{supp:aw}
 Full versions of the results condensed in Section~\ref{subsec:ablation} of the main text.
