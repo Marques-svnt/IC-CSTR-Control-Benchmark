@@ -929,7 +929,7 @@ def main() -> None:
     lit_body = literature_audit_numbers()
     predictive_and_exact_numbers()
     shapley_numbers()
-    load_cols, load_body = load_table()
+    load_table()
 
     tables = PAPER / "tables"
     (tables / "v7_testbed.tex").write_text(
@@ -1001,18 +1001,6 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
-    (tables / "v7_load.tex").write_text(
-        booktabs(
-            ["Tuning", "IAE", "TV", "Peak", "Max \\(q_j\\)"],
-            load_body,
-            "Deterministic rejection of a $+2$~K feed-temperature step at $t = 2$~min and a $+10\\%$ "
-            "feed-concentration step at $t = 8$~min ($15$~min, no noise, directional rule). IAE in "
-            "K$\\cdot$min, TV and largest valve opening $q_j$ in L/min, peak deviation in K.",
-            "tab:load",
-            env="table",
-        ),
-        encoding="utf-8",
-    )
 
     out = PAPER / "generated"
     out.mkdir(exist_ok=True)
@@ -1031,7 +1019,7 @@ def main() -> None:
         w = csv.writer(fh)
         w.writerow(["macro", "value", "source"])
         w.writerows((f"\\v{n}", v, s) for n, v, s in MACROS)
-    print(f"{len(MACROS)} macros, 5 tables")
+    print(f"{len(MACROS)} macros, 4 tables")
 
 
 if __name__ == "__main__":
