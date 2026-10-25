@@ -1,6 +1,9 @@
 {
-  "title": "IC-CSTR-Control-Benchmark: PID, anti-windup and NMPC benchmark for an exothermic CSTR",
+  "title": "IC-CSTR-Control-Benchmark: simulation code, controllers and data for anti-windup under actuator limits in an exothermic CSTR",
   "upload_type": "software",
+  "version": "v2.0.0-jpc",
+  "description": "Simulation code, PID controllers with seven anti-windup policies, campaign scripts, fixed random seeds and the CSV files behind every table and figure of the Journal of Process Control manuscript on anti-windup under amplitude and slew-rate limits (main text and supplementary material). See README section 6 for the reproduction steps.",
+  "keywords": ["anti-windup", "actuator rate saturation", "PID", "exothermic CSTR", "reproducibility"],
   "creators": [
     {"name": "Marques de Andrade, Gabriel", "affiliation": "State University of Santa Cruz (UESC)", "orcid": "0009-0008-8868-5100"},
     {"name": "Rodrigues Edwards, Elilton", "affiliation": "State University of Santa Cruz (UESC)"}

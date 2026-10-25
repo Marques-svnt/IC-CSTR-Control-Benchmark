@@ -186,12 +186,17 @@ pytest -q
 
 ## 6. Receitas de Reprodução em 1 Comando (Reprodutibilidade Estrita)
 
-### Reproduzir Artigo 1 (*Journal of Process Control*)
+### Reproduzir Artigo 1 (*Journal of Process Control*, v6)
+As sementes aleatórias são fixas no código; a ordem abaixo regenera tudo o que o manuscrito e o material suplementar citam.
 ```bash
-# Executa benchmark nominal e campanha de robustez
-python experiments/exp_01_classical_benchmark.py
-python experiments/exp_02_robustness_campaign.py
-python experiments/exp_03_pareto_tuning_sweep.py
+# 1. Tabelas, figuras e espelhos CSV (results/jpc/*.csv); cerca de 11 min
+.venv/bin/python experiments/build_paper_assets.py jpc-remediation
+# 2. Macros numéricas do texto (generated/numbers.tex) e tabelas condensadas, a partir dos CSV
+.venv/bin/python scripts/jpc_v6_numbers.py
+# 3. PDFs (o suplementar referencia o main.aux, por isso vem depois)
+cd papers/01_journal_of_process_control && latexmk -pdf main.tex && latexmk -pdf supplementary.tex && cd ../..
+# 4. Conferências: ordem das referências e números do texto contra os CSV
+.venv/bin/python scripts/check_citation_order.py papers/01_journal_of_process_control/main.aux
 ```
 
 ### Reproduzir Artigo 2 (*Computers & Chemical Engineering*)

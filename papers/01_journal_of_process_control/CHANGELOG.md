@@ -39,3 +39,13 @@ Referência: `papers/review/parecer_r5.md` (5ª rodada, nota 73). "Obr." = exig�
 | Regra 1 (divergência > 2%) | Nenhum valor já publicado mudou: `antiwindup_tt_sweep.csv` idêntico, colunas antigas da tabela-resumo idênticas | — | Sem divergência |
 
 Extensão após a Fase 2: 13 páginas (incluindo a de highlights).
+
+## Fase 3 — conformidade (branch `phase3/conformity`)
+
+| Exigência | O que mudou | Arquivos | Antes → depois |
+|---|---|---|---|
+| Formato (guia/template) | Classe atualizada para a versão oficial do zip enviado (cas-dc 2.4, 2024-05-04); duas colunas, declarações (IA generativa, CRediT, conflito de interesse), dados e 6 palavras-chave conferidos. Estilo de referências mantido em `elsarticle-num` (numérico, ordem de citação), que é o que o guia pede; o template traz como padrão um estilo autor-ano | `cas-dc.cls`, `cas-common.sty` | 2.3 (2021) → 2.4 (2024) |
+| Obr. 4 (ordem das referências) | Script que confere a numeração pela ordem de primeira citação (lida do `.aux`, em ordem de página) e a existência de cada chave. A desordem apontada no parecer ([31]–[35] antes de [23]–[30]) era artefato da extração de texto em duas colunas: na v5 a ordem já estava correta, e na v6 também | `scripts/check_citation_order.py` | Principal: 31 referências em ordem; suplementar: 11 em ordem |
+| Obr. 4 (abreviação de periódicos) | Nomes de periódicos abreviados conforme a LTWA (ex.: J. Process Control, Chem. Eng. Sci., IEEE Control Syst. Mag., Ind. Eng. Chem. Res.) | `references.bib` | 25 campos `journal` abreviados |
+| Obr. 4 (verificação [18]–[22] e [29]–[33] da v5) | Conferidas no Crossref (DOI, título, 1º autor, ano, volume, primeira página): lerch2021antiwindup, wang2020rate, aksland2022gradient, serrano2024neuron, morohoshi2025nonlinear, garpinger2015software, sato2019optimal, segovia2013noise, alcantara2013pid e marques2020applications sem divergência. Na v6, garpinger2015software, sato2019optimal, alcantara2013pid e marques2020applications deixaram de ser citadas (estavam nas contribuições de sintonia) | `scripts/verify_bib_crossref.py` | Único aviso do script: subtítulo do livro de Hippe (título curto no Crossref) |
+| Obr. 3 (dados e software) | Referência de software no formato do guia (criadores, título, Zenodo, data, versão, DOI) com DOI placeholder, citada na seção de dados; README com a receita de reprodução da v6; `CITATION.cff` e `.zenodo.json` com versão, data e DOI placeholder. **Depósito não criado** (aguarda aprovação) | `references.bib`, `main.tex`, `README.md`, `CITATION.cff`, `.zenodo.json` | DOI: `10.5281/zenodo.XXXXXXX` (placeholder) |
