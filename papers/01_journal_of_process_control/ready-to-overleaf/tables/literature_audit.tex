@@ -2,7 +2,7 @@
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\caption{Short literature audit (not a systematic review): what the articles that compare control strategies on a CSTR or equivalent reactor with an actuator constraint state about the implementation, counted over the articles read in full. Protocol, search strings and the list of every candidate are in \texttt{repository/literature\_audit.csv}, and the coding of each counted article in \texttt{repository/audit\_coding.csv}. Anti-windup logic and loop action are not applicable to the five predictive controllers. One coder.}
+\caption{Short literature audit (not a systematic review): what the articles that compare control strategies on a CSTR or equivalent reactor with an actuator constraint state about the implementation, counted over the articles read in full. Protocol, search strings and the list of every candidate are in \texttt{repository/literature\_audit.csv}, and the coding of each counted article in \texttt{repository/audit\_coding.csv}. Anti-windup logic is not applicable to the purely predictive controllers. Loop action is meaningful only for PID laws, so it is counted over the PID articles. One coder.}
 \label{tab:literature_audit}
 \begin{tabular}{lcccc}
 \toprule
@@ -11,8 +11,8 @@ Item & yes & no & not applicable & not verifiable \\
 Actuator limits declared (amplitude) & 11 & 1 & 0 & 0 \\
 Slew-rate limit declared & 0 & 12 & 0 & 0 \\
 Backlash or deadband declared & 0 & 12 & 0 & 0 \\
-Anti-windup logic declared & 2 & 5 & 5 & 0 \\
-Loop action (reverse or direct) stated & 0 & 7 & 5 & 0 \\
+Anti-windup logic declared & 2 & 4 & 6 & 0 \\
+Loop action (reverse or direct) stated & 0 & 3 & 9 & 0 \\
 Sampling interval and discretization method stated & 2 & 10 & 0 & 0 \\
 Measurement noise or filter stated & 1 & 9 & 0 & 2 \\
 \bottomrule
