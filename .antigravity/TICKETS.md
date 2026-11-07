@@ -710,3 +710,22 @@
   - CRediT, ORCID, and AI statements present in all 3 papers.
   - `ready_to_overleaf.zip` updated for all three papers.
   - Test suite passes: `.venv/bin/pytest tests/`.
+
+
+---
+
+## Wave 8 — Paper 1 (JPC) literature audit, anti-mocking (`IC-T38`)
+
+> Ticket: `Claude outputs/TICKET_PAPER1_LITAUDIT_ANTIMOCKING.md` · Branch: `jpc-v9-t38-litaudit` (from `jpc-v9`, not merged) · Report: `.antigravity/T38_REPORT.md`
+
+### [x] `IC-T38`: [Paper 1 - JPC] Remove hand-typed literature-audit counts; make the "Loop action stated" row consistent
+- **Paper:** `papers/01_journal_of_process_control/` (Paper 2 and 3 untouched)
+- **Files:**
+  - `papers/01_journal_of_process_control/repository/audit_coding.csv` (new `uses_pid` column), `repository/literature_audit.csv`
+  - `scripts/jpc_numbers.py` (macro `litpid`, cross-checks, caption without fixed counts)
+  - `experiments/build_paper_assets.py` (stiction caption uses `\ref{tab:stiction}`)
+  - `papers/01_journal_of_process_control/{generated/numbers.tex,tables/literature_audit.tex,tables/antiwindup_deadband.tex}`, `results/jpc/v9_numbers.csv`
+  - `papers/01_journal_of_process_control/{main.tex,supplementary.tex,sections/*.tex}` (advisor-revised text promoted from `overleaf-pós-revisões/`), `ready-to-overleaf/`, `ready_to_overleaf.zip`
+- **Outcome:** author decision on article 2.1 (10.51485/ajss.v9i3.226): MPC with PSO-tuned parameters, no PID (predictive, `uses_pid = no`, anti-windup and loop action not applicable). Loop action row: 0 / 3 / 9 / 0; `vlitantiwindupapp` = 6, `vlitloopsignapp` = 3, `vlitpid` = 3.
+- **Acceptance:** `jpc_numbers.py`, `check_text_numbers.py`, `check_main_supp_consistency.py`, `ruff`, `pytest` green; `main.pdf` and `supplementary.pdf` compile from the parent folder and from a clean extraction of `ready_to_overleaf.zip`.
+- **Open for the author:** supplementary line "five items coded" vs seven rows in Table S36; second coder column empty.
