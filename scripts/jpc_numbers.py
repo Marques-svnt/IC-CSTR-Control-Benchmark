@@ -994,7 +994,7 @@ def main() -> None:
             "implementation, counted over the articles read in full. Protocol, search strings and the "
             "list of every candidate are in \\texttt{repository/literature\\_audit.csv}, and the coding "
             "of each counted article in \\texttt{repository/audit\\_coding.csv}. Anti-windup logic is not "
-            "applicable to the five predictive controllers. Loop action is meaningful only for PID laws, "
+            "applicable to the purely predictive controllers. Loop action is meaningful only for PID laws, "
             "so it is counted over the PID articles. One coder.",
             "tab:literature_audit",
             env="table",
