@@ -1721,7 +1721,7 @@ def run_deadband_test(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> 
             "deadband (backlash, Eq.~\\eqref{eq:backlash}) of $0$, $3$ and $6$~L/min after the amplitude "
             "and slew limits; the anti-windup logic sees $u_{\\text{act}}$, not the backlash position. Valve $[0, 300]$~L/min, "
             "$S_{\\max} = 80$~L/min$^2$; BC with $T_t = \\sqrt{T_iT_d}$ and with the $T_t^{\\mathrm{sel}}$ of "
-            "Table~\\ref{tab:antiwindup_tt_summary}. Stiction is not modelled."
+            "Table~\\ref{tab:antiwindup_tt_summary}. Stiction is treated in Table~\\ref{tab:stiction}."
         ),
         label="tab:antiwindup_deadband",
     )

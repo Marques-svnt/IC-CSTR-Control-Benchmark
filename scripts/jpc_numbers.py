@@ -771,6 +771,16 @@ def literature_audit_numbers() -> list[list[str]]:
         coding[r["rank"]][k] != r[k] for r in counted for k, _ in items
     ):
         raise ValueError("audit_coding.csv disagrees with the counted rows of literature_audit.csv")
+    open_ids = [i for i, r in coding.items() if r["controller_class"] != "predictive" and r["uses_pid"] not in ("yes", "no")]
+    if open_ids:
+        raise ValueError(f"audit_coding.csv: uses_pid is empty for {open_ids}; the author must code it yes/no before regenerating")
+    pid = [r for r in coding.values() if r["uses_pid"] == "yes"]
+    define("litpid", f"{len(pid)}", "audit_coding (uses_pid = yes)")
+    if any((r["loop_sign"] == "not applicable") == (r["uses_pid"] == "yes")
+           for r in coding.values() if r["controller_class"] != "predictive"):
+        raise ValueError("loop_sign must be 'not applicable' exactly for non-PID laws")
+    if len(pid) != sum(r["loop_sign"] != "not applicable" for r in counted):
+        raise ValueError("number of PID articles differs from the articles where loop action is applicable")
     return body
 
 
@@ -983,8 +993,9 @@ def main() -> None:
             "strategies on a CSTR or equivalent reactor with an actuator constraint state about the "
             "implementation, counted over the articles read in full. Protocol, search strings and the "
             "list of every candidate are in \\texttt{repository/literature\\_audit.csv}, and the coding "
-            "of each counted article in \\texttt{repository/audit\\_coding.csv}. Anti-windup logic and "
-            "loop action are not applicable to the five predictive controllers. One coder.",
+            "of each counted article in \\texttt{repository/audit\\_coding.csv}. Anti-windup logic is not "
+            "applicable to the five predictive controllers. Loop action is meaningful only for PID laws, "
+            "so it is counted over the PID articles. One coder.",
             "tab:literature_audit",
             env="table",
         ),
