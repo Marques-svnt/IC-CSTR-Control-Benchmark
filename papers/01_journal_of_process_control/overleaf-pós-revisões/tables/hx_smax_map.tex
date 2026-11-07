@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Heat exchanger: $R = \mathrm{IAE}_{\mathrm{amp}}/\mathrm{IAE}_{\mathrm{rate}}$ on the $-2$~K step against the slew limit (L/min$^2$), gains fixed; the full grid with the three steps and $\rho$ is in \texttt{results/jpc/hx\_rate\_demand\_grid.csv}.}
+\label{tab:hx_smax_map}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccccccc}
+\toprule
+Method & $S_{\max}=20$ & $S_{\max}=30$ & $S_{\max}=45$ & $S_{\max}=60$ & $S_{\max}=80$ & $S_{\max}=120$ & $S_{\max}=160$ & $S_{\max}=240$ & $S_{\max}=320$ \\
+\midrule
+Ziegler-Nichols & 11.43 & 14.29 & 12.78 & 2.80 & 1.87 & 1.48 & 1.37 & 1.25 & 1.17 \\
+Cohen-Coon & 11.89 & 15.30 & 19.72 & 20.85 & 4.32 & 1.83 & 1.51 & 1.30 & 1.22 \\
+Tyreus-Luyben & 0.71 & 0.60 & 0.65 & 0.70 & 0.74 & 0.80 & 0.84 & 0.90 & 0.92 \\
+AMIGO & 1.64 & 1.38 & 1.24 & 1.16 & 1.10 & 1.05 & 1.03 & 1.02 & 1.01 \\
+Skogestad SIMC & 1.03 & 0.95 & 0.93 & 0.94 & 0.94 & 0.96 & 0.97 & 0.98 & 0.99 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.42 & 1.32 & 1.27 & 1.21 & 1.18 & 1.12 & 1.09 & 1.06 & 1.04 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

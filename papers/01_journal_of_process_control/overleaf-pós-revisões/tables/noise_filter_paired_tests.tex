@@ -1,0 +1,38 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Effect of the measurement filter ($\tau_m = 0.05$~min against none) on the $30$ paired noise realizations: mean paired difference and Wilcoxon signed-rank $p$-values adjusted by Benjamini--Hochberg over all tests in the table.}
+\label{tab:noise_filter_paired}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Method & Noise $\sigma$ (K) & \(\Delta\)TV (L/min) & \(\Delta\)TV (\%) & \(p_{\mathrm{adj}}\) (TV) & \(\Delta\)IAE (K$\cdot$min) & \(p_{\mathrm{adj}}\) (IAE) \\
+\midrule
+Ziegler-Nichols & 0.01 & -284.8 & -49 & $<10^{-3}$ & +0.127 & $<10^{-3}$ \\
+Ziegler-Nichols & 0.05 & -115.4 & -15 & $<10^{-3}$ & -0.100 & $<10^{-3}$ \\
+Ziegler-Nichols & 0.10 & -59.7 & -8 & $<10^{-3}$ & -0.370 & $<10^{-3}$ \\
+Cohen-Coon & 0.01 & -257.1 & -44 & $<10^{-3}$ & +0.255 & $<10^{-3}$ \\
+Cohen-Coon & 0.05 & -107.5 & -14 & $<10^{-3}$ & +0.059 & 0.020 \\
+Cohen-Coon & 0.10 & -51.3 & -7 & $<10^{-3}$ & -0.085 & 0.040 \\
+Tyreus-Luyben & 0.01 & -305.0 & -60 & $<10^{-3}$ & -0.046 & $<10^{-3}$ \\
+Tyreus-Luyben & 0.05 & -165.3 & -23 & $<10^{-3}$ & -0.192 & $<10^{-3}$ \\
+Tyreus-Luyben & 0.10 & -89.7 & -12 & $<10^{-3}$ & -0.334 & $<10^{-3}$ \\
+AMIGO & 0.01 & -249.0 & -67 & $<10^{-3}$ & +0.016 & $<10^{-3}$ \\
+AMIGO & 0.05 & -253.2 & -38 & $<10^{-3}$ & -0.023 & $<10^{-3}$ \\
+AMIGO & 0.10 & -158.0 & -22 & $<10^{-3}$ & -0.136 & $<10^{-3}$ \\
+2-DOF AMIGO & 0.01 & -252.8 & -69 & $<10^{-3}$ & -0.033 & $<10^{-3}$ \\
+2-DOF AMIGO & 0.05 & -256.8 & -39 & $<10^{-3}$ & -0.213 & $<10^{-3}$ \\
+2-DOF AMIGO & 0.10 & -160.6 & -22 & $<10^{-3}$ & -0.357 & $<10^{-3}$ \\
+Skogestad SIMC & 0.01 & -90.5 & -68 & $<10^{-3}$ & -0.078 & $<10^{-3}$ \\
+Skogestad SIMC & 0.05 & -321.1 & -68 & $<10^{-3}$ & -0.194 & $<10^{-3}$ \\
+Skogestad SIMC & 0.10 & -314.7 & -52 & $<10^{-3}$ & -0.410 & $<10^{-3}$ \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 0.01 & -258.3 & -64 & $<10^{-3}$ & +0.012 & $<10^{-3}$ \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 0.05 & -236.1 & -35 & $<10^{-3}$ & -0.080 & $<10^{-3}$ \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 0.10 & -144.8 & -20 & $<10^{-3}$ & -0.210 & $<10^{-3}$ \\
+2-DOF Optimal ITAE & 0.01 & -270.3 & -69 & $<10^{-3}$ & -0.090 & $<10^{-3}$ \\
+2-DOF Optimal ITAE & 0.05 & -244.7 & -36 & $<10^{-3}$ & -0.341 & $<10^{-3}$ \\
+2-DOF Optimal ITAE & 0.10 & -149.7 & -20 & $<10^{-3}$ & -0.433 & $<10^{-3}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

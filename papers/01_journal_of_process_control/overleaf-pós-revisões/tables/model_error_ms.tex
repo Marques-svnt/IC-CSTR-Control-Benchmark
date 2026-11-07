@@ -1,0 +1,21 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Robustness to model error on the exact plant, identical for every tuning: loop gain, all plant time constants ($\tau$ included) scaled by $0.8$, $1$ and $1.2$ and an extra delay of $0$ or $0.2\,\theta_{\mathrm{FOPTD}}$ ($18$ loops each). Stability is decided by the roots of the closed-loop polynomial (4th-order Pad\'e delay); $M_s$ is reported over the stable corners only. Deadband and stiction are not part of this test.}
+\label{tab:model_error}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Tuning & \(M_s^{\mathrm{lin}}\) nominal & unstable corners (of 18) & worst \(M_s\), stable corners \\
+\midrule
+Ziegler-Nichols & 1.57 & 0 & 2.84 \\
+Cohen-Coon & 1.75 & 0 & 3.42 \\
+Tyreus-Luyben & 1.15 & 0 & 1.42 \\
+AMIGO & 1.26 & 0 & 1.59 \\
+Skogestad SIMC & 1.11 & 0 & 1.20 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.31 & 0 & 1.63 \\
+Optimal ITAE ($M_s^{\mathrm{lin}} \leq 1.6$) & 1.20 & 0 & 2.06 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

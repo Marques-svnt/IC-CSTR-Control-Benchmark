@@ -1,0 +1,32 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Regime map over the valve slew-rate limit ($-2$~K step, gains designed at $S_{\max} = 80$~L/min$^2$). First row of each tuning: IAE of amplitude-only directional clamping over IAE of the rate-aware rule (above $1$ the rate trigger improves the loop; below $1$ it makes the loop worse, as for SIMC, rather than being irrelevant); second: IAE of the rate-aware rule; third: final error of sign-blind clamping ($\approx -16.7$~K: valve latched at full cooling).}
+\label{tab:smax_map}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccccccc}
+\toprule
+Method & Quantity & $S_{\max}=20$ & $S_{\max}=30$ & $S_{\max}=45$ & $S_{\max}=60$ & $S_{\max}=80$ & $S_{\max}=120$ & $S_{\max}=160$ & $S_{\max}=240$ & $S_{\max}=320$ \\
+\midrule
+Ziegler-Nichols & $\mathrm{IAE}_{\mathrm{amp}}/\mathrm{IAE}_{\mathrm{rate}}$ & 7.9 & 11.5 & 15.6 & 19.7 & 23.5 & 30.8 & 35.7 & 38.3 & 36.3 \\
+ & IAE rate-aware (K$\cdot$min) & 1.62 & 1.38 & 1.16 & 1.06 & 0.94 & 0.77 & 0.70 & 0.63 & 0.60 \\
+ & Sign-blind $T(t_f)-T_{sp}$ (K) & +32.5 & +1.9 & -14.9 & -16.7 & -16.7 & -16.7 & -16.7 & +54.2 & -16.7 \\
+Cohen-Coon & $\mathrm{IAE}_{\mathrm{amp}}/\mathrm{IAE}_{\mathrm{rate}}$ & 7.4 & 10.2 & 13.5 & 16.8 & 20.3 & 26.6 & 32.7 & 35.5 & 37.7 \\
+ & IAE rate-aware (K$\cdot$min) & 1.70 & 1.47 & 1.26 & 1.17 & 1.02 & 0.85 & 0.72 & 0.62 & 0.55 \\
+ & Sign-blind $T(t_f)-T_{sp}$ (K) & +30.6 & -3.3 & -16.0 & -16.7 & -16.7 & -16.7 & -16.7 & -16.3 & -16.7 \\
+Tyreus-Luyben & $\mathrm{IAE}_{\mathrm{amp}}/\mathrm{IAE}_{\mathrm{rate}}$ & 2.1 & 1.8 & 1.5 & 1.4 & 1.4 & 1.3 & 1.3 & 1.3 & 1.2 \\
+ & IAE rate-aware (K$\cdot$min) & 1.67 & 1.39 & 1.16 & 1.04 & 0.92 & 0.79 & 0.69 & 0.59 & 0.55 \\
+ & Sign-blind $T(t_f)-T_{sp}$ (K) & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 \\
+AMIGO & $\mathrm{IAE}_{\mathrm{amp}}/\mathrm{IAE}_{\mathrm{rate}}$ & 11.5 & 14.7 & 14.4 & 2.7 & 1.7 & 1.4 & 1.3 & 1.2 & 1.1 \\
+ & IAE rate-aware (K$\cdot$min) & 1.57 & 1.30 & 1.11 & 1.01 & 0.93 & 0.84 & 0.79 & 0.75 & 0.72 \\
+ & Sign-blind $T(t_f)-T_{sp}$ (K) & +2.5 & -0.4 & -2.5 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 \\
+Skogestad SIMC & $\mathrm{IAE}_{\mathrm{amp}}/\mathrm{IAE}_{\mathrm{rate}}$ & 1.0 & 0.9 & 0.9 & 0.8 & 0.8 & 0.9 & 0.9 & 0.9 & 0.9 \\
+ & IAE rate-aware (K$\cdot$min) & 1.94 & 1.69 & 1.48 & 1.36 & 1.29 & 1.17 & 1.13 & 1.06 & 1.06 \\
+ & Sign-blind $T(t_f)-T_{sp}$ (K) & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & $\mathrm{IAE}_{\mathrm{amp}}/\mathrm{IAE}_{\mathrm{rate}}$ & 9.3 & 9.6 & 3.5 & 2.4 & 1.8 & 1.5 & 1.5 & 1.3 & 1.3 \\
+ & IAE rate-aware (K$\cdot$min) & 1.59 & 1.30 & 1.07 & 0.93 & 0.83 & 0.72 & 0.66 & 0.61 & 0.58 \\
+ & Sign-blind $T(t_f)-T_{sp}$ (K) & +0.3 & +0.2 & +0.0 & -0.0 & +0.0 & -0.0 & -0.0 & -0.0 & -0.0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

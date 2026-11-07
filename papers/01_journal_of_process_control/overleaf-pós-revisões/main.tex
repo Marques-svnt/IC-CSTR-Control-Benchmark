@@ -1,0 +1,88 @@
+\documentclass[a4paper,fleqn]{cas-dc}
+\usepackage[numbers]{natbib}
+\usepackage{siunitx}
+\usepackage{xurl}
+\usepackage{amsthm}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{array}
+
+\newtheorem{proposition}{Proposition}
+\input{generated/numbers}
+\input{generated/supprefs}
+\shorttitle{Anti-windup under amplitude and slew-rate limits}
+\shortauthors{G.M. de Andrade and E.R. Edwards}
+
+\begin{document}
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+\title [mode = title]{Anti-Windup under Amplitude and Slew-Rate Limits in Reverse-Acting Process Loops: An Implementation Study on an Exothermic CSTR}
+
+\author[1]{Gabriel Marques de Andrade}[orcid=0009-0008-8868-5100]
+\cormark[1]
+\ead{gmandrade.egm@uesc.br}
+\credit{Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data Curation, Writing -- Original Draft, Writing -- Review \& Editing, Visualization}
+
+\author[1]{Elilton Rodrigues Edwards}
+\ead{eredwards@uesc.br}
+\credit{Supervision, Methodology, Writing -- review \& editing}
+
+\affiliation[1]{organization={Department of Engineering and Computing (DEC), Universidade Estadual de Santa Cruz (UESC)},
+    addressline={Rodovia Jorge Amado, km 16},
+    city={Ilh\'eus},
+    postcode={45662-900},
+    state={Bahia},
+    country={Brazil}}
+
+\cortext[1]{Corresponding author}
+
+\begin{abstract}
+In a reverse-acting PID loop whose valve is limited in amplitude and slew rate, the anti-windup logic, the discretization of its filters and the order in which the limits are evaluated are part of the controller, yet comparisons of controllers seldom report them. This study shows how these choices decide the verdict on the temperature loop of an exothermic CSTR using six fixed-gain PID configurations. A proposition shows that sign-blind amplitude clamping, which reuses the direct-acting freeze condition, latches the loop at full cooling; the temperature settles $\vlatchgap$~K below the setpoint and the integral absolute error of a $-2$~K step for Ziegler--Nichols rises from $\vZNdir$ to $\vZNsign$~K$\cdot$min. An ablation over three steps, a load profile, deadband, stiction and three operating points shows that a slew-rate trigger, not sign awareness, restores the high-gain loops but worsens slow ones such as SIMC. Without measurement noise, back-calculation with one tracking constant per loop stays within $\vttcvmaxpct\%$ of the directional rule, whereas the usual defaults are up to $\vtttimaxpct\%$ worse; with $0.05$~K sensor noise it is up to $\vnzbchimaxpct\%$ worse. Placing the backlash before the slew limit and discretizing the measurement filter by explicit Euler change the IAE by up to $\vorderTwodIAE\%$ and $\vorderFourdIAE\%$ and reorder loops and policies. A heat exchanger used as a second plant confirms the trigger for the high-gain loops but shows no latch and a loop where the rate-demand heuristic fails. A pseudocode and a checklist state what a comparison must report.
+\end{abstract}
+
+\input{highlights}
+
+\begin{keywords}
+Anti-windup \sep Actuator rate saturation \sep Conditional integration \sep Back-calculation \sep Reverse-acting loop \sep Exothermic CSTR
+\end{keywords}
+
+\maketitle
+
+\section{Introduction}\label{sec:intro}
+\input{sections/01_introduction}
+
+\section{Plant model and actuator limits}\label{sec:model}
+\input{sections/02_plant_actuator_limits}
+
+\section{PID implementation and anti-windup logic}\label{sec:pid}
+\input{sections/03_robust_pid_antiwindup}
+
+\section{Results and discussion}\label{sec:results}
+\input{sections/04_results_discussion}
+
+\section{Conclusions}\label{sec:conclusion}
+\input{sections/05_conclusion}
+
+\section*{Data and code availability}
+The simulation code, controllers, campaign scripts, random seeds and the CSV files behind every table and figure are archived on Zenodo \cite{andrade2026software} (DOI to be assigned on deposit; placeholder in the reference) and developed at \url{https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark}. Every number in the text is generated from those CSV files by \texttt{scripts/jpc\_numbers.py}. The tuning-specific analyses are in the Supplementary Material.
+
+\section*{CRediT authorship contribution statement}
+\sloppy
+\textbf{Gabriel Marques de Andrade:} Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data Curation, Writing -- Original Draft, Writing -- Review \& Editing, Visualization. \textbf{Elilton Rodrigues Edwards:} Supervision, Methodology, Writing -- Review \& Editing.
+
+\section*{Declaration of generative AI and AI-assisted technologies in the writing process}
+During the preparation of this work the authors used Claude (Anthropic) as an AI-assisted coding and language-editing tool. After using this tool, the authors reviewed and edited the content as needed, verified that every reported number is produced by the released code, and take full responsibility for the content of the publication.
+
+\fussy
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{Acknowledgements}
+This research was supported in part by the Brazilian National Council for Scientific and Technological Development (CNPq), the Bahia State Research Foundation (FAPESB), and PROIC-UESC under Grant 34/2026.
+
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\end{document}

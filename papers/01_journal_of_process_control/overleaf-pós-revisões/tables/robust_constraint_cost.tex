@@ -1,0 +1,19 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Cost of the design-model constraint. Each tuning minimizes the ITAE of the $-2$~K step ($6$~min) subject to $M_s \le 1.6$ evaluated on the dead-time FOPTD ($M_s^{\mathrm{FOPTD}}$) or on the exact Jacobian loop with the half-sample zero-order hold ($M_s^{\mathrm{lin}}$); ``joint'' rows optimize $(K_p, T_i, T_d, \beta, \gamma)$ together, the 2-DOF row with $\beta = 0.5$ is the fixed-weight variant ($\beta = 0.5$, $\gamma = 0$) of Fig.~\ref{fig:classical_benchmark}. ITAE in K$\cdot$min$^2$, IAE in K$\cdot$min, TV in L/min, $K_{\mathrm{hf}}$ in (L/min)/K, PM at the highest gain crossover.}
+\label{tab:constraint_cost}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccccccccccccc}
+\toprule
+Tuning & \(K_p\) & \(T_i\) (min) & \(T_d\) (min) & \(\beta\) & \(\gamma\) & \(M_s^{\mathrm{FOPTD}}\) & \(M_s^{\mathrm{lin}}\) & PM$^{\mathrm{lin}}$ ($^\circ$) & \(K_{\mathrm{hf}}\) & IAE & ITAE & \(M_p\) (\%) & TV & ITAE $-5$ K & ITAE $+5$ K \\
+\midrule
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & -23.55 & 0.465 & 0.032 & 1.00 & 0.00 & 1.60 & 1.31 & 57.1 & 259 & 0.827 & 0.204 & 2.2 & 48.6 & 1.292 & 1.200 \\
+2-DOF Optimal ITAE & -23.55 & 0.465 & 0.032 & 0.50 & 0.00 & 1.60 & 1.31 & 57.1 & 259 & 1.084 & 0.424 & 0.0 & 25.0 & 1.756 & 1.564 \\
+Joint 2-DOF ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & -23.55 & 0.464 & 0.032 & 1.00 & 0.00 & 1.60 & 1.31 & 57.1 & 259 & 0.827 & 0.204 & 2.2 & 48.6 & 1.289 & 1.197 \\
+Optimal ITAE ($M_s^{\mathrm{lin}} \leq 1.6$) & -41.41 & 0.597 & 0.093 & 1.00 & 0.00 & 13.86 & 1.20 & 75.5 & 456 & 0.799 & 0.181 & 0.7 & 59.6 & 1.322 & 1.239 \\
+Joint 2-DOF ITAE ($M_s^{\mathrm{lin}} \leq 1.6$) & -46.23 & 0.558 & 0.099 & 0.98 & 0.09 & 12.95 & 1.24 & 74.4 & 508 & 0.799 & 0.181 & 0.8 & 60.7 & 1.307 & 1.257 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

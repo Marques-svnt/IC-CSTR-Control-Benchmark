@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Heat exchanger: FOPTD from a $+10$~L/min step ($K = -0.2036$~K/(L/min), $\tau = 0.657$~min, $\theta = 0.224$~min, $r = \theta/\tau = 0.341$, RMSE $0.0115$~K), the six loops tuned by the same rules (Optimal ITAE re-optimized on this plant under $M_s^{\mathrm{FOPTD}} \le 1.6$) and $T_t^{\mathrm{sel}}$ chosen by the criterion of Table~\ref{tab:antiwindup_tt_summary}.}
+\label{tab:hx_gains}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Method & \(K_p\) ((L/min)/K) & \(T_i\) (min) & \(T_d\) (min) & \(M_s^{\mathrm{FOPTD}}\) & \(T_t^{\mathrm{sel}}\) (min) \\
+\midrule
+Ziegler-Nichols & -17.28 & 0.448 & 0.112 & 3.89 & 0.123 \\
+Cohen-Coon & -20.43 & 0.485 & 0.077 & 4.28 & 0.166 \\
+Tyreus-Luyben & -11.75 & 1.757 & 0.127 & 2.37 & 1.757 \\
+AMIGO & -7.46 & 0.476 & 0.102 & 1.45 & 0.165 \\
+Skogestad SIMC & -5.17 & 0.657 & 0.074 & 1.25 & 0.657 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & -9.74 & 0.695 & 0.073 & 1.60 & 0.374 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

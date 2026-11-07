@@ -1,0 +1,26 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{ITAE (K$\cdot$min$^2$) of every tuning on setpoint steps of different size and sign. The Optimal ITAE gains were fitted on the $-2$~K step only (in-sample column); all other columns are out-of-sample. Same valve, directional anti-windup and $10$~min horizon.}
+\label{tab:out_of_sample}
+\resizebox{\ifdim\width>\textwidth\textwidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Method & -5 K & -2 K & -1 K & +1 K & +2 K & +5 K \\
+\midrule
+Ziegler-Nichols & 1.413 & 0.316 & 0.084 & 0.105 & 0.345 & 1.985 \\
+Cohen-Coon & 1.571 & 0.388 & 0.111 & 0.131 & 0.465 & 3.373 \\
+Tyreus-Luyben & 1.876 & 0.336 & 0.092 & 0.091 & 0.327 & 1.716 \\
+AMIGO & 1.389 & 0.308 & 0.122 & 0.108 & 0.250 & 0.969 \\
+2-DOF AMIGO & 1.605 & 0.312 & 0.118 & 0.105 & 0.260 & 1.136 \\
+Skogestad SIMC & 2.961 & 0.629 & 0.229 & 0.204 & 0.499 & 1.890 \\
+Optimal ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.292 & 0.204 & 0.065 & 0.063 & 0.192 & 1.200 \\
+2-DOF Optimal ITAE & 1.756 & 0.424 & 0.154 & 0.153 & 0.414 & 1.564 \\
+Optimal ITAE ($M_s^{\mathrm{lin}} \leq 1.6$) & 1.322 & 0.181 & 0.077 & 0.062 & 0.209 & 1.239 \\
+Joint 2-DOF ITAE ($M_s^{\mathrm{FOPTD}} \leq 1.6$) & 1.289 & 0.204 & 0.065 & 0.063 & 0.191 & 1.197 \\
+Joint 2-DOF ITAE ($M_s^{\mathrm{lin}} \leq 1.6$) & 1.307 & 0.181 & 0.072 & 0.062 & 0.202 & 1.257 \\
+Rank of Optimal ITAE among the eight benchmark tunings (1 = best) & 1 & 1 & 1 & 1 & 1 & 3 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
