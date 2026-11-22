@@ -1,15 +1,11 @@
 {
   "title": "IC-CSTR-Control-Benchmark: simulation code, controllers and data for anti-windup under actuator limits in an exothermic CSTR",
   "upload_type": "software",
-  "version": "v2.0.0-jpc",
-  "license": "MIT",
+  "license": "mit",
   "description": "Simulation code, PID controllers with seven anti-windup policies, campaign scripts, fixed random seeds, generated figures, literature-audit coding, and the CSV files behind every table and figure of the Journal of Process Control manuscript on anti-windup under amplitude and slew-rate limits (main text and supplementary material). See README.md for reproduction steps.",
   "keywords": ["anti-windup", "actuator rate saturation", "PID", "exothermic CSTR", "reproducibility"],
   "creators": [
-    {"name": "Marques de Andrade, Gabriel", "affiliation": "State University of Santa Cruz (UESC)", "orcid": "0009-0008-8868-5100"},
+    {"name": "Marques de Andrade, Gabriel", "affiliation": "State University of Santa Cruz (UESC)", "orcid": "0009-0007-0733-7473"},
     {"name": "Rodrigues Edwards, Elilton", "affiliation": "State University of Santa Cruz (UESC)"}
-  ],
-  "related_identifiers": [
-    {"identifier": "https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark", "relation": "isSupplementTo", "scheme": "url"}
   ]
 }

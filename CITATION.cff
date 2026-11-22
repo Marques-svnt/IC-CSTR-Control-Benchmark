@@ -2,13 +2,13 @@ cff-version: 1.2.0
 message: "If you use this software or dataset, please cite it as below."
 title: "IC-CSTR-Control-Benchmark: simulation code, controllers and data for anti-windup under actuator limits in an exothermic CSTR"
 type: software
-version: "v2.0.0-jpc"
+version: "v2.0.1-jpc"
 date-released: "2026-11-22"
 license: MIT
 authors:
   - family-names: "Marques de Andrade"
     given-names: "Gabriel"
-    orcid: "https://orcid.org/0009-0008-8868-5100"
+    orcid: "https://orcid.org/0009-0007-0733-7473"
     affiliation: "State University of Santa Cruz (UESC)"
   - family-names: "Rodrigues Edwards"
     given-names: "Elilton"
