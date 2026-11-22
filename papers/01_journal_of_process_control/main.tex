@@ -66,14 +66,21 @@ Anti-windup \sep Actuator rate saturation \sep Conditional integration \sep Back
 \input{sections/05_conclusion}
 
 \section*{Data and code availability}
-The simulation code, controllers, campaign scripts, random seeds and the CSV files behind every table and figure are archived on Zenodo \cite{andrade2026software} (DOI to be assigned on deposit; placeholder in the reference) and developed at \url{https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark}. Every number in the text is generated from those CSV files by \texttt{scripts/jpc\_numbers.py}. The tuning-specific analyses are in the Supplementary Material.
+The simulation code, controller implementations, campaign scripts, random seeds, and CSV files underlying the reported tables and figures are archived on Zenodo \cite{andrade2026software} (DOI to be assigned upon deposit) and are also available in the GitHub repository: \url{https://github.com/Marques-svnt/IC-CSTR-Control-Benchmark}. All numerical results reported in the manuscript can be reproduced from these CSV files using \texttt{scripts/jpc\_numbers.py}. The tuning-specific analyses are provided in the Supplementary Material.
+
+\begingroup
+\sloppy
 
 \section*{CRediT authorship contribution statement}
-\sloppy
-\textbf{Gabriel Marques de Andrade:} Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data Curation, Writing -- Original Draft, Writing -- Review \& Editing, Visualization. \textbf{Elilton Rodrigues Edwards:} Supervision, Methodology, Writing -- Review \& Editing.
+\textbf{Gabriel Marques de Andrade:} Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data curation, Writing -- original draft, Writing -- review \& editing, Visualization.
+
+\textbf{Elilton Rodrigues Edwards:} Supervision, Methodology, Writing -- review \& editing.
+
+\fussy
+\endgroup
 
 \section*{Declaration of generative AI and AI-assisted technologies in the writing process}
-During the preparation of this work the authors used Claude (Anthropic) as an AI-assisted coding and language-editing tool. After using this tool, the authors reviewed and edited the content as needed, verified that every reported number is produced by the released code, and take full responsibility for the content of the publication.
+During the preparation of this manuscript, the authors used Claude (Anthropic) to assist with code development and language editing. All AI-assisted outputs were reviewed and edited by the authors as necessary. The authors verified the reported numerical results against the released code and take full responsibility for the accuracy, integrity, and content of the published work.
 
 \fussy
 \section*{Declaration of competing interest}

@@ -975,7 +975,7 @@ def main() -> None:
         booktabs(
             ["Tuning", "None", "SB", "Amp.", "Rate", "BC$^{\\mathrm{sel}}$", "None", "Rate"],
             hx_body,
-            "Second plant, the heat exchanger of Supplementary Section~\\suppref{supp:hx}: IAE "
+            "Second plant, the heat exchanger described in Supplementary Section~\\suppref{supp:hx}: IAE "
             "(K$\\cdot$min) of the integrator policies on the $-5$~K step (first five columns) and of no "
             "anti-windup and the rate-aware rule on the $-2$~K step (last two); same valve "
             "($[0, 300]$~L/min, $S_{\\max} = 80$~L/min$^2$), loops tuned by the same rules, Optimal ITAE "
