@@ -1,5 +1,7 @@
 # IC-CSTR-Control-Benchmark
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24449532.svg)](https://doi.org/10.5281/zenodo.24449532)
+
 Simulation code, PID controllers with seven anti-windup policies, campaign scripts, fixed random seeds, generated figures, literature-audit coding, and CSV datasets accompanying the *Journal of Process Control* manuscript:
 
 > **Anti-Windup under Amplitude and Slew-Rate Limits in Reverse-Acting Process Loops: An Implementation Study on an Exothermic CSTR**  
@@ -73,7 +75,9 @@ All stochastic experiments (measurement noise, 30 realizations per case; Sobol/S
 
 ## Citation
 
-If you use this software or dataset, please cite it using the metadata in [`CITATION.cff`](CITATION.cff) (Zenodo DOI assigned upon release `v2.0.0-jpc`).
+If you use this software or dataset, please cite it using [`CITATION.cff`](CITATION.cff) or the Zenodo record:
+
+> Marques de Andrade, G., & Rodrigues Edwards, E. (2026). *IC-CSTR-Control-Benchmark: simulation code, controllers and data for anti-windup under actuator limits in an exothermic CSTR* (Version v2.0.1-jpc). Zenodo. https://doi.org/10.5281/zenodo.24449532
 
 ## License
 

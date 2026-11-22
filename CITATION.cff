@@ -4,6 +4,7 @@ title: "IC-CSTR-Control-Benchmark: simulation code, controllers and data for ant
 type: software
 version: "v2.0.1-jpc"
 date-released: "2026-11-22"
+doi: "10.5281/zenodo.24449532"
 license: MIT
 authors:
   - family-names: "Marques de Andrade"
