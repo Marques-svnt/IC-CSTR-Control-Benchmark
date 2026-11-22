@@ -399,3 +399,21 @@ macro,value,source
 \vloadpeakmax,2.86,disturbance_rejection_table
 \vloadvalvemin,162.4,disturbance_rejection_table
 \vloadvalvemax,180.0,disturbance_rejection_table
+\vrhoexcloop,TL,"rate_demand_grid (rho >= 1, R <= 1)"
+\vrhoexcstep,+5,rate_demand_grid
+\vrhoexcsmax,320,rate_demand_grid
+\vrhoexcrho,2.17,rate_demand_grid
+\vrhoexcR,0.99,rate_demand_grid
+\vfiltbcbetterhi,16,"noise_policies_ext_full (sigma=0.05, BC improved by filter)"
+\vfiltbcnhi,18,"noise_policies_ext_full (sigma=0.05, total BC pairs)"
+\vfiltdirworsehi,6,"noise_policies_ext_full (sigma=0.05, Dir degraded by filter)"
+\vfiltdirnhi,18,"noise_policies_ext_full (sigma=0.05, total Dir pairs)"
+\vfiltdirmaxpcthi,38,"noise_policies_ext_full (sigma=0.05, worst Dir %)"
+\vfiltdirworstloop,CC,"noise_policies_ext_full (sigma=0.05, worst Dir loop)"
+\vfiltdirworststep,+5,"noise_policies_ext_full (sigma=0.05, worst Dir step)"
+\vfiltdirworselo,12,"noise_policies_ext_full (sigma=0.01, Dir degraded by filter)"
+\vfiltbcworselo,12,"noise_policies_ext_full (sigma=0.01, BC degraded by filter)"
+\vfiltnlo,18,"noise_policies_ext_full (sigma=0.01, total pairs)"
+\vfilttvbetter,24,noise_filter_paired_tests (Delta TV < 0)
+\vfiltiaeworse,5,noise_filter_paired_tests (Delta IAE > 0)
+\vfiltiaen,24,noise_filter_paired_tests (total loop-noise pairs)

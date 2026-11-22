@@ -921,6 +921,64 @@ def load_table() -> list[list[str]]:
     return [cols, body]
 
 
+def advisor_audit_numbers() -> None:
+    """Nominal rho >= 1 exception and measurement-filter IAE/TV breakdowns from CSVs."""
+    grid = rows("rate_demand_grid")
+    exc = [r for r in grid if float(r["rho"]) >= 1.0 and float(r["ratio"]) <= 1.0]
+    if len(exc) != 1:
+        raise ValueError(f"expected 1 nominal rho>=1 exception, found {len(exc)}")
+    e = exc[0]
+    step_val = float(e["step_K"])
+    define("rhoexcloop", SHORT[e["Method"]], "rate_demand_grid (rho >= 1, R <= 1)", "{}")
+    define("rhoexcstep", f"{step_val:+.0f}", "rate_demand_grid", "{}")
+    define("rhoexcsmax", float(e["S_max"]), "rate_demand_grid", "{:.0f}")
+    define("rhoexcrho", float(e["rho"]), "rate_demand_grid")
+    define("rhoexcR", float(e["ratio"]), "rate_demand_grid")
+
+    ext = rows("noise_policies_ext_full")
+
+    def _filter_counts(sigma_val: float, pol_name: str) -> tuple[int, int, int, float, str, str]:
+        by_ms: dict[tuple[str, str], dict[float, float]] = {}
+        for r in ext:
+            if abs(float(r["sigma"]) - sigma_val) < 1e-9 and r["policy"] == pol_name:
+                by_ms.setdefault((r["Method"], r["step_K"]), {})[float(r["tau_m"])] = float(r["IAE_mean"])
+        better = worse = 0
+        worst_pct, worst_m, worst_st = 0.0, "", ""
+        for (m, st), d in by_ms.items():
+            if 0.0 in d and 0.05 in d:
+                if d[0.05] > d[0.0]:
+                    worse += 1
+                    pct = (d[0.05] / d[0.0] - 1.0) * 100.0
+                    if pct > worst_pct:
+                        worst_pct, worst_m, worst_st = pct, SHORT[m], f"{float(st):+.0f}"
+                else:
+                    better += 1
+        return better, worse, better + worse, worst_pct, worst_m, worst_st
+
+    bc_b_hi, _, bc_n_hi, _, _, _ = _filter_counts(0.05, "BC")
+    _, dir_w_hi, dir_n_hi, dir_pct_hi, dir_m_hi, dir_st_hi = _filter_counts(0.05, "Dir")
+    _, dir_w_lo, n_lo, _, _, _ = _filter_counts(0.01, "Dir")
+    _, bc_w_lo, _, _, _, _ = _filter_counts(0.01, "BC")
+
+    define("filtbcbetterhi", f"{bc_b_hi}", "noise_policies_ext_full (sigma=0.05, BC improved by filter)")
+    define("filtbcnhi", f"{bc_n_hi}", "noise_policies_ext_full (sigma=0.05, total BC pairs)")
+    define("filtdirworsehi", f"{dir_w_hi}", "noise_policies_ext_full (sigma=0.05, Dir degraded by filter)")
+    define("filtdirnhi", f"{dir_n_hi}", "noise_policies_ext_full (sigma=0.05, total Dir pairs)")
+    define("filtdirmaxpcthi", dir_pct_hi, "noise_policies_ext_full (sigma=0.05, worst Dir %)", "{:.0f}")
+    define("filtdirworstloop", dir_m_hi, "noise_policies_ext_full (sigma=0.05, worst Dir loop)", "{}")
+    define("filtdirworststep", dir_st_hi, "noise_policies_ext_full (sigma=0.05, worst Dir step)", "{}")
+    define("filtdirworselo", f"{dir_w_lo}", "noise_policies_ext_full (sigma=0.01, Dir degraded by filter)")
+    define("filtbcworselo", f"{bc_w_lo}", "noise_policies_ext_full (sigma=0.01, BC degraded by filter)")
+    define("filtnlo", f"{n_lo}", "noise_policies_ext_full (sigma=0.01, total pairs)")
+
+    pt = rows("noise_filter_paired_tests")
+    tv_col = next(c for c in pt[0] if "TV (L/min)" in c)
+    iae_col = next(c for c in pt[0] if "IAE (K" in c)
+    define("filttvbetter", f"{sum(num(r[tv_col]) < 0 for r in pt)}", "noise_filter_paired_tests (Delta TV < 0)")
+    define("filtiaeworse", f"{sum(num(r[iae_col]) > 0 for r in pt)}", "noise_filter_paired_tests (Delta IAE > 0)")
+    define("filtiaen", f"{len(pt)}", "noise_filter_paired_tests (total loop-noise pairs)")
+
+
 def main() -> None:
     """Writes numbers.tex, the condensed tables and the provenance CSV."""
     ablation_numbers()
@@ -946,6 +1004,7 @@ def main() -> None:
     predictive_and_exact_numbers()
     shapley_numbers()
     load_table()
+    advisor_audit_numbers()
 
     tables = PAPER / "tables"
     (tables / "v7_testbed.tex").write_text(
@@ -975,7 +1034,7 @@ def main() -> None:
         booktabs(
             ["Tuning", "None", "SB", "Amp.", "Rate", "BC$^{\\mathrm{sel}}$", "None", "Rate"],
             hx_body,
-            "Second plant, the heat exchanger described in Supplementary Section~\\suppref{supp:hx}: IAE "
+            "Second plant: the heat exchanger described in Supplementary Section~\\suppref{supp:hx}: IAE "
             "(K$\\cdot$min) of the integrator policies on the $-5$~K step (first five columns) and of no "
             "anti-windup and the rate-aware rule on the $-2$~K step (last two); same valve "
             "($[0, 300]$~L/min, $S_{\\max} = 80$~L/min$^2$), loops tuned by the same rules, Optimal ITAE "
