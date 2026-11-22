@@ -4,12 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cstr-control-research"
-version = "0.1.0"
-description = "Research framework for classical, neural, and agentic PID control of non-linear chemical processes (PROIC/UESC)"
+version = "2.0.0"
+description = "Simulation code, PID controllers with seven anti-windup policies, and reproducibility data for anti-windup under amplitude and slew-rate limits in an exothermic CSTR (JPC)"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.11"
 authors = [
-    { name = "Research Team", email = "research@uesc.br" }
+    { name = "Gabriel Marques de Andrade" },
+    { name = "Elilton Rodrigues Edwards" },
 ]
 dependencies = [
     "numpy>=1.26.0",
@@ -35,17 +37,6 @@ dev = [
     "hypothesis>=6.100.0",
     "ruff>=0.3.0",
     "mypy>=1.9.0",
-]
-ai = [
-    "torch>=2.2.0",
-    "torchdiffeq>=0.2.4",
-    "neuromancer>=1.5.0",
-    "do-mpc>=4.6.0",
-    "casadi>=3.6.0",
-    "langgraph>=0.0.30",
-    "langchain-core>=0.1.30",
-    "osqp>=1.0.0",
-    "qpsolvers>=4.0.0",
 ]
 
 [tool.setuptools.packages.find]

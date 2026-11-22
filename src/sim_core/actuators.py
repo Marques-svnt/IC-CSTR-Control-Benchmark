@@ -153,9 +153,7 @@ class ValveActuator:
             delta_max = self.limits.max_slew_rate * dt
             delta_req = u_clamped - self._current_position
             if abs(delta_req) > delta_max:
-                u_actual = self._current_position + (
-                    delta_max if delta_req > 0 else -delta_max
-                )
+                u_actual = self._current_position + (delta_max if delta_req > 0 else -delta_max)
                 is_saturated = True
             else:
                 u_actual = u_clamped
@@ -172,9 +170,7 @@ class ValveActuator:
         Args:
             position: Posição-alvo para reset da válvula [L/min].
         """
-        self._current_position = float(
-            max(self.limits.u_min, min(self.limits.u_max, position))
-        )
+        self._current_position = float(max(self.limits.u_min, min(self.limits.u_max, position)))
         self._rate_state = self._current_position
         logger.debug("ValveActuator reiniciado para %.2f", self._current_position)
 
@@ -191,8 +187,9 @@ if __name__ == "__main__":
     dt_step = 0.5  # minutos (máximo deslocamento por passo = 60 * 0.5 = 30 L/min)
 
     print(f"Posição inicial da válvula: {valve.current_position:.1f} L/min")
-    print(f"Limites: [{limits.u_min}, {limits.u_max}] L/min | "
-          f"Slew: {limits.max_slew_rate} L/min²\n")
+    print(
+        f"Limites: [{limits.u_min}, {limits.u_max}] L/min | Slew: {limits.max_slew_rate} L/min²\n"
+    )
 
     # Aplicação de comando em degrau para 250 L/min (ultrapassa u_max e testa slew rate)
     u_req = 250.0

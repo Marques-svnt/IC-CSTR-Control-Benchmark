@@ -73,11 +73,13 @@ scripts/overleaf/.olauth
 
 
 # ========================
+# Generated temporary outputs
+# ========================
+outputs/
+
+# ========================
 # Whitelist Exceptions (Must be tracked)
 # ========================
-!papers/**/figures/*.pdf
-!papers/**/tables/*.tex
-!papers/**/ready_to_overleaf.zip
+!results/jpc/figures/*.pdf
 !results/*.csv
 !results/**/*.csv
-!Biblioteca/README.md

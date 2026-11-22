@@ -154,7 +154,9 @@ class ClosedLoopSimulator:
                 )
             elif not meas_filter_derivative:
                 u_act, diag = controller.compute(
-                    setpoint=sp, measurement=pv_measured, dt=dt,
+                    setpoint=sp,
+                    measurement=pv_measured,
+                    dt=dt,
                     d_measurement=current_state.T + noise,
                 )
             else:

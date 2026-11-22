@@ -249,8 +249,8 @@ class PIDController:
 
             # Atualização do estado do filtro passa-baixas recursivo
             self._filtered_deriv_state = (
-                (1.0 - alpha) * self._filtered_deriv_state + alpha * d_input
-            )
+                1.0 - alpha
+            ) * self._filtered_deriv_state + alpha * d_input
             d_term = self.gains.kp * self.gains.td * self._filtered_deriv_state
         else:
             d_term = 0.0
@@ -297,7 +297,8 @@ class PIDController:
             # Integração trapezoidal discreta de maior precisão
             delta_i = i_gain * e_trap * dt
             if self.anti_windup in (
-                AntiWindupMethod.BACK_CALCULATION, AntiWindupMethod.BACK_CALCULATION_EXACT
+                AntiWindupMethod.BACK_CALCULATION,
+                AntiWindupMethod.BACK_CALCULATION_EXACT,
             ):
                 # Correção por recálculo: rastreia a discrepância entre saída real e calculada
                 tracking_error = self._last_u_applied - self._last_u_unconstrained
@@ -355,14 +356,15 @@ if __name__ == "__main__":
     )
 
     # 2. Inicialização bumpless com medição inicial T = 350 K
-    t_sp = 348.0   # Setpoint reduz em 2 K (requer mais refrigeração q_j)
-    t_meas = 350.0 # Medição inicial
+    t_sp = 348.0  # Setpoint reduz em 2 K (requer mais refrigeração q_j)
+    t_meas = 350.0  # Medição inicial
     pid.reset(initial_measurement=t_meas, initial_u=100.0)
 
-    print(f"Ganhos: Kp={gains_demo.kp:.2f}, Ti={gains_demo.ti:.2f} min, "
-          f"Td={gains_demo.td:.2f} min")
-    print(f"Anti-Windup: {pid.anti_windup.value} | "
-          f"Limites: [{limits_demo.u_min}, {limits_demo.u_max}] L/min")
+    print(f"Ganhos: Kp={gains_demo.kp:.2f}, Ti={gains_demo.ti:.2f} min, Td={gains_demo.td:.2f} min")
+    print(
+        f"Anti-Windup: {pid.anti_windup.value} | "
+        f"Limites: [{limits_demo.u_min}, {limits_demo.u_max}] L/min"
+    )
     print(f"\nAplicando degrau de setpoint: SP = {t_sp:.1f} K (PV inicial = {t_meas:.1f} K)\n")
 
     # 3. Execução de passos de controle com dt = 0.1 min

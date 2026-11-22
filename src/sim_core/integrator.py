@@ -107,9 +107,7 @@ class NumericalIntegrator:
         )
 
         if not sol.success:
-            logger.error(
-                "Falha na integração no instante t=%.2f: %s", t_current, sol.message
-            )
+            logger.error("Falha na integração no instante t=%.2f: %s", t_current, sol.message)
             raise RuntimeError(f"Falha de integração numérica ODE: {sol.message}")
 
         y_next = sol.y[:, -1]
@@ -170,9 +168,7 @@ class NumericalIntegrator:
             u_vals[i] = q_j
 
             dist = disturbance_func(t_now) if disturbance_func else None
-            current_state = self.step(
-                plant, current_state, q_j, t_now, dt, disturbances=dist
-            )
+            current_state = self.step(plant, current_state, q_j, t_now, dt, disturbances=dist)
             states[i + 1] = current_state.to_array()
 
             noise_i = rng.normal(0.0, noise_std) if noise_std > 0 else 0.0
@@ -204,8 +200,8 @@ if __name__ == "__main__":
 
     # 3. Simulação de ensaio degrau em malha aberta: +15 L/min na vazão da camisa
     delta_q = 15.0  # L/min
-    t_end = 6.0     # minutos
-    dt_sim = 0.05   # minutos
+    t_end = 6.0  # minutos
+    dt_sim = 0.05  # minutos
 
     print(f"Executando simulação malha aberta por {t_end:.1f} min (dt = {dt_sim} min)...")
     res = integrator.simulate_open_loop(

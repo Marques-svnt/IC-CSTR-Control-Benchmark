@@ -338,10 +338,21 @@ class TestMeasurementFilterAndExactRobustness:
 
         def tv(tau: float) -> float:
             pid = PIDController(gains, limits, AntiWindupMethod.CLAMPING, u_bias=q_j, y_ss=ss.T)
-            return ClosedLoopSimulator().run(
-                plant, pid, ss, (0.0, 3.0), 0.02, lambda t: ss.T, noise_std=0.05, seed=1,
-                meas_filter_tau=tau,
-            ).metrics.tv
+            return (
+                ClosedLoopSimulator()
+                .run(
+                    plant,
+                    pid,
+                    ss,
+                    (0.0, 3.0),
+                    0.02,
+                    lambda t: ss.T,
+                    noise_std=0.05,
+                    seed=1,
+                    meas_filter_tau=tau,
+                )
+                .metrics.tv
+            )
 
         assert tv(0.05) < tv(0.0)
 
@@ -357,14 +368,19 @@ class TestMeasurementFilterAndExactRobustness:
         gains = tune_amigo(NOMINAL_FOPTD)
         rob = linearized_robustness(plant, ss, q_j, gains, theta=0.01)
         w = np.array([1e7])
-        c_hf = abs(gains.kp + gains.kp / (1j * w * gains.ti)
-                   + gains.kp * gains.td * 1j * w / (1.0 + gains.td / gains.n_filter * 1j * w))[0]
+        c_hf = abs(
+            gains.kp
+            + gains.kp / (1j * w * gains.ti)
+            + gains.kp * gains.td * 1j * w / (1.0 + gains.td / gains.n_filter * 1j * w)
+        )[0]
         assert high_frequency_gain(gains) == pytest.approx(c_hf, rel=1e-3)
         assert rob["k_hf"] == pytest.approx(abs(gains.kp) * (1.0 + gains.n_filter))
         assert rob["cs_inf"] <= rob["k_hf"] * rob["ms"] * (1 + 1e-6)  # CS = C S, |C| <= K_hf-ish
         assert rob["ms"] == pytest.approx(
-            __import__("src.classical_control.tuning_optimization", fromlist=["x"])
-            .calculate_maximum_sensitivity(plant, ss, q_j, gains, theta=0.01), rel=1e-2
+            __import__(
+                "src.classical_control.tuning_optimization", fromlist=["x"]
+            ).calculate_maximum_sensitivity(plant, ss, q_j, gains, theta=0.01),
+            rel=1e-2,
         )
 
 
@@ -387,6 +403,7 @@ def test_textbook_clamping_latches_valve_at_upper_stop_for_zn(
     assert naive.u_applied[-1] == limits.u_max
     assert naive.states[-1, 1] == pytest.approx(plant.find_steady_state(q_j=300.0).T, abs=0.1)
     assert directional.metrics.iae < 0.1 * naive.metrics.iae
+
 
 # %% [Slave gain scheduling: Kc2(T_j) = Kc2_0 (T_j0 - T_jf) / (T_j - T_jf)]
 def _scheduled_cascade(t_j_ref: float | None) -> CascadePIDController:

@@ -40,7 +40,6 @@ from src.classical_control.tuning_optimization import (
     calculate_maximum_sensitivity_foptd,
     tune_by_optimization,
 )
-from src.controllers.optimal.nmpc_controller import CstrNmpcController
 from src.evaluation.plot_styles import (
     IEEE_LINESTYLES,
     IEEE_MARKERS,
@@ -102,16 +101,30 @@ def plot_grouped_responses(
     sample = next(iter(sim_results.values()))
     for col, (title, names) in enumerate(PID_GROUPS):
         ax_t, ax_u = axes[0, col], axes[1, col]
-        ax_t.plot(sample.t, sample.setpoint, color=IEEE_PALETTE["Setpoint"],
-                  linestyle=IEEE_LINESTYLES["Setpoint"], label="Setpoint", linewidth=1.1)
+        ax_t.plot(
+            sample.t,
+            sample.setpoint,
+            color=IEEE_PALETTE["Setpoint"],
+            linestyle=IEEE_LINESTYLES["Setpoint"],
+            label="Setpoint",
+            linewidth=1.1,
+        )
         for name in (n for n in names if n in sim_results):
             res = sim_results[name]
-            style = {"color": IEEE_PALETTE[name], "linestyle": IEEE_LINESTYLES[name], "linewidth": 1.1}
+            style = {
+                "color": IEEE_PALETTE[name],
+                "linestyle": IEEE_LINESTYLES[name],
+                "linewidth": 1.1,
+            }
             ax_t.plot(res.t, res.t_pv, label=name.split(" (")[0], **style)
             ax_u.plot(res.t, res.u_applied, **style)
         for lim in (limits.u_min, limits.u_max):
-            ax_u.axhline(lim, color=IEEE_PALETTE["Constraint"], linestyle=IEEE_LINESTYLES["Constraint"],
-                         linewidth=0.9)
+            ax_u.axhline(
+                lim,
+                color=IEEE_PALETTE["Constraint"],
+                linestyle=IEEE_LINESTYLES["Constraint"],
+                linewidth=0.9,
+            )
         ax_t.set_title(f"{title} ({t_title})" if t_title else title, fontsize=8.0)
         ax_t.set_ylim(*t_ylim)
         ax_u.set_ylim(-15, 335)
@@ -210,9 +223,13 @@ def setup_controllers(
         )
         for g0 in starts
     ]
-    feasible = [g for g in candidates if calculate_maximum_sensitivity_foptd(foptd, g) <= 1.6 + 1e-3]
+    feasible = [
+        g for g in candidates if calculate_maximum_sensitivity_foptd(foptd, g) <= 1.6 + 1e-3
+    ]
     opt = min(feasible, key=itae)
-    logger.info("Optimal ITAE multi-start: %d starts -> %s (ITAE=%.4f)", len(starts), opt, itae(opt))
+    logger.info(
+        "Optimal ITAE multi-start: %d starts -> %s (ITAE=%.4f)", len(starts), opt, itae(opt)
+    )
     gains = {
         "Ziegler-Nichols": analytical["Ziegler-Nichols"],
         "Cohen-Coon": analytical["Cohen-Coon"],
@@ -241,29 +258,27 @@ def make_factories(
     """
     factories: dict[str, Callable[..., Any]] = {}
     for name, g in gains.items():
-        factories[name] = (
-            lambda sensor_noise_std=0.0, seed=None, g=g: PIDController(
-                gains=g,
-                actuator_limits=limits,
-                anti_windup=AntiWindupMethod.CLAMPING,
-                u_bias=q_j_ss,
-                y_ss=y_ss,
-            )
+        factories[name] = lambda sensor_noise_std=0.0, seed=None, g=g: PIDController(
+            gains=g,
+            actuator_limits=limits,
+            anti_windup=AntiWindupMethod.CLAMPING,
+            u_bias=q_j_ss,
+            y_ss=y_ss,
         )
     if include_nmpc:
+        from src.controllers.optimal.nmpc_controller import CstrNmpcController
+
         for name, mode in (("NMPC-Oracle", "oracle"), ("NMPC-MHE", "mhe")):
-            factories[name] = (
-                lambda sensor_noise_std=0.0, seed=None, mode=mode: CstrNmpcController(
-                    horizon_steps=NMPC_HORIZON,
-                    t_step_min=dt,
-                    u_bias=q_j_ss,
-                    feedback_mode=mode,
-                    max_slew_rate=limits.max_slew_rate,
-                    u_min=limits.u_min,
-                    u_max=limits.u_max,
-                    tj_noise_std=sensor_noise_std,
-                    seed=seed,
-                )
+            factories[name] = lambda sensor_noise_std=0.0, seed=None, mode=mode: CstrNmpcController(
+                horizon_steps=NMPC_HORIZON,
+                t_step_min=dt,
+                u_bias=q_j_ss,
+                feedback_mode=mode,
+                max_slew_rate=limits.max_slew_rate,
+                u_min=limits.u_min,
+                u_max=limits.u_max,
+                tj_noise_std=sensor_noise_std,
+                seed=seed,
             )
     return factories
 
@@ -395,16 +410,18 @@ def run_load_disturbance_campaign(
         dev = np.abs(res.states[:, 1] - ss.T)  # true temperature, not the noisy measurement
         peak_dev = np.max(dev[res.t >= 2.0])
 
-        table_rows.append({
-            "Method": name,
-            "IAE": f"{res.metrics.iae:.2f}",
-            r"ITAE (K$\cdot$min$^2$)": f"{res.metrics.itae:.2f}",
-            "TV (L/min)": f"{res.metrics.tv:.1f}",
-            "TV/ceiling (\\%)": f"{100.0 * res.metrics.tv / (limits.max_slew_rate * t_span[1]):.0f}",
-            "Peak Dev (K)": f"{peak_dev:.2f}",
-            "Max Valve (L/min)": f"{np.max(res.u_applied):.1f}",
-            r"\(T(t_f) - T_{sp}\) (K)": f"{res.states[-1, 1] - ss.T:+.2f}",
-        })
+        table_rows.append(
+            {
+                "Method": name,
+                "IAE": f"{res.metrics.iae:.2f}",
+                r"ITAE (K$\cdot$min$^2$)": f"{res.metrics.itae:.2f}",
+                "TV (L/min)": f"{res.metrics.tv:.1f}",
+                "TV/ceiling (\\%)": f"{100.0 * res.metrics.tv / (limits.max_slew_rate * t_span[1]):.0f}",
+                "Peak Dev (K)": f"{peak_dev:.2f}",
+                "Max Valve (L/min)": f"{np.max(res.u_applied):.1f}",
+                r"\(T(t_f) - T_{sp}\) (K)": f"{res.states[-1, 1] - ss.T:+.2f}",
+            }
+        )
         if has_nmpc:
             a_hat = getattr(pid, "_estimated_alpha_ua", None)
             table_rows[-1][r"\(\hat\alpha_{UA}(t_f)\)"] = "--" if a_hat is None else f"{a_hat:.3f}"
@@ -438,7 +455,10 @@ def run_load_disturbance_campaign(
     if grouped is not None:
         fig, axes = grouped
         for ax in axes[0]:
-            for t_d, text in ((2.0, rf"$\Delta T_f = +{dT_f:g}$ K"), (8.0, rf"$\Delta C_{{Af}} = +{100 * dC_frac:g}\%$")):
+            for t_d, text in (
+                (2.0, rf"$\Delta T_f = +{dT_f:g}$ K"),
+                (8.0, rf"$\Delta C_{{Af}} = +{100 * dC_frac:g}\%$"),
+            ):
                 ax.axvline(t_d, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
                 ax.text(t_d + 0.1, 405.0, text, fontsize=6.5, color="#444444")
         save_grouped(fig, figures_dir / "fig2_disturbance_rejection")
@@ -464,7 +484,9 @@ def run_load_disturbance_campaign(
     ax1.axvline(2.0, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
     ax1.text(2.1, 395.6, rf"$\Delta T_f = +{dT_f:g}$ K", fontsize=7.2, color="#444444")
     ax1.axvline(8.0, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
-    ax1.text(8.1, 395.6, rf"$\Delta C_{{Af}} = +{100 * dC_frac:g}\%$", fontsize=7.2, color="#444444")
+    ax1.text(
+        8.1, 395.6, rf"$\Delta C_{{Af}} = +{100 * dC_frac:g}\%$", fontsize=7.2, color="#444444"
+    )
 
     for name, res in sim_results.items():
         color = IEEE_PALETTE.get(name, "#333333")
@@ -475,7 +497,10 @@ def run_load_disturbance_campaign(
     # Subplot 1: Temperatura do reator com faixa [395.0, 404.0] K
     # Sem legenda interna: desobstrução completa dos transientes e picos de distúrbio
     ax1.set_ylabel("Reactor Temp. $T$ (K)", fontsize=8.5)
-    ax1.set_title(rf"Load Disturbance Rejection ($+{dT_f:g}$ K & $+{100 * dC_frac:g}\%\ C_{{Af}}$)", fontsize=9.0)
+    ax1.set_title(
+        rf"Load Disturbance Rejection ($+{dT_f:g}$ K & $+{100 * dC_frac:g}\%\ C_{{Af}}$)",
+        fontsize=9.0,
+    )
     ax1.set_ylim(394.0, 406.0)
     ax1.grid(True, linestyle=":", alpha=0.6)
 
@@ -585,14 +610,16 @@ def run_fouling_campaign(
             if f_ratio in [1.0, 0.7]:
                 plot_data[str(f_ratio)][name] = res
 
-            table_rows.append({
-                "Method": name,
-                "$UA / UA_{\\text{nom}}$": f"{int(f_ratio * 100)}\\%",
-                "IAE": f"{res.metrics.iae:.2f}",
-                r"ITAE (K$\cdot$min$^2$)": f"{res.metrics.itae:.2f}",
-                "TV (L/min)": f"{res.metrics.tv:.1f}",
-                "$M_p$ (\\%)": f"{res.metrics.overshoot_pct:.1f}",
-            })
+            table_rows.append(
+                {
+                    "Method": name,
+                    "$UA / UA_{\\text{nom}}$": f"{int(f_ratio * 100)}\\%",
+                    "IAE": f"{res.metrics.iae:.2f}",
+                    r"ITAE (K$\cdot$min$^2$)": f"{res.metrics.itae:.2f}",
+                    "TV (L/min)": f"{res.metrics.tv:.1f}",
+                    "$M_p$ (\\%)": f"{res.metrics.overshoot_pct:.1f}",
+                }
+            )
 
     export_latex_table(
         data=table_rows,
@@ -802,9 +829,13 @@ def run_noise_and_pareto_campaign(
                     )
 
                 row |= {
-                    "Noise $\\sigma$ (K)": f"{sigma:.1f}" if round(sigma, 1) == sigma else f"{sigma:.2f}",
-                    "IAE (mean $\\pm$ " + ("95\\% CI)" if ci else "std)"):
-                        f"{np.mean(r['iae']):.2f} $\\pm$ {spread(r['iae']):.2f}",
+                    "Noise $\\sigma$ (K)": f"{sigma:.1f}"
+                    if round(sigma, 1) == sigma
+                    else f"{sigma:.2f}",
+                    "IAE (mean $\\pm$ "
+                    + (
+                        "95\\% CI)" if ci else "std)"
+                    ): f"{np.mean(r['iae']):.2f} $\\pm$ {spread(r['iae']):.2f}",
                     "TV (L/min)": f"{np.mean(r['tv']):.1f} $\\pm$ {spread(r['tv']):.1f}",
                 }
                 table_rows.append(row)
@@ -873,8 +904,17 @@ def run_noise_and_pareto_campaign(
     ax.set_ylabel(r"Tracking Error $\mathrm{IAE}$ (K$\cdot$min)", fontsize=8.5)
     # Legend above the axes so no curve is covered
     h, lab = ax.get_legend_handles_labels()
-    fig.legend(h, lab, loc="upper center", bbox_to_anchor=(0.5, 1.0), ncol=3, fontsize=5.6,
-               columnspacing=0.6, handlelength=2.2, markerscale=0.8)
+    fig.legend(
+        h,
+        lab,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.0),
+        ncol=3,
+        fontsize=5.6,
+        columnspacing=0.6,
+        handlelength=2.2,
+        markerscale=0.8,
+    )
     ax.grid(True, linestyle=":", alpha=0.6)
 
     plt.tight_layout(rect=[0.0, 0.0, 1.0, 0.855])
@@ -887,8 +927,11 @@ def run_noise_and_pareto_campaign(
 
 
 def _export_filter_paired_tests(
-    results: dict, controllers: Any, noise_levels: tuple[float, ...],
-    filter_taus: tuple[float, ...], tables_dir: Path,
+    results: dict,
+    controllers: Any,
+    noise_levels: tuple[float, ...],
+    filter_taus: tuple[float, ...],
+    tables_dir: Path,
 ) -> None:
     """Paired Wilcoxon signed-rank tests (same noise seeds) of filtered vs unfiltered runs.
 
@@ -903,20 +946,24 @@ def _export_filter_paired_tests(
             a, b = results[(name, t0)][sigma], results[(name, t1)][sigma]
             d_tv = np.array(b["tv"]) - np.array(a["tv"])
             d_iae = np.array(b["iae"]) - np.array(a["iae"])
-            keys.append((name, sigma, d_tv.mean(), d_iae.mean(), 100.0 * d_tv.mean() / np.mean(a["tv"])))
+            keys.append(
+                (name, sigma, d_tv.mean(), d_iae.mean(), 100.0 * d_tv.mean() / np.mean(a["tv"]))
+            )
             raw += [scipy_stats.wilcoxon(d_tv).pvalue, scipy_stats.wilcoxon(d_iae).pvalue]
     adj = scipy_stats.false_discovery_control(np.array(raw))
     fmt = lambda p: "$<10^{-3}$" if p < 1e-3 else f"{p:.3f}"  # noqa: E731
     for i, (name, sigma, m_tv, m_iae, rel_tv) in enumerate(keys):
-        rows.append({
-            "Method": name,
-            "Noise $\\sigma$ (K)": f"{sigma:.2f}",
-            "\\(\\Delta\\)TV (L/min)": f"{m_tv:+.1f}",
-            "\\(\\Delta\\)TV (\\%)": f"{rel_tv:+.0f}",
-            "\\(p_{\\mathrm{adj}}\\) (TV)": fmt(adj[2 * i]),
-            "\\(\\Delta\\)IAE (K$\\cdot$min)": f"{m_iae:+.3f}",
-            "\\(p_{\\mathrm{adj}}\\) (IAE)": fmt(adj[2 * i + 1]),
-        })
+        rows.append(
+            {
+                "Method": name,
+                "Noise $\\sigma$ (K)": f"{sigma:.2f}",
+                "\\(\\Delta\\)TV (L/min)": f"{m_tv:+.1f}",
+                "\\(\\Delta\\)TV (\\%)": f"{rel_tv:+.0f}",
+                "\\(p_{\\mathrm{adj}}\\) (TV)": fmt(adj[2 * i]),
+                "\\(\\Delta\\)IAE (K$\\cdot$min)": f"{m_iae:+.3f}",
+                "\\(p_{\\mathrm{adj}}\\) (IAE)": fmt(adj[2 * i + 1]),
+            }
+        )
     export_latex_table(
         data=rows,
         output_path=tables_dir / "noise_filter_paired_tests.tex",
@@ -988,14 +1035,16 @@ def run_multistep_campaign(
         )
         sim_results[name] = res
 
-        table_rows.append({
-            "Method": name,
-            "Total IAE": f"{res.metrics.iae:.2f}",
-            "Total ITAE": f"{res.metrics.itae:.2f}",
-            "Total TV (L/min)": f"{res.metrics.tv:.1f}",
-            "Max Valve (L/min)": f"{np.max(res.u_applied):.1f}",
-            "Min Valve (L/min)": f"{np.min(res.u_applied):.1f}",
-        })
+        table_rows.append(
+            {
+                "Method": name,
+                "Total IAE": f"{res.metrics.iae:.2f}",
+                "Total ITAE": f"{res.metrics.itae:.2f}",
+                "Total TV (L/min)": f"{res.metrics.tv:.1f}",
+                "Max Valve (L/min)": f"{np.max(res.u_applied):.1f}",
+                "Min Valve (L/min)": f"{np.min(res.u_applied):.1f}",
+            }
+        )
 
     export_latex_table(
         data=table_rows,
@@ -1117,7 +1166,14 @@ def run_sobol_uncertainty_campaign(
     logger.info("=== Executando Análise de Sensibilidade Global de Sobol (SALib, N=%d) ===", n_base)
     factories = {name: pid_factory(gains[name], limits, q_j_ss) for name in SOBOL_CONTROLLERS}
     df = closed_loop_sobol(
-        factories, n_base=n_base, seed=2026, q_j_ss=q_j_ss, raw=raw, dt=dt, t_final=t_final, n_jobs=-1
+        factories,
+        n_base=n_base,
+        seed=2026,
+        q_j_ss=q_j_ss,
+        raw=raw,
+        dt=dt,
+        t_final=t_final,
+        n_jobs=-1,
     )
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(RESULTS_DIR / "sobol_sensitivity_summary.csv", index=False)
@@ -1175,15 +1231,23 @@ def run_sobol_uncertainty_campaign(
             st = [wide.loc[(name, prm)][("ST", metric)] for prm in params]
             s1 = [wide.loc[(name, prm)][("S1", metric)] for prm in params]
             pos = x - 0.4 + width * (k + 0.5)
-            ax.bar(pos, st, width, color=IEEE_PALETTE[name], alpha=0.35, edgecolor=IEEE_PALETTE[name])
+            ax.bar(
+                pos, st, width, color=IEEE_PALETTE[name], alpha=0.35, edgecolor=IEEE_PALETTE[name]
+            )
             ax.bar(pos, s1, width * 0.5, color=IEEE_PALETTE[name], label=name)
         ax.set_xticks(x, [SOBOL_LABELS[prm] for prm in params])
         ax.set_title(f"{metric}: $S_1$ (solid) and $S_T$ (shaded)")
         ax.grid(True, axis="y", linestyle=":", alpha=0.6)
     axes[0].set_ylabel("Sobol index")
     h, lab = axes[0].get_legend_handles_labels()
-    fig.legend(h, lab, loc="upper center", ncol=len(SOBOL_CONTROLLERS), fontsize=7.0,
-               bbox_to_anchor=(0.5, 1.0))
+    fig.legend(
+        h,
+        lab,
+        loc="upper center",
+        ncol=len(SOBOL_CONTROLLERS),
+        fontsize=7.0,
+        bbox_to_anchor=(0.5, 1.0),
+    )
     fig.tight_layout(rect=[0.0, 0.0, 1.0, 0.88])
     fig.savefig(figures_dir / "fig_sobol_indices.pdf")
     fig.savefig(figures_dir / "fig_sobol_indices.png", dpi=300)

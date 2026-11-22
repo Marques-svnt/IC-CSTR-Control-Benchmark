@@ -184,7 +184,6 @@ class TestOptimizationTuning:
         )
         assert calculate_maximum_sensitivity_foptd(foptd, opt_gains) <= 1.60 + 1e-3
 
-
     def test_exact_ms_constraint_acts_on_linearized_plant(
         self, plant: CSTRPlant, nominal_steady_state: tuple[CSTRState, float]
     ) -> None:
@@ -251,7 +250,11 @@ class TestClosedLoopTotalVariation:
             u_bias=q_j_ss,
         )
         res = ClosedLoopSimulator().run(
-            plant=plant, controller=pid, initial_state=ss, t_span=(0.0, 0.2), dt=0.02,
+            plant=plant,
+            controller=pid,
+            initial_state=ss,
+            t_span=(0.0, 0.2),
+            dt=0.02,
             setpoint_func=lambda t: ss.T - 2.0,
         )
         u = res.u_applied

@@ -32,8 +32,8 @@ def three_point_front() -> list[ParetoPoint]:
     """Simple 3-point non-dominated front: A dominates nothing; none dominate each other."""
     return [
         ParetoPoint(iae=1.0, tv=100.0, ms=1.2, label="A"),  # best IAE
-        ParetoPoint(iae=2.0, tv=50.0, ms=1.3, label="B"),   # balanced
-        ParetoPoint(iae=3.0, tv=20.0, ms=1.4, label="C"),   # best TV
+        ParetoPoint(iae=2.0, tv=50.0, ms=1.3, label="B"),  # balanced
+        ParetoPoint(iae=3.0, tv=20.0, ms=1.4, label="C"),  # best TV
     ]
 
 
@@ -135,7 +135,7 @@ class TestNormalizeObjectives:
 
     def test_explicit_refs_applied(self) -> None:
         pts = [ParetoPoint(iae=2.0, tv=100.0, ms=1.2)]
-        (iae_n, tv_n), = normalize_objectives(pts, iae_ref=4.0, tv_ref=200.0)
+        ((iae_n, tv_n),) = normalize_objectives(pts, iae_ref=4.0, tv_ref=200.0)
         assert math.isclose(iae_n, 0.5, rel_tol=1e-9)
         assert math.isclose(tv_n, 0.5, rel_tol=1e-9)
 

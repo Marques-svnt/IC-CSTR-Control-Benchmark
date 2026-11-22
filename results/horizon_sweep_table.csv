@@ -1,9 +1,0 @@
-Variant,\(N\),Horizon (min),\(T(t_f)-T_{sp}\) (K),Valve at \(t_f\) (L/min),IAE (K$\cdot$min),Peak dev. (K)
-Original (no disturbance model),30,0.6,+7.187,182.0,55.05,8.04
-Original (no disturbance model),50,1.0,+8.693,166.6,63.91,8.69
-Original (no disturbance model),75,1.5,+8.783,165.7,64.42,8.78
-Original (no disturbance model),100,2.0,+8.783,165.7,64.42,8.78
-Offset-free,30,0.6,+0.000,297.2,12.60,7.28
-Offset-free,50,1.0,+0.000,297.2,12.60,7.28
-Offset-free,75,1.5,+0.000,297.2,12.60,7.28
-Offset-free,100,2.0,+0.000,297.2,12.60,7.28

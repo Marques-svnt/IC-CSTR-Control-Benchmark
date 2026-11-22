@@ -205,14 +205,14 @@ if __name__ == "__main__":
     print("=" * 70)
 
     # 1. Criação de modelo sintético de referência para validação
-    true_kp = -0.185     # K / (L/min)
-    true_tau = 1.45      # min
-    true_theta = 0.32    # min
+    true_kp = -0.185  # K / (L/min)
+    true_tau = 1.45  # min
+    true_theta = 0.32  # min
     model_real = FOPTDModel(k_p=true_kp, tau=true_tau, theta=true_theta)
 
     t_vec = np.linspace(0.0, 10.0, 300)
     delta_u_test = 10.0  # +10 L/min degrau
-    y_base = 350.0       # K
+    y_base = 350.0  # K
 
     # 2. Resposta teórica com adição de ruído de processo
     y_synthetic = model_real.step_response(t_vec, delta_u=delta_u_test, y0=y_base)
@@ -220,9 +220,7 @@ if __name__ == "__main__":
     y_noisy = y_synthetic + rng.normal(0.0, 0.02, size=len(t_vec))
 
     # 3. Execução da identificação não-linear
-    model_est, fit_rmse = identify_foptd(
-        t=t_vec, y=y_noisy, delta_u=delta_u_test, y0=y_base
-    )
+    model_est, fit_rmse = identify_foptd(t=t_vec, y=y_noisy, delta_u=delta_u_test, y0=y_base)
 
     print("\n[Comparativo: Parâmetros Reais vs Identificados]:")
     print(f"  Ganho Kp:     Real = {true_kp:+.4f} | Identificado = {model_est.k_p:+.4f}")

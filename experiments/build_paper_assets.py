@@ -38,10 +38,6 @@ from scipy import stats as scipy_stats
 import experiments.exp_01_classical_benchmark as exp01
 import experiments.exp_02_robustness_campaign as exp02
 from experiments.exp_01_classical_benchmark import run_benchmark
-from experiments.exp_01b_nmpc_oracle_comparison import (
-    run_mhe_tuning_sensitivity,
-    run_nmpc_oracle_benchmark,
-)
 from src.classical_control.tuning_optimization import (
     OptimizationCriterion,
     calculate_maximum_sensitivity_foptd,
@@ -103,24 +99,33 @@ def run_antiwindup_ablation(
         row = {"Method": name}
         for label, method in ABLATION_VARIANTS:
             pid = exp02.PIDController(
-                _variant_gains(label, g, tt_cv.get(name)), exp02.BENCHMARK_LIMITS, method,
-                u_bias=100.0, y_ss=ss.T,
+                _variant_gains(label, g, tt_cv.get(name)),
+                exp02.BENCHMARK_LIMITS,
+                method,
+                u_bias=100.0,
+                y_ss=ss.T,
             )
             res = sim.run(plant, pid, ss, (0.0, 10.0), 0.02, setpoint_func=lambda t: ss.T - 2.0)
             m = res.metrics
             row[label] = f"{m.iae:.2f} / {m.overshoot_pct:.1f}"
             if name in ("Ziegler-Nichols", "Cohen-Coon") and method in (
-                AW.NONE, AW.CLAMPING_NAIVE, AW.CLAMPING
+                AW.NONE,
+                AW.CLAMPING_NAIVE,
+                AW.CLAMPING,
             ):
-                t_valve_max = float(np.sum(res.u_applied >= exp02.BENCHMARK_LIMITS.u_max - 1e-9)) * 0.02
-                mech_rows.append({
-                    "Method": name,
-                    "Anti-windup": label,
-                    "\\(T_{\\min}\\) (K)": f"{res.states[:, 1].min():.1f}",
-                    "Time at \\(u_{\\max}\\) (min)": f"{t_valve_max:.2f}",
-                    "\\(T(t_f)-T_{sp}\\) (K)": f"{res.states[-1, 1] - (ss.T - 2.0):+.2f}",
-                    "\\(\\max|u_{\\mathrm{raw}}-u_{\\mathrm{act}}|\\) (L/min)": f"{np.max(np.abs(res.u_unconstrained - res.u_applied)):.0f}",
-                })
+                t_valve_max = (
+                    float(np.sum(res.u_applied >= exp02.BENCHMARK_LIMITS.u_max - 1e-9)) * 0.02
+                )
+                mech_rows.append(
+                    {
+                        "Method": name,
+                        "Anti-windup": label,
+                        "\\(T_{\\min}\\) (K)": f"{res.states[:, 1].min():.1f}",
+                        "Time at \\(u_{\\max}\\) (min)": f"{t_valve_max:.2f}",
+                        "\\(T(t_f)-T_{sp}\\) (K)": f"{res.states[-1, 1] - (ss.T - 2.0):+.2f}",
+                        "\\(\\max|u_{\\mathrm{raw}}-u_{\\mathrm{act}}|\\) (L/min)": f"{np.max(np.abs(res.u_unconstrained - res.u_applied)):.0f}",
+                    }
+                )
         rows.append(row)
     exp02.export_latex_table(
         data=rows,
@@ -152,7 +157,10 @@ def run_antiwindup_ablation(
 
 
 def run_exact_robustness(
-    plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", foptd: "exp02.FOPTDModel", gains: dict,
+    plant: "exp02.CSTRPlant",
+    ss: "exp02.CSTRState",
+    foptd: "exp02.FOPTDModel",
+    gains: dict,
     tables_dir: Path,
 ) -> None:
     """Plant-exact ||S||, ||T||, ||CS|| (3-state Jacobian + half-sample ZOH) and K_hf."""
@@ -161,14 +169,16 @@ def run_exact_robustness(
         if name.startswith("2-DOF"):
             continue  # same L(s) as the 1-DOF loop
         rob = linearized_robustness(plant, ss, 100.0, g, theta=0.02 / 2.0)
-        rows.append({
-            "Method": name,
-            "\\(M_s\\) (FOPTD)": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
-            "\\(\\|S\\|_\\infty\\) (lin.)": f"{rob['ms']:.2f}",
-            "\\(\\|T\\|_\\infty\\) (lin.)": f"{rob['mt']:.2f}",
-            "\\(\\|CS\\|_\\infty\\) (L/min/K)": f"{rob['cs_inf']:.1f}",
-            "\\(K_{\\mathrm{hf}}=|K_p|(1+N)\\) (L/min/K)": f"{rob['k_hf']:.1f}",
-        })
+        rows.append(
+            {
+                "Method": name,
+                "\\(M_s\\) (FOPTD)": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
+                "\\(\\|S\\|_\\infty\\) (lin.)": f"{rob['ms']:.2f}",
+                "\\(\\|T\\|_\\infty\\) (lin.)": f"{rob['mt']:.2f}",
+                "\\(\\|CS\\|_\\infty\\) (L/min/K)": f"{rob['cs_inf']:.1f}",
+                "\\(K_{\\mathrm{hf}}=|K_p|(1+N)\\) (L/min/K)": f"{rob['k_hf']:.1f}",
+            }
+        )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "exact_robustness_table.tex",
@@ -182,7 +192,10 @@ def run_exact_robustness(
 
 
 def run_out_of_sample(
-    plant: "exp02.CSTRPlant", ss: "exp02.CSTRState", gains: dict, tables_dir: Path,
+    plant: "exp02.CSTRPlant",
+    ss: "exp02.CSTRState",
+    gains: dict,
+    tables_dir: Path,
     base: tuple[str, ...],
 ) -> None:
     """ITAE of every tuning on setpoint steps; Optimal ITAE was designed on -2 K only.
@@ -194,15 +207,18 @@ def run_out_of_sample(
     itae = {n: {} for n in names}
     for n, g in gains.items():
         for step in OOS_STEPS:
-            pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, AW.CLAMPING, u_bias=100.0, y_ss=ss.T)
+            pid = exp02.PIDController(
+                g, exp02.BENCHMARK_LIMITS, AW.CLAMPING, u_bias=100.0, y_ss=ss.T
+            )
             itae[n][step] = sim.run(
                 plant, pid, ss, (0.0, 10.0), 0.02, setpoint_func=lambda t, d=step: ss.T + d
             ).metrics.itae
-    rows = [
-        {"Method": n} | {f"{d:+g} K": f"{itae[n][d]:.3f}" for d in OOS_STEPS} for n in names
-    ]
+    rows = [{"Method": n} | {f"{d:+g} K": f"{itae[n][d]:.3f}" for d in OOS_STEPS} for n in names]
     ranks = {d: 1 + sum(itae[n][d] < itae[exp02.OPT_ITAE][d] for n in base) for d in OOS_STEPS}
-    rows.append({"Method": "Rank of Optimal ITAE among the eight benchmark tunings (1 = best)"} | {f"{d:+g} K": str(ranks[d]) for d in OOS_STEPS})
+    rows.append(
+        {"Method": "Rank of Optimal ITAE among the eight benchmark tunings (1 = best)"}
+        | {f"{d:+g} K": str(ranks[d]) for d in OOS_STEPS}
+    )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "out_of_sample_itae.tex",
@@ -233,9 +249,7 @@ def _one_dof(gains: dict) -> dict:
 
 def _step_run(plant, ss, g, aw=AW.CLAMPING, step=-2.0, t_end=10.0, limits=None, q_j=100.0, **kw):
     """Closed-loop setpoint step on the benchmark valve (or on `limits`)."""
-    pid = exp02.PIDController(
-        g, limits or exp02.BENCHMARK_LIMITS, aw, u_bias=q_j, y_ss=ss.T
-    )
+    pid = exp02.PIDController(g, limits or exp02.BENCHMARK_LIMITS, aw, u_bias=q_j, y_ss=ss.T)
     return exp02.ClosedLoopSimulator().run(
         plant, pid, ss, (0.0, t_end), SIM_DT, setpoint_func=lambda t: ss.T + step, **kw
     )
@@ -267,8 +281,13 @@ def run_aw_scenarios(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> N
                         gv, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T
                     )
                     res = sim.run(
-                        plant, pid, ss, (0.0, 15.0), SIM_DT,
-                        setpoint_func=lambda t: ss.T, disturbance_func=load,
+                        plant,
+                        pid,
+                        ss,
+                        (0.0, 15.0),
+                        SIM_DT,
+                        setpoint_func=lambda t: ss.T,
+                        disturbance_func=load,
                     )
                 else:
                     res = _step_run(plant, ss, gv, method, step)
@@ -318,12 +337,24 @@ def run_smax_map(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     rows = []
     for name in base:
         iae = lambda lab, s_: out[(name, lab, s_)][0]  # noqa: E731
-        rows.append({"Method": name, "Quantity": "$\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}$"}
-                    | {cols[s_]: f"{iae('Amp. direct.', s_) / iae('Amp.+rate direct.', s_):.1f}" for s_ in SMAX_GRID})
-        rows.append({"Method": "", "Quantity": "IAE rate-aware (K$\\cdot$min)"}
-                    | {cols[s_]: f"{iae('Amp.+rate direct.', s_):.2f}" for s_ in SMAX_GRID})
-        rows.append({"Method": "", "Quantity": "Sign-blind $T(t_f)-T_{sp}$ (K)"}
-                    | {cols[s_]: f"{out[(name, 'Sign-blind amp.', s_)][1]:+.1f}" for s_ in SMAX_GRID})
+        rows.append(
+            {
+                "Method": name,
+                "Quantity": "$\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}$",
+            }
+            | {
+                cols[s_]: f"{iae('Amp. direct.', s_) / iae('Amp.+rate direct.', s_):.1f}"
+                for s_ in SMAX_GRID
+            }
+        )
+        rows.append(
+            {"Method": "", "Quantity": "IAE rate-aware (K$\\cdot$min)"}
+            | {cols[s_]: f"{iae('Amp.+rate direct.', s_):.2f}" for s_ in SMAX_GRID}
+        )
+        rows.append(
+            {"Method": "", "Quantity": "Sign-blind $T(t_f)-T_{sp}$ (K)"}
+            | {cols[s_]: f"{out[(name, 'Sign-blind amp.', s_)][1]:+.1f}" for s_ in SMAX_GRID}
+        )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "smax_regime_map.tex",
@@ -342,8 +373,14 @@ def run_smax_map(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     fig, axes = plt.subplots(2, 3, figsize=(fig_w, 4.2), sharex=True, dpi=300)
     for ax, name in zip(axes.flat, base):
         for label, _ in policies:
-            ax.plot(SMAX_GRID, [out[(name, label, s_)][0] for s_ in SMAX_GRID], marker="o",
-                    markersize=2.5, linewidth=1.0, label=label)
+            ax.plot(
+                SMAX_GRID,
+                [out[(name, label, s_)][0] for s_ in SMAX_GRID],
+                marker="o",
+                markersize=2.5,
+                linewidth=1.0,
+                label=label,
+            )
         ax.axvline(80.0, color="gray", linestyle=":", linewidth=0.8)
         ax.set_xscale("log")
         ax.set_xticks([20, 40, 80, 160, 320], ["20", "40", "80", "160", "320"])
@@ -369,13 +406,19 @@ def run_signblind_diagnostics(plant, ss, gains: dict) -> None:
             lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
             res = _step_run(plant, ss, gains[name], AW.CLAMPING_NAIVE, limits=lim)
             u, err = res.u_applied, res.states[:, 1] - (ss.T - 2.0)
-            out.append({"Method": name, "S_max": smax,
-                        "t_upper_min": float(np.sum(u >= lim.u_max - 1e-9)) * SIM_DT,
-                        "t_lower_min": float(np.sum(u <= lim.u_min + 1e-9)) * SIM_DT,
-                        "final_error_K": float(err[-1]), "error_rate_end_K_per_min":
-                        float(err[-1] - err[-26]) / (25 * SIM_DT)})
-    pd.DataFrame(out).to_csv(exp02.RESULTS_DIR / "smax_signblind_diagnostics.csv", index=False,
-                             float_format="%.4f")
+            out.append(
+                {
+                    "Method": name,
+                    "S_max": smax,
+                    "t_upper_min": float(np.sum(u >= lim.u_max - 1e-9)) * SIM_DT,
+                    "t_lower_min": float(np.sum(u <= lim.u_min + 1e-9)) * SIM_DT,
+                    "final_error_K": float(err[-1]),
+                    "error_rate_end_K_per_min": float(err[-1] - err[-26]) / (25 * SIM_DT),
+                }
+            )
+    pd.DataFrame(out).to_csv(
+        exp02.RESULTS_DIR / "smax_signblind_diagnostics.csv", index=False, float_format="%.4f"
+    )
 
 
 def run_amigo_regime_diagnostics(plant, ss, gains: dict) -> None:
@@ -387,9 +430,16 @@ def run_amigo_regime_diagnostics(plant, ss, gains: dict) -> None:
     for smax in SMAX_GRID:
         lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
         res = _step_run(plant, ss, g, AW.CLAMPING_POS_DIRECTIONAL, limits=lim)
-        out.append({"S_max": smax, "IAE": round(res.metrics.iae, 2),
-                    "max_u_act": round(float(res.u_applied.max()), 1),
-                    "max_abs_u_raw_minus_u_act": round(float(np.max(np.abs(res.u_unconstrained - res.u_applied))), 0)})
+        out.append(
+            {
+                "S_max": smax,
+                "IAE": round(res.metrics.iae, 2),
+                "max_u_act": round(float(res.u_applied.max()), 1),
+                "max_abs_u_raw_minus_u_act": round(
+                    float(np.max(np.abs(res.u_unconstrained - res.u_applied))), 0
+                ),
+            }
+        )
     pd.DataFrame(out).to_csv(exp02.RESULTS_DIR / "smax_amigo_diagnostics.csv", index=False)
 
 
@@ -409,23 +459,39 @@ def run_rate_demand(plant, ss, gains: dict, tables_dir: Path) -> None:
                 lim = replace(exp02.BENCHMARK_LIMITS, max_slew_rate=smax)
                 amp = _step_run(plant, ss, g, AW.CLAMPING_POS_DIRECTIONAL, step, limits=lim)
                 rate = _step_run(plant, ss, g, AW.CLAMPING, step, limits=lim)
-                free = _step_run(plant, ss, g, AW.CLAMPING, step,
-                                 limits=replace(lim, max_slew_rate=np.inf))
+                free = _step_run(
+                    plant, ss, g, AW.CLAMPING, step, limits=replace(lim, max_slew_rate=np.inf)
+                )
                 rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (smax * SIM_DT)
-                t_rl = float(np.sum(np.abs(np.diff(rate.u_applied)) >= smax * SIM_DT - 1e-9)) * SIM_DT
+                t_rl = (
+                    float(np.sum(np.abs(np.diff(rate.u_applied)) >= smax * SIM_DT - 1e-9)) * SIM_DT
+                )
                 ratio = amp.metrics.iae / rate.metrics.iae
-                grid.append({"Method": name, "step_K": step, "S_max": smax,
-                             "IAE_amp": amp.metrics.iae, "IAE_rate": rate.metrics.iae,
-                             "ratio": ratio, "rho": rho, "T_rl_min": t_rl})
+                grid.append(
+                    {
+                        "Method": name,
+                        "step_K": step,
+                        "S_max": smax,
+                        "IAE_amp": amp.metrics.iae,
+                        "IAE_rate": rate.metrics.iae,
+                        "ratio": ratio,
+                        "rho": rho,
+                        "T_rl_min": t_rl,
+                    }
+                )
                 if smax == 80.0:
-                    rows.append({
-                        "Method": name if i == 0 else "", "Step": f"${step:+g}$ K",
-                        "\\(\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}\\)": f"{ratio:.2f}",
-                        "\\(\\rho\\)": f"{rho:.2f}",
-                        "slew-limited (min)": f"{t_rl:.2f}",
-                    })
-    pd.DataFrame(grid).to_csv(exp02.RESULTS_DIR / "rate_demand_grid.csv", index=False,
-                              float_format="%.4f")
+                    rows.append(
+                        {
+                            "Method": name if i == 0 else "",
+                            "Step": f"${step:+g}$ K",
+                            "\\(\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}\\)": f"{ratio:.2f}",
+                            "\\(\\rho\\)": f"{rho:.2f}",
+                            "slew-limited (min)": f"{t_rl:.2f}",
+                        }
+                    )
+    pd.DataFrame(grid).to_csv(
+        exp02.RESULTS_DIR / "rate_demand_grid.csv", index=False, float_format="%.4f"
+    )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "rate_demand.tex",
@@ -447,10 +513,18 @@ def run_noise_policies(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) ->
     -2 K step, unfiltered measurement, N_SEEDS realizations per level with the seeds of the noise
     campaign (100 + k); mean and 95 % half-width of IAE (true temperature) and TV.
     """
-    policies = (("None", AW.NONE, False), (BC_CV, AW.BACK_CALCULATION, True),
-                ("Directional", AW.CLAMPING, False))
-    jobs = [(n, lab, m, cv, sigma, k) for n in _one_dof(gains) for lab, m, cv in policies
-            for sigma in (0.0, 0.01, 0.05) for k in (range(N_SEEDS) if sigma else [0])]
+    policies = (
+        ("None", AW.NONE, False),
+        (BC_CV, AW.BACK_CALCULATION, True),
+        ("Directional", AW.CLAMPING, False),
+    )
+    jobs = [
+        (n, lab, m, cv, sigma, k)
+        for n in _one_dof(gains)
+        for lab, m, cv in policies
+        for sigma in (0.0, 0.01, 0.05)
+        for k in (range(N_SEEDS) if sigma else [0])
+    ]
 
     def one(name, lab, method, cv, sigma, k):
         g = replace(gains[name], tt=tt_cv[name]) if cv else gains[name]
@@ -488,8 +562,17 @@ NOISE_SIGMA_BC = 0.05  # K, the level at which back-calculation lost ground in n
 
 def _noisy(name, g, method, step, sigma, tau, seed, limits=None):
     """One noisy run (seeds of the noise campaign, 100 + k): name, IAE, TV, Mp."""
-    m = _step_run(plant_global(), ss_global(), g, method, step, limits=limits, noise_std=sigma,
-                  seed=100 + seed, meas_filter_tau=tau).metrics
+    m = _step_run(
+        plant_global(),
+        ss_global(),
+        g,
+        method,
+        step,
+        limits=limits,
+        noise_std=sigma,
+        seed=100 + seed,
+        meas_filter_tau=tau,
+    ).metrics
     return name, m.iae, m.tv, m.overshoot_pct
 
 
@@ -523,28 +606,58 @@ def run_noise_ttcv(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> Non
     for name, g in loops.items():
         grid = _tt_grid(g)
         for t in grid[(grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)]:
-            jobs += [((name, float(t)), name, replace(g, tt=float(t)), AW.BACK_CALCULATION, -2.0, sig, 0.0, k)
-                     for k in range(N_SEEDS)]
+            jobs += [
+                (
+                    (name, float(t)),
+                    name,
+                    replace(g, tt=float(t)),
+                    AW.BACK_CALCULATION,
+                    -2.0,
+                    sig,
+                    0.0,
+                    k,
+                )
+                for k in range(N_SEEDS)
+            ]
     cv_curve = _mean_iae(jobs)
-    tt_noise = {n: min((t for (m, t) in cv_curve if m == n), key=lambda t: cv_curve[(n, t)][0])
-                for n in loops}
-    pols = {"BC ($T_t^{\\mathrm{sel}}$)": lambda n, g: (replace(g, tt=tt_cv[n]), AW.BACK_CALCULATION),
-            "BC ($T_t^{\\mathrm{sel,noise}}$)": lambda n, g: (replace(g, tt=tt_noise[n]), AW.BACK_CALCULATION),
-            "Directional": lambda n, g: (g, AW.CLAMPING)}
-    jobs = [((n, lab, st), n, *f(n, g)[:1], f(n, g)[1], st, sig, 0.0, k)
-            for n, g in loops.items() for lab, f in pols.items() for st in TT_STEPS for k in range(N_SEEDS)]
+    tt_noise = {
+        n: min((t for (m, t) in cv_curve if m == n), key=lambda t: cv_curve[(n, t)][0])
+        for n in loops
+    }
+    pols = {
+        "BC ($T_t^{\\mathrm{sel}}$)": lambda n, g: (replace(g, tt=tt_cv[n]), AW.BACK_CALCULATION),
+        "BC ($T_t^{\\mathrm{sel,noise}}$)": lambda n, g: (
+            replace(g, tt=tt_noise[n]),
+            AW.BACK_CALCULATION,
+        ),
+        "Directional": lambda n, g: (g, AW.CLAMPING),
+    }
+    jobs = [
+        ((n, lab, st), n, *f(n, g)[:1], f(n, g)[1], st, sig, 0.0, k)
+        for n, g in loops.items()
+        for lab, f in pols.items()
+        for st in TT_STEPS
+        for k in range(N_SEEDS)
+    ]
     res = _mean_iae(jobs)
     rows = []
     for n in loops:
         for i, st in enumerate(TT_STEPS):
-            row = {"Method": n if i == 0 else "",
-                   "\\(T_t^{\\mathrm{sel}}\\), \\(T_t^{\\mathrm{sel,noise}}\\) (min)":
-                   f"{tt_cv[n]:.3f}, {tt_noise[n]:.3f}" if i == 0 else "",
-                   "Step": f"${st:+g}$ K"}
-            row |= {f"IAE {lab}": f"{res[(n, lab, st)][0]:.2f} $\\pm$ {res[(n, lab, st)][1]:.2f}" for lab in pols}
+            row = {
+                "Method": n if i == 0 else "",
+                "\\(T_t^{\\mathrm{sel}}\\), \\(T_t^{\\mathrm{sel,noise}}\\) (min)": f"{tt_cv[n]:.3f}, {tt_noise[n]:.3f}"
+                if i == 0
+                else "",
+                "Step": f"${st:+g}$ K",
+            }
+            row |= {
+                f"IAE {lab}": f"{res[(n, lab, st)][0]:.2f} $\\pm$ {res[(n, lab, st)][1]:.2f}"
+                for lab in pols
+            }
             rows.append(row)
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "noise_ttcv.tex",
+        data=rows,
+        output_path=tables_dir / "noise_ttcv.tex",
         caption=(
             f"Tracking constant re-chosen under sensor noise ($\\sigma = {sig:g}$~K, {N_SEEDS} "
             "realizations, seeds of the noise campaign, unfiltered measurement): "
@@ -562,21 +675,40 @@ def run_noise_mechanism(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -
     Per policy: share of samples with u_act != u_raw, RMS deviation of the integrator from its
     noise-free trajectory, and (BC only) mean |dt/T_t (u_act - u_raw)| per sample.
     """
-    pols = (("BC ($T_t^{\\mathrm{sel}}$)", AW.BACK_CALCULATION, True), ("Directional", AW.CLAMPING, False))
+    pols = (
+        ("BC ($T_t^{\\mathrm{sel}}$)", AW.BACK_CALCULATION, True),
+        ("Directional", AW.CLAMPING, False),
+    )
 
     def one(name, lab, method, cv, sigma, seed):
         g = replace(gains[name], tt=tt_cv[name]) if cv else gains[name]
         tap = _Tap(exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T))
-        res = exp02.ClosedLoopSimulator().run(plant, tap, ss, (0.0, 10.0), SIM_DT,
-                                              setpoint_func=lambda t: ss.T - 2.0,
-                                              noise_std=sigma, seed=100 + seed)
+        res = exp02.ClosedLoopSimulator().run(
+            plant,
+            tap,
+            ss,
+            (0.0, 10.0),
+            SIM_DT,
+            setpoint_func=lambda t: ss.T - 2.0,
+            noise_std=sigma,
+            seed=100 + seed,
+        )
         i_state = np.array([r[0] for r in tap.rows])
         cut = np.abs(res.u_unconstrained - res.u_applied) > 1e-9
-        track = np.abs(res.u_applied[:-1] - res.u_unconstrained[:-1]) * SIM_DT / g.tt if cv else np.zeros(1)
+        track = (
+            np.abs(res.u_applied[:-1] - res.u_unconstrained[:-1]) * SIM_DT / g.tt
+            if cv
+            else np.zeros(1)
+        )
         return name, lab, sigma, i_state, float(cut.mean()), float(track.mean())
 
-    jobs = [(n, lab, m, cv, sg, k) for n in _one_dof(gains) for lab, m, cv in pols
-            for sg in (0.0, NOISE_SIGMA_BC) for k in (range(N_SEEDS) if sg else [0])]
+    jobs = [
+        (n, lab, m, cv, sg, k)
+        for n in _one_dof(gains)
+        for lab, m, cv in pols
+        for sg in (0.0, NOISE_SIGMA_BC)
+        for k in (range(N_SEEDS) if sg else [0])
+    ]
     out = Parallel(n_jobs=-1)(delayed(one)(*j) for j in jobs)
     rows = []
     for n in _one_dof(gains):
@@ -585,12 +717,15 @@ def run_noise_mechanism(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -
             ref = next(o[3] for o in out if o[:3] == (n, lab, 0.0))
             sel = [o for o in out if o[:3] == (n, lab, NOISE_SIGMA_BC)]
             row[f"cut share {lab}"] = f"{np.mean([o[4] for o in sel]):.2f}"
-            row[f"RMS \\(I - I_0\\) {lab}"] = f"{np.mean([np.sqrt(np.mean((o[3] - ref) ** 2)) for o in sel]):.1f}"
+            row[f"RMS \\(I - I_0\\) {lab}"] = (
+                f"{np.mean([np.sqrt(np.mean((o[3] - ref) ** 2)) for o in sel]):.1f}"
+            )
             if cv:
                 row["mean tracking step (L/min)"] = f"{np.mean([o[5] for o in sel]):.2f}"
         rows.append(row)
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "noise_mechanism.tex",
+        data=rows,
+        output_path=tables_dir / "noise_mechanism.tex",
         caption=(
             f"Mechanism under sensor noise ($\\sigma = {NOISE_SIGMA_BC:g}$~K, $-2$~K step, {N_SEEDS} "
             "realizations): share of samples in which a limit cuts the command ($u_{\\text{act}} \\ne "
@@ -621,8 +756,13 @@ def run_rho_noise(plant, ss, gains: dict, tables_dir: Path) -> None:
         rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (lim.max_slew_rate * SIM_DT)
         return name, step, sigma, tau, rho, amp / rate
 
-    jobs = [(n, st, sg, tau, k) for n in _one_dof(gains) for st in TT_STEPS for sg, tau in combos
-            for k in (range(N_SEEDS) if sg else [0])]
+    jobs = [
+        (n, st, sg, tau, k)
+        for n in _one_dof(gains)
+        for st in TT_STEPS
+        for sg, tau in combos
+        for k in (range(N_SEEDS) if sg else [0])
+    ]
     out = Parallel(n_jobs=-1)(delayed(one)(*j) for j in jobs)
     rows, grid = [], []
     for n in _one_dof(gains):
@@ -633,11 +773,16 @@ def run_rho_noise(plant, ss, gains: dict, tables_dir: Path) -> None:
                 rho, r = float(np.mean([o[4] for o in sel])), float(np.mean([o[5] for o in sel]))
                 tag = "noise-free" if not sg else f"$\\sigma={sg:g}$, $\\tau_m={tau:g}$"
                 row[tag] = f"{rho:.2f} / {r:.2f}"
-                grid.append({"Method": n, "step_K": st, "sigma": sg, "tau_m": tau, "rho": rho, "R": r})
+                grid.append(
+                    {"Method": n, "step_K": st, "sigma": sg, "tau_m": tau, "rho": rho, "R": r}
+                )
             rows.append(row)
-    pd.DataFrame(grid).to_csv(exp02.RESULTS_DIR / "rho_noise_grid.csv", index=False, float_format="%.4f")
+    pd.DataFrame(grid).to_csv(
+        exp02.RESULTS_DIR / "rho_noise_grid.csv", index=False, float_format="%.4f"
+    )
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "rho_noise.tex",
+        data=rows,
+        output_path=tables_dir / "rho_noise.tex",
         caption=(
             f"Rate demand under sensor noise, $S_{{\\max}} = 80$~L/min$^2$, {N_SEEDS} realizations: each cell "
             "is $\\rho$ / $R = \\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}$ (means over seeds), "
@@ -650,15 +795,35 @@ def run_rho_noise(plant, ss, gains: dict, tables_dir: Path) -> None:
 
 def run_noise_policies_ext(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
     """B4: Table noise_policies on -5 and +5 K and with the measurement filter (tau_m = 0.05 min)."""
-    pols = (("None", AW.NONE, False), ("BC", AW.BACK_CALCULATION, True), ("Dir", AW.CLAMPING, False))
+    pols = (
+        ("None", AW.NONE, False),
+        ("BC", AW.BACK_CALCULATION, True),
+        ("Dir", AW.CLAMPING, False),
+    )
     combos = [(sg, tau) for tau in (0.0, MEASUREMENT_TAU_F) for sg in (0.01, 0.05)]
-    jobs = [((n, lab, st, sg, tau), n, replace(g, tt=tt_cv[n]) if cv else g, m, st, sg, tau, k)
-            for n, g in _one_dof(gains).items() for lab, m, cv in pols for st in TT_STEPS
-            for sg, tau in combos for k in range(N_SEEDS)]
+    jobs = [
+        ((n, lab, st, sg, tau), n, replace(g, tt=tt_cv[n]) if cv else g, m, st, sg, tau, k)
+        for n, g in _one_dof(gains).items()
+        for lab, m, cv in pols
+        for st in TT_STEPS
+        for sg, tau in combos
+        for k in range(N_SEEDS)
+    ]
     res = _mean_iae(jobs)
-    pd.DataFrame([{"Method": k[0], "policy": k[1], "step_K": k[2], "sigma": k[3], "tau_m": k[4],
-                   "IAE_mean": v[0], "IAE_ci95": v[1]} for k, v in res.items()]).to_csv(
-        exp02.RESULTS_DIR / "noise_policies_ext_full.csv", index=False, float_format="%.4f")
+    pd.DataFrame(
+        [
+            {
+                "Method": k[0],
+                "policy": k[1],
+                "step_K": k[2],
+                "sigma": k[3],
+                "tau_m": k[4],
+                "IAE_mean": v[0],
+                "IAE_ci95": v[1],
+            }
+            for k, v in res.items()
+        ]
+    ).to_csv(exp02.RESULTS_DIR / "noise_policies_ext_full.csv", index=False, float_format="%.4f")
     rows = []
     for n in _one_dof(gains):
         for i, st in enumerate(TT_STEPS):
@@ -668,7 +833,8 @@ def run_noise_policies_ext(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path
                 row[f"$\\sigma={sg:g}$, $\\tau_m={tau:g}$"] = f"{bc / dr:.2f} / {no / dr:.2f}"
             rows.append(row)
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "noise_policies_ext.tex",
+        data=rows,
+        output_path=tables_dir / "noise_policies_ext.tex",
         caption=(
             f"Table~\\ref{{tab:noise_policies}} extended to the $\\pm 5$~K steps and to the filtered "
             f"measurement ($\\tau_m = 0.05$~min), {N_SEEDS} realizations: each cell is "
@@ -711,20 +877,27 @@ class _BacklashBeforeRate:
 
 
 D2_POLICIES = (
-    ("SB", AW.CLAMPING_NAIVE, False), ("Amp.", AW.CLAMPING_POS_DIRECTIONAL, False),
-    ("Rate", AW.CLAMPING, False), ("BC", AW.BACK_CALCULATION, False),
+    ("SB", AW.CLAMPING_NAIVE, False),
+    ("Amp.", AW.CLAMPING_POS_DIRECTIONAL, False),
+    ("Rate", AW.CLAMPING, False),
+    ("BC", AW.BACK_CALCULATION, False),
     ("BC$^{\\mathrm{sel}}$", AW.BACK_CALCULATION, True),
 )
 D2_VARIANTS = {
-    "base": dict(), "rate_sat": dict(order="rate_sat"),
-    "db_after": dict(band=6.0), "db_before": dict(band=6.0, before=True),
-    "filt_D": dict(tau=MEASUREMENT_TAU_F), "filt_PI": dict(tau=MEASUREMENT_TAU_F, d_raw=True),
+    "base": dict(),
+    "rate_sat": dict(order="rate_sat"),
+    "db_after": dict(band=6.0),
+    "db_before": dict(band=6.0, before=True),
+    "filt_D": dict(tau=MEASUREMENT_TAU_F),
+    "filt_PI": dict(tau=MEASUREMENT_TAU_F, d_raw=True),
     "filt_euler": dict(tau=MEASUREMENT_TAU_F, euler=True),
 }
-D2_PAIRS = (("base", "rate_sat", "(i) slew limit before saturation"),
-            ("db_after", "db_before", "(ii) backlash before the slew limit"),
-            ("filt_D", "filt_PI", "(iii) derivative on the unfiltered measurement"),
-            ("filt_D", "filt_euler", "(iv) measurement filter by explicit Euler"))
+D2_PAIRS = (
+    ("base", "rate_sat", "(i) slew limit before saturation"),
+    ("db_after", "db_before", "(ii) backlash before the slew limit"),
+    ("filt_D", "filt_PI", "(iii) derivative on the unfiltered measurement"),
+    ("filt_D", "filt_euler", "(iv) measurement filter by explicit Euler"),
+)
 
 
 def _d2_run(name, g, method, step, var, sigma, seed):
@@ -735,11 +908,23 @@ def _d2_run(name, g, method, step, var, sigma, seed):
     ctrl = pid
     if "band" in var:
         ctrl = (_BacklashBeforeRate if var.get("before") else _Deadband)(pid, var["band"])
-    m = exp02.ClosedLoopSimulator().run(
-        plant, ctrl, ss, (0.0, 10.0), SIM_DT, setpoint_func=lambda t: ss.T + step,
-        noise_std=sigma, seed=100 + seed, meas_filter_tau=var.get("tau", 0.0),
-        meas_filter_exact=not var.get("euler", False), meas_filter_derivative=not var.get("d_raw", False),
-    ).metrics
+    m = (
+        exp02.ClosedLoopSimulator()
+        .run(
+            plant,
+            ctrl,
+            ss,
+            (0.0, 10.0),
+            SIM_DT,
+            setpoint_func=lambda t: ss.T + step,
+            noise_std=sigma,
+            seed=100 + seed,
+            meas_filter_tau=var.get("tau", 0.0),
+            meas_filter_exact=not var.get("euler", False),
+            meas_filter_derivative=not var.get("d_raw", False),
+        )
+        .metrics
+    )
     return m.iae, m.overshoot_pct, m.tv
 
 
@@ -747,7 +932,7 @@ def _flips(base: dict, var: dict, margin: float = 0.01) -> list:
     """Pairs whose order flips by more than `margin` (relative) in both conditions."""
     out, keys = [], list(base)
     for i, a in enumerate(keys):
-        for b in keys[i + 1:]:
+        for b in keys[i + 1 :]:
             lo, hi = (a, b) if base[a] < base[b] else (b, a)
             if base[lo] < (1 - margin) * base[hi] and var[lo] > (1 + margin) * var[hi]:
                 out.append(f"{lo}<{hi}")
@@ -762,9 +947,17 @@ def run_order_variants(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) ->
     one policy) or of policies (for one loop) swaps order by more than 1 % in both conditions.
     """
     loops = _one_dof(gains)
-    cases = [(v, 0.0) for v in D2_VARIANTS] + [(v, NOISE_SIGMA_BC) for v in ("filt_D", "filt_PI", "filt_euler")]
-    jobs = [(n, lab, v, sg, st, k) for n in loops for lab, _, _ in D2_POLICIES for v, sg in cases
-            for st in TT_STEPS for k in (range(N_SEEDS) if sg else [0])]
+    cases = [(v, 0.0) for v in D2_VARIANTS] + [
+        (v, NOISE_SIGMA_BC) for v in ("filt_D", "filt_PI", "filt_euler")
+    ]
+    jobs = [
+        (n, lab, v, sg, st, k)
+        for n in loops
+        for lab, _, _ in D2_POLICIES
+        for v, sg in cases
+        for st in TT_STEPS
+        for k in (range(N_SEEDS) if sg else [0])
+    ]
     pol = {lab: (m, cv) for lab, m, cv in D2_POLICIES}
 
     def one(n, lab, v, sg, st, k):
@@ -777,9 +970,21 @@ def run_order_variants(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) ->
     for key, met in out:
         acc.setdefault(key, []).append(met)
     mean = {k: np.mean(np.array(v), axis=0) for k, v in acc.items()}
-    pd.DataFrame([{"Method": k[0], "policy": k[1], "variant": k[2], "sigma": k[3], "step_K": k[4],
-                   "IAE": v[0], "Mp_pct": v[1], "TV": v[2]} for k, v in mean.items()]).to_csv(
-        exp02.RESULTS_DIR / "order_variants_full.csv", index=False, float_format="%.4f")
+    pd.DataFrame(
+        [
+            {
+                "Method": k[0],
+                "policy": k[1],
+                "variant": k[2],
+                "sigma": k[3],
+                "step_K": k[4],
+                "IAE": v[0],
+                "Mp_pct": v[1],
+                "TV": v[2],
+            }
+            for k, v in mean.items()
+        ]
+    ).to_csv(exp02.RESULTS_DIR / "order_variants_full.csv", index=False, float_format="%.4f")
     rows, changes = [], []
     for base_v, var_v, label in D2_PAIRS:
         for sg in sorted({sg for v, sg in cases if v == base_v and (var_v, sg) in cases}):
@@ -794,17 +999,28 @@ def run_order_variants(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) ->
                     b = {lab: mean[(n, lab, base_v, sg, st)][0] for lab, _, _ in D2_POLICIES}
                     w = {lab: mean[(n, lab, var_v, sg, st)][0] for lab, _, _ in D2_POLICIES}
                     pol_fl += [f"{_short_name(n)}, {st:+g} K: {f}" for f in _flips(b, w)]
-            rows.append({"Variant": label, "group": "actuator" if "backlash" in label else "controller",
-                         "\\(\\sigma\\) (K)": f"{sg:g}",
-                         "max \\(|\\Delta\\)IAE\\(|\\) (\\%)": f"{100 * max(d_iae):.1f}",
-                         "loop ranking": "changes" if loop_fl else "same",
-                         "policy ranking": "changes" if pol_fl else "same"})
-            changes += [{"variant": label, "sigma": sg, "kind": "loops", "flip": f} for f in loop_fl]
-            changes += [{"variant": label, "sigma": sg, "kind": "policies", "flip": f} for f in pol_fl]
+            rows.append(
+                {
+                    "Variant": label,
+                    "group": "actuator" if "backlash" in label else "controller",
+                    "\\(\\sigma\\) (K)": f"{sg:g}",
+                    "max \\(|\\Delta\\)IAE\\(|\\) (\\%)": f"{100 * max(d_iae):.1f}",
+                    "loop ranking": "changes" if loop_fl else "same",
+                    "policy ranking": "changes" if pol_fl else "same",
+                }
+            )
+            changes += [
+                {"variant": label, "sigma": sg, "kind": "loops", "flip": f} for f in loop_fl
+            ]
+            changes += [
+                {"variant": label, "sigma": sg, "kind": "policies", "flip": f} for f in pol_fl
+            ]
     pd.DataFrame(changes, columns=["variant", "sigma", "kind", "flip"]).to_csv(
-        exp02.RESULTS_DIR / "order_variants_flips.csv", index=False)
+        exp02.RESULTS_DIR / "order_variants_flips.csv", index=False
+    )
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "order_variants.tex",
+        data=rows,
+        output_path=tables_dir / "order_variants.tex",
         caption=(
             "Order of evaluation and discretization (six loops, five policies of "
             "Table~\\ref{tab:robustness_ext}, three steps). Largest relative change of IAE against the "
@@ -824,8 +1040,12 @@ def run_order_variants(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) ->
 
 def _short_name(name: str) -> str:
     """Short loop name for the flip lists."""
-    return {"Ziegler-Nichols": "ZN", "Cohen-Coon": "CC", "Tyreus-Luyben": "TL",
-            "Skogestad SIMC": "SIMC"}.get(name, name.split(" (")[0])
+    return {
+        "Ziegler-Nichols": "ZN",
+        "Cohen-Coon": "CC",
+        "Tyreus-Luyben": "TL",
+        "Skogestad SIMC": "SIMC",
+    }.get(name, name.split(" (")[0])
 
 
 HX_DELAY_SAMPLES = 10  # 0.20 min transport delay on the heat-exchanger outlet, dt = 0.02 min
@@ -858,7 +1078,9 @@ def _hx_run(hx, g, method, step, limits=None, t_end=10.0, q_ss=100.0) -> _HXResu
         x = hx.step(x, u[k], SIM_DT)
         hist.append(float(x[1]))
     sp = np.full(n, y_ss + step)
-    return _HXResult(t, y, sp, u, ur, evaluate_performance(t=t, y=y, setpoint=sp, u=u, u_init=q_ss), ii)
+    return _HXResult(
+        t, y, sp, u, ur, evaluate_performance(t=t, y=y, setpoint=sp, u=u, u_init=q_ss), ii
+    )
 
 
 def _hx_setup(hx):
@@ -894,13 +1116,22 @@ def _hx_setup(hx):
         off = abs(r.y[-1] - r.sp[-1])
         return r.metrics.itae + 1e4 * max(0.0, ms - 1.6) ** 2 + (1e3 * off if off > 0.5 else 0.0)
 
-    starts = [np.array([-5.0, 1.5, 0.2])] + [np.array([g.kp, g.ti, g.td]) for g in loops.values()
-                                             if calculate_maximum_sensitivity_foptd(foptd, g) <= 1.6]
-    sols = [minimize(cost, x0, method="Nelder-Mead",
-                     options={"maxiter": 120, "xatol": 1e-2, "fatol": 1e-2}).x for x0 in starts]
+    starts = [np.array([-5.0, 1.5, 0.2])] + [
+        np.array([g.kp, g.ti, g.td])
+        for g in loops.values()
+        if calculate_maximum_sensitivity_foptd(foptd, g) <= 1.6
+    ]
+    sols = [
+        minimize(
+            cost, x0, method="Nelder-Mead", options={"maxiter": 120, "xatol": 1e-2, "fatol": 1e-2}
+        ).x
+        for x0 in starts
+    ]
     cand = [exp02.PIDGains(kp=float(a), ti=float(b), td=float(c)) for a, b, c in sols]
     cand = [g for g in cand if calculate_maximum_sensitivity_foptd(foptd, g) <= 1.6 + 1e-3]
-    loops[exp02.OPT_ITAE] = min(cand, key=lambda g: _hx_run(hx, g, AW.CLAMPING, -2.0, t_end=6.0).metrics.itae)
+    loops[exp02.OPT_ITAE] = min(
+        cand, key=lambda g: _hx_run(hx, g, AW.CLAMPING, -2.0, t_end=6.0).metrics.itae
+    )
     return foptd, rmse, loops
 
 
@@ -912,23 +1143,53 @@ def run_heat_exchanger(tables_dir: Path) -> None:
     foptd, rmse, loops = _hx_setup(hx)
     x0 = hx.steady_state(100.0)
     eig = np.sort(np.linalg.eigvals(hx.jacobian(x0, 100.0)).real)
-    pd.DataFrame([{
-        "T2_ss_K": x0[1], "T2_at_umax_K": hx.steady_state(300.0)[1], "eig_1": eig[0], "eig_2": eig[1],
-        "eig_3": eig[2], "K": foptd.k_p, "tau_min": foptd.tau, "theta_min": foptd.theta,
-        "r": foptd.theta / foptd.tau, "rmse_K": rmse}]).to_csv(
-        exp02.RESULTS_DIR / "hx_model.csv", index=False, float_format="%.4f")
+    pd.DataFrame(
+        [
+            {
+                "T2_ss_K": x0[1],
+                "T2_at_umax_K": hx.steady_state(300.0)[1],
+                "eig_1": eig[0],
+                "eig_2": eig[1],
+                "eig_3": eig[2],
+                "K": foptd.k_p,
+                "tau_min": foptd.tau,
+                "theta_min": foptd.theta,
+                "r": foptd.theta / foptd.tau,
+                "rmse_K": rmse,
+            }
+        ]
+    ).to_csv(exp02.RESULTS_DIR / "hx_model.csv", index=False, float_format="%.4f")
     gains_rows, tt_cv = [], {}
     for n, g in loops.items():
         grid = _tt_grid(g)
         grid = grid[(grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)]
-        tt_cv[n] = float(grid[int(np.argmin([_hx_run(hx, replace(g, tt=float(t)), AW.BACK_CALCULATION, -2.0).metrics.iae
-                                             for t in grid]))])
-        gains_rows.append({"Method": n, "\\(K_p\\) ((L/min)/K)": f"{g.kp:.2f}", "\\(T_i\\) (min)": f"{g.ti:.3f}",
-                           "\\(T_d\\) (min)": f"{g.td:.3f}",
-                           "\\(M_s^{\\mathrm{FOPTD}}\\)": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
-                           "\\(T_t^{\\mathrm{sel}}\\) (min)": f"{tt_cv[n]:.3f}"})
+        tt_cv[n] = float(
+            grid[
+                int(
+                    np.argmin(
+                        [
+                            _hx_run(
+                                hx, replace(g, tt=float(t)), AW.BACK_CALCULATION, -2.0
+                            ).metrics.iae
+                            for t in grid
+                        ]
+                    )
+                )
+            ]
+        )
+        gains_rows.append(
+            {
+                "Method": n,
+                "\\(K_p\\) ((L/min)/K)": f"{g.kp:.2f}",
+                "\\(T_i\\) (min)": f"{g.ti:.3f}",
+                "\\(T_d\\) (min)": f"{g.td:.3f}",
+                "\\(M_s^{\\mathrm{FOPTD}}\\)": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
+                "\\(T_t^{\\mathrm{sel}}\\) (min)": f"{tt_cv[n]:.3f}",
+            }
+        )
     exp02.export_latex_table(
-        data=gains_rows, output_path=tables_dir / "hx_gains.tex",
+        data=gains_rows,
+        output_path=tables_dir / "hx_gains.tex",
         caption=(
             f"Heat exchanger: FOPTD from a $+10$~L/min step ($K = {foptd.k_p:.4f}$~K/(L/min), "
             f"$\\tau = {foptd.tau:.3f}$~min, $\\theta = {foptd.theta:.3f}$~min, $r = \\theta/\\tau = "
@@ -947,10 +1208,13 @@ def run_heat_exchanger(tables_dir: Path) -> None:
                 row[lab] = f"{r.metrics.iae:.2f} / {r.metrics.overshoot_pct:.1f}"
                 if lab == "Sign-blind amp.":
                     row["SB \\(y(t_f) - y_{sp}\\) (K)"] = f"{r.y[-1] - r.sp[-1]:+.2f}"
-                    row["SB at \\(u_{\\max}\\) (min)"] = f"{np.sum(r.u_applied >= 300.0 - 1e-9) * SIM_DT:.2f}"
+                    row["SB at \\(u_{\\max}\\) (min)"] = (
+                        f"{np.sum(r.u_applied >= 300.0 - 1e-9) * SIM_DT:.2f}"
+                    )
             full.append(row)
     exp02.export_latex_table(
-        data=full, output_path=tables_dir / "hx_ablation.tex",
+        data=full,
+        output_path=tables_dir / "hx_ablation.tex",
         caption=(
             "Heat exchanger: the seven integrator policies of Table~\\ref{tab:antiwindup_ablation} (with "
             "back-calculation at both tracking constants) on $-2$, $-5$ and $+5$~K steps of the outlet "
@@ -970,13 +1234,16 @@ def run_heat_exchanger(tables_dir: Path) -> None:
                 free = _hx_run(hx, g, AW.CLAMPING, st, limits=free_lim)
                 rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (smax * SIM_DT)
                 grid.append({"Method": n, "step_K": st, "S_max": smax, "R": amp / rate, "rho": rho})
-    pd.DataFrame(grid).to_csv(exp02.RESULTS_DIR / "hx_rate_demand_grid.csv", index=False, float_format="%.4f")
+    pd.DataFrame(grid).to_csv(
+        exp02.RESULTS_DIR / "hx_rate_demand_grid.csv", index=False, float_format="%.4f"
+    )
     rows = []
     for n in loops:
         sel = [r for r in grid if r["Method"] == n and r["step_K"] == -2.0]
         rows.append({"Method": n} | {f"$S_{{\\max}}={r['S_max']:g}$": f"{r['R']:.2f}" for r in sel})
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "hx_smax_map.tex",
+        data=rows,
+        output_path=tables_dir / "hx_smax_map.tex",
         caption=(
             "Heat exchanger: $R = \\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}$ on the $-2$~K step "
             "against the slew limit (L/min$^2$), gains fixed; the full grid with the three steps and "
@@ -1022,28 +1289,54 @@ def run_stiction(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
         for n, g in _one_dof(gains).items():
             for lab, m, cv in D2_POLICIES:
                 for st in TT_STEPS:
-                    pid = exp02.PIDController(replace(g, tt=tt_cv[n]) if cv else g, exp02.BENCHMARK_LIMITS,
-                                              m, u_bias=100.0, y_ss=ss.T)
+                    pid = exp02.PIDController(
+                        replace(g, tt=tt_cv[n]) if cv else g,
+                        exp02.BENCHMARK_LIMITS,
+                        m,
+                        u_bias=100.0,
+                        y_ss=ss.T,
+                    )
                     ctrl = _Stiction(pid, sb, jj)
-                    res = sim.run(plant, ctrl, ss, (0.0, STICTION_T_END), SIM_DT,
-                                  setpoint_func=lambda t, d=st: ss.T + d)
+                    res = sim.run(
+                        plant,
+                        ctrl,
+                        ss,
+                        (0.0, STICTION_T_END),
+                        SIM_DT,
+                        setpoint_func=lambda t, d=st: ss.T + d,
+                    )
                     temp = res.states[-win:, 1]
                     ptp, slips = float(temp.max() - temp.min()), int(sum(ctrl.slips[-win:]))
-                    full.append({"severity": sev, "Method": n, "policy": lab, "step_K": st,
-                                 "IAE": res.metrics.iae, "Mp_pct": res.metrics.overshoot_pct,
-                                 "TV": res.metrics.tv, "ptp_last10_K": ptp, "slips_last10": slips,
-                                 "hunting": bool(ptp > HUNT_PTP_K and slips >= HUNT_SLIPS)})
+                    full.append(
+                        {
+                            "severity": sev,
+                            "Method": n,
+                            "policy": lab,
+                            "step_K": st,
+                            "IAE": res.metrics.iae,
+                            "Mp_pct": res.metrics.overshoot_pct,
+                            "TV": res.metrics.tv,
+                            "ptp_last10_K": ptp,
+                            "slips_last10": slips,
+                            "hunting": bool(ptp > HUNT_PTP_K and slips >= HUNT_SLIPS),
+                        }
+                    )
     df = pd.DataFrame(full)
     df.to_csv(exp02.RESULTS_DIR / "stiction_full.csv", index=False, float_format="%.4f")
     for n in _one_dof(gains):
         row = {"Method": n}
         for sev in STICTION:
-            sel = df[(df.Method == n) & (df.severity == sev) & (df.step_K == -2.0)].set_index("policy")
-            row |= {f"{lab}, {sev}": f"{sel.loc[lab, 'IAE']:.2f}{'*' if sel.loc[lab, 'hunting'] else ''}"
-                    for lab in ("SB", "Rate", "BC$^{\\mathrm{sel}}$")}
+            sel = df[(df.Method == n) & (df.severity == sev) & (df.step_K == -2.0)].set_index(
+                "policy"
+            )
+            row |= {
+                f"{lab}, {sev}": f"{sel.loc[lab, 'IAE']:.2f}{'*' if sel.loc[lab, 'hunting'] else ''}"
+                for lab in ("SB", "Rate", "BC$^{\\mathrm{sel}}$")
+            }
         rows.append(row)
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "stiction.tex",
+        data=rows,
+        output_path=tables_dir / "stiction.tex",
         caption=(
             "Valve stiction (two-parameter model of Choudhury et al., applied after the amplitude and "
             "slew limits; the anti-windup sees $u_{\\text{act}}$): IAE (K$\\cdot$min, $20$~min horizon) of "
@@ -1087,31 +1380,41 @@ class _MeasuredPosition:
         self.prev_i, self.prev_linear = diag["i"], abs(diag["u_unconstrained"] - u) < 1e-9
         a = np.exp(-dt / TAU_V)
         self.u_meas = a * self.u_meas + (1.0 - a) * u + self.rng.normal(0.0, SIGMA_V)
-        self.track.append(abs(self.u_meas - diag["u_unconstrained"]) * dt / (self.pid.gains.tt or 1.0))
+        self.track.append(
+            abs(self.u_meas - diag["u_unconstrained"]) * dt / (self.pid.gains.tt or 1.0)
+        )
         self.pid.set_feedback_position(self.u_meas, self.band)
         return u, diag
 
 
 def run_measured_position(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> None:
     """C4: Eq. (11) and back-calculation with a measured position, with and without a band."""
-    cases = (("Rate, $u_{\\text{act}}$", AW.CLAMPING, False, None),
-             ("Rate, $u_{\\text{meas}}$", AW.CLAMPING, False, 0.0),
-             ("Rate, $u_{\\text{meas}}$, $\\varepsilon_u$", AW.CLAMPING, False, EPS_U),
-             ("BC$^{\\mathrm{sel}}$, $u_{\\text{act}}$", AW.BACK_CALCULATION, True, None),
-             ("BC$^{\\mathrm{sel}}$, $u_{\\text{meas}}$", AW.BACK_CALCULATION, True, 0.0))
+    cases = (
+        ("Rate, $u_{\\text{act}}$", AW.CLAMPING, False, None),
+        ("Rate, $u_{\\text{meas}}$", AW.CLAMPING, False, 0.0),
+        ("Rate, $u_{\\text{meas}}$, $\\varepsilon_u$", AW.CLAMPING, False, EPS_U),
+        ("BC$^{\\mathrm{sel}}$, $u_{\\text{act}}$", AW.BACK_CALCULATION, True, None),
+        ("BC$^{\\mathrm{sel}}$, $u_{\\text{meas}}$", AW.BACK_CALCULATION, True, 0.0),
+    )
 
     def one(name, lab, method, cv, band, step, seed):
         g = replace(gains[name], tt=tt_cv[name]) if cv else gains[name]
         pid = exp02.PIDController(g, exp02.BENCHMARK_LIMITS, method, u_bias=100.0, y_ss=ss.T)
         ctrl = pid if band is None else _MeasuredPosition(pid, band, seed)
-        res = exp02.ClosedLoopSimulator().run(plant, ctrl, ss, (0.0, 10.0), SIM_DT,
-                                              setpoint_func=lambda t: ss.T + step)
+        res = exp02.ClosedLoopSimulator().run(
+            plant, ctrl, ss, (0.0, 10.0), SIM_DT, setpoint_func=lambda t: ss.T + step
+        )
         spur = float(np.mean(ctrl.spurious)) if band is not None and ctrl.spurious else 0.0
         track = float(np.mean(ctrl.track)) if band is not None and cv else 0.0
         return name, lab, step, res.metrics.iae, spur, track
 
-    jobs = [(n, lab, m, cv, band, st, k) for n in _one_dof(gains) for lab, m, cv, band in cases
-            for st in TT_STEPS for k in (range(N_SEEDS) if band is not None else [0])]
+    jobs = [
+        (n, lab, m, cv, band, st, k)
+        for n in _one_dof(gains)
+        for lab, m, cv, band in cases
+        for st in TT_STEPS
+        for k in (range(N_SEEDS) if band is not None else [0])
+    ]
     out = Parallel(n_jobs=-1)(delayed(one)(*j) for j in jobs)
     full, rows = [], []
     for n in _one_dof(gains):
@@ -1120,13 +1423,26 @@ def run_measured_position(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path)
             for lab, _, cv, band in cases:
                 sel = [o for o in out if o[:3] == (n, lab, st)]
                 iae, spur = float(np.mean([o[3] for o in sel])), float(np.mean([o[4] for o in sel]))
-                full.append({"Method": n, "case": lab, "step_K": st, "IAE": iae, "spurious_freeze": spur,
-                             "track_step": float(np.mean([o[5] for o in sel]))})
-                row[lab] = f"{iae:.2f}" + (f" ({100 * spur:.0f}\\%)" if band is not None and not cv else "")
+                full.append(
+                    {
+                        "Method": n,
+                        "case": lab,
+                        "step_K": st,
+                        "IAE": iae,
+                        "spurious_freeze": spur,
+                        "track_step": float(np.mean([o[5] for o in sel])),
+                    }
+                )
+                row[lab] = f"{iae:.2f}" + (
+                    f" ({100 * spur:.0f}\\%)" if band is not None and not cv else ""
+                )
             rows.append(row)
-    pd.DataFrame(full).to_csv(exp02.RESULTS_DIR / "measured_position_full.csv", index=False, float_format="%.4f")
+    pd.DataFrame(full).to_csv(
+        exp02.RESULTS_DIR / "measured_position_full.csv", index=False, float_format="%.4f"
+    )
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "measured_position.tex",
+        data=rows,
+        output_path=tables_dir / "measured_position.tex",
         caption=(
             "Anti-windup fed with a measured valve position, $u_{\\text{meas},k} = e^{-\\Delta t/\\tau_v}"
             "u_{\\text{meas},k-1} + (1 - e^{-\\Delta t/\\tau_v})u_{\\text{act},k} + \\eta_k$ with "
@@ -1161,9 +1477,17 @@ def select_c2_point(plant) -> float:
         both = phys[:-1] & phys[1:]
         roots = int(np.sum((np.diff(np.sign(demand - q)) != 0) & both))
         k = exp02.identify_nominal_foptd(plant, ss_q, q).k_p
-        out.append({"q_j_ss": q, "T_ss_K": ss_q.T, "slack": (u_max - q) / u_max, "K": k,
-                    "lambda_slow": slow, "n_steady_states": roots,
-                    "eligible": bool(slow < 0.0 and roots == 1)})
+        out.append(
+            {
+                "q_j_ss": q,
+                "T_ss_K": ss_q.T,
+                "slack": (u_max - q) / u_max,
+                "K": k,
+                "lambda_slow": slow,
+                "n_steady_states": roots,
+                "eligible": bool(slow < 0.0 and roots == 1),
+            }
+        )
     df = pd.DataFrame(out)
     df.to_csv(exp02.RESULTS_DIR / "c2_candidates.csv", index=False, float_format="%.4f")
     ok = df[df.eligible]
@@ -1188,13 +1512,18 @@ def run_c2_point(plant, tables_dir: Path) -> None:
             amp = _step_run(plant, ss2, g, AW.CLAMPING_POS_DIRECTIONAL, st, q_j=q).metrics.iae
             rate = _step_run(plant, ss2, g, AW.CLAMPING, st, q_j=q).metrics.iae
             free = _step_run(plant, ss2, g, AW.CLAMPING, st, q_j=q, limits=free_lim)
-            rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (exp02.BENCHMARK_LIMITS.max_slew_rate * SIM_DT)
+            rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (
+                exp02.BENCHMARK_LIMITS.max_slew_rate * SIM_DT
+            )
             row["\\(\\rho\\) / \\(R\\)"] = f"{rho:.2f} / {amp / rate:.2f}"
             grid.append({"Method": n, "step_K": st, "rho": rho, "R": amp / rate})
             rows.append(row)
-    pd.DataFrame(grid).to_csv(exp02.RESULTS_DIR / "c2_rate_demand.csv", index=False, float_format="%.4f")
+    pd.DataFrame(grid).to_csv(
+        exp02.RESULTS_DIR / "c2_rate_demand.csv", index=False, float_format="%.4f"
+    )
     exp02.export_latex_table(
-        data=rows, output_path=tables_dir / "c2_ablation.tex",
+        data=rows,
+        output_path=tables_dir / "c2_ablation.tex",
         caption=(
             f"Operating point chosen by the declared criterion (smallest slack to the upper stop): "
             f"$q_{{j,ss}} = {q:g}$~L/min, $T_{{ss}} = {ss2.T:.2f}$~K, FOPTD $K = {foptd2.k_p:.4f}$~K/(L/min), "
@@ -1215,25 +1544,42 @@ def run_rate_demand_check(plant, ss, gains: dict, tables_dir: Path) -> None:
     kept and only the slew limit removed.
     """
     ss2, _, loops2 = _second_op_loops(plant, SECOND_OP_Q_J)
-    cases = [(f"$q_{{j,ss}} = {SECOND_OP_Q_J:g}$", n, g, ss2, SECOND_OP_Q_J, 0.0) for n, g in loops2.items()]
-    cases += [(f"deadband {band:g} L/min", n, g, ss, 100.0, band)
-              for band in (3.0, 6.0) for n, g in _one_dof(gains).items()]
+    cases = [
+        (f"$q_{{j,ss}} = {SECOND_OP_Q_J:g}$", n, g, ss2, SECOND_OP_Q_J, 0.0)
+        for n, g in loops2.items()
+    ]
+    cases += [
+        (f"deadband {band:g} L/min", n, g, ss, 100.0, band)
+        for band in (3.0, 6.0)
+        for n, g in _one_dof(gains).items()
+    ]
     sim, rows = exp02.ClosedLoopSimulator(), []
     for i, (label, name, g, s0, q_j, band) in enumerate(cases):
+
         def run(method, limits):
             pid = exp02.PIDController(g, limits, method, u_bias=q_j, y_ss=s0.T)
-            return sim.run(plant, _Deadband(pid, band), s0, (0.0, 10.0), SIM_DT,
-                           setpoint_func=lambda t: s0.T - 2.0)
+            return sim.run(
+                plant,
+                _Deadband(pid, band),
+                s0,
+                (0.0, 10.0),
+                SIM_DT,
+                setpoint_func=lambda t: s0.T - 2.0,
+            )
+
         lim = exp02.BENCHMARK_LIMITS
         amp = run(AW.CLAMPING_POS_DIRECTIONAL, lim).metrics.iae
         rate = run(AW.CLAMPING, lim).metrics.iae
         free = run(AW.CLAMPING, replace(lim, max_slew_rate=np.inf))
         rho = float(np.max(np.abs(np.diff(free.u_applied)))) / (lim.max_slew_rate * SIM_DT)
-        rows.append({
-            "Condition": label if i == 0 or cases[i - 1][0] != label else "", "Method": name,
-            "\\(\\rho\\)": f"{rho:.2f}",
-            "\\(\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}\\)": f"{amp / rate:.2f}",
-        })
+        rows.append(
+            {
+                "Condition": label if i == 0 or cases[i - 1][0] != label else "",
+                "Method": name,
+                "\\(\\rho\\)": f"{rho:.2f}",
+                "\\(\\mathrm{IAE}_{\\mathrm{amp}}/\\mathrm{IAE}_{\\mathrm{rate}}\\)": f"{amp / rate:.2f}",
+            }
+        )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "rate_demand_check.tex",
@@ -1258,10 +1604,17 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
     for name, g in base.items():
         grid = _tt_grid(g)
         for step in TT_STEPS:
-            curves[(name, step)] = (grid, np.array([
-                _step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION, step).metrics.iae
-                for t in grid
-            ]))
+            curves[(name, step)] = (
+                grid,
+                np.array(
+                    [
+                        _step_run(
+                            plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION, step
+                        ).metrics.iae
+                        for t in grid
+                    ]
+                ),
+            )
             direct[(name, step)] = _step_run(plant, ss, g, AW.CLAMPING, step).metrics.iae
         inside = (grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)
         ratio = np.array([curves[(name, st)][1] / direct[(name, st)] for st in TT_STEPS])  # 3 x n
@@ -1269,50 +1622,71 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
         k_cv = int(np.argmin(np.where(inside, ratio[0], np.inf)))  # chosen on the -2 K design step
         k_sq, k_ti = int(np.argmin(np.abs(grid - g.tt))), int(np.argmin(np.abs(grid - g.ti)))
         k_free = int(np.argmin(ratio[0]))  # design-step choice without the [T_d, T_i] restriction
-        exact = np.array([[  # same scan with the exact factor 1 - exp(-dt/T_t) (T8)
-            _step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION_EXACT, step).metrics.iae
-            for t in grid] for step in TT_STEPS])
+        exact = np.array(
+            [
+                [  # same scan with the exact factor 1 - exp(-dt/T_t) (T8)
+                    _step_run(
+                        plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION_EXACT, step
+                    ).metrics.iae
+                    for t in grid
+                ]
+                for step in TT_STEPS
+            ]
+        )
         ratio_x = exact / np.array([[direct[(name, st)]] for st in TT_STEPS])
         k_fx = int(np.argmin(ratio_x[0]))
         for i, step in enumerate(TT_STEPS):
-            bc = _step_run(plant, ss, replace(g, tt=float(grid[k_cv])), AW.BACK_CALCULATION, step).metrics
+            bc = _step_run(
+                plant, ss, replace(g, tt=float(grid[k_cv])), AW.BACK_CALCULATION, step
+            ).metrics
             dr = _step_run(plant, ss, g, AW.CLAMPING, step).metrics
-            tvmp.append({
-                "Method": name if i == 0 else "",
-                "Step": f"${step:+g}$ K",
-                "IAE dir.": f"{dr.iae:.2f}", "IAE BC": f"{bc.iae:.2f}",
-                "TV dir. (L/min)": f"{dr.tv:.1f}", "TV BC (L/min)": f"{bc.tv:.1f}",
-                "\\(M_p\\) dir. (\\%)": f"{dr.overshoot_pct:.1f}",
-                "\\(M_p\\) BC (\\%)": f"{bc.overshoot_pct:.1f}",
-            })
+            tvmp.append(
+                {
+                    "Method": name if i == 0 else "",
+                    "Step": f"${step:+g}$ K",
+                    "IAE dir.": f"{dr.iae:.2f}",
+                    "IAE BC": f"{bc.iae:.2f}",
+                    "TV dir. (L/min)": f"{dr.tv:.1f}",
+                    "TV BC (L/min)": f"{bc.tv:.1f}",
+                    "\\(M_p\\) dir. (\\%)": f"{dr.overshoot_pct:.1f}",
+                    "\\(M_p\\) BC (\\%)": f"{bc.overshoot_pct:.1f}",
+                }
+            )
         for i, step in enumerate(TT_STEPS):
-            rows.append({
-                "Method": name if i == 0 else "",
-                "Step": f"${step:+g}$ K",
-                "IAE dir.": f"{direct[(name, step)]:.2f}",
-                "IAE $T_t^{\\mathrm{mm}}$": f"{curves[(name, step)][1][k_mm]:.2f}",
-                "IAE $\\sqrt{T_iT_d}$": f"{curves[(name, step)][1][k_sq]:.2f}",
-                "IAE $T_t=T_i$": f"{curves[(name, step)][1][k_ti]:.2f}",
-                "IAE $T_t^{\\mathrm{sel}}$": f"{curves[(name, step)][1][k_cv]:.2f}",
-            })
-        summary.append({
-            "Method": name,
-            "\\([T_d, T_i]\\)": f"[{g.td:.3f}, {g.ti:.3f}]",
-            "\\(T_t^{\\mathrm{sel}}\\)": f"{grid[k_cv]:.3f}",
-            "sel: \\(\\pm 5\\)~K": f"{ratio[1:, k_cv].max():.2f}",
-            "free \\(T_t^{\\mathrm{sel}}\\)": f"{grid[k_free]:.3f}",
-            "in range": "yes" if inside[k_free] else "no",
-            "free: \\(\\pm 5\\)~K": f"{ratio[1:, k_free].max():.2f}",
-            "free, exact": f"{grid[k_fx]:.3f}",
-            "exact: \\(\\pm 5\\)~K": f"{ratio_x[1:, k_fx].max():.2f}",
-            "\\(T_t^{\\mathrm{mm}}\\)": f"{grid[k_mm]:.3f}",
-            "mm": f"{ratio[:, k_mm].max():.2f}",
-            "\\(\\sqrt{T_iT_d}\\)": f"{ratio[:, k_sq].max():.2f}",
-            "\\(T_i\\)": f"{ratio[:, k_ti].max():.2f}",
-        })
+            rows.append(
+                {
+                    "Method": name if i == 0 else "",
+                    "Step": f"${step:+g}$ K",
+                    "IAE dir.": f"{direct[(name, step)]:.2f}",
+                    "IAE $T_t^{\\mathrm{mm}}$": f"{curves[(name, step)][1][k_mm]:.2f}",
+                    "IAE $\\sqrt{T_iT_d}$": f"{curves[(name, step)][1][k_sq]:.2f}",
+                    "IAE $T_t=T_i$": f"{curves[(name, step)][1][k_ti]:.2f}",
+                    "IAE $T_t^{\\mathrm{sel}}$": f"{curves[(name, step)][1][k_cv]:.2f}",
+                }
+            )
+        summary.append(
+            {
+                "Method": name,
+                "\\([T_d, T_i]\\)": f"[{g.td:.3f}, {g.ti:.3f}]",
+                "\\(T_t^{\\mathrm{sel}}\\)": f"{grid[k_cv]:.3f}",
+                "sel: \\(\\pm 5\\)~K": f"{ratio[1:, k_cv].max():.2f}",
+                "free \\(T_t^{\\mathrm{sel}}\\)": f"{grid[k_free]:.3f}",
+                "in range": "yes" if inside[k_free] else "no",
+                "free: \\(\\pm 5\\)~K": f"{ratio[1:, k_free].max():.2f}",
+                "free, exact": f"{grid[k_fx]:.3f}",
+                "exact: \\(\\pm 5\\)~K": f"{ratio_x[1:, k_fx].max():.2f}",
+                "\\(T_t^{\\mathrm{mm}}\\)": f"{grid[k_mm]:.3f}",
+                "mm": f"{ratio[:, k_mm].max():.2f}",
+                "\\(\\sqrt{T_iT_d}\\)": f"{ratio[:, k_sq].max():.2f}",
+                "\\(T_i\\)": f"{ratio[:, k_ti].max():.2f}",
+            }
+        )
     pd.DataFrame(
-        [{"Method": n, "step_K": st, "T_t_min": t, "IAE": v}
-         for (n, st), (grid_, iae_) in curves.items() for t, v in zip(grid_, iae_)]
+        [
+            {"Method": n, "step_K": st, "T_t_min": t, "IAE": v}
+            for (n, st), (grid_, iae_) in curves.items()
+            for t, v in zip(grid_, iae_)
+        ]
     ).to_csv(exp02.RESULTS_DIR / "antiwindup_tt_curve.csv", index=False, float_format="%.4f")
     exp02.export_latex_table(
         data=summary,
@@ -1361,8 +1735,15 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
         ax.axvline(SIM_DT, color="gray", linestyle=":", linewidth=0.8)
         for step in TT_STEPS:
             grid, iae = curves[(name, step)]
-            ax.plot(grid, iae, color=colors[step], marker="o", markersize=2.2, linewidth=1.0,
-                    label=f"back-calc., {step:+g} K")
+            ax.plot(
+                grid,
+                iae,
+                color=colors[step],
+                marker="o",
+                markersize=2.2,
+                linewidth=1.0,
+                label=f"back-calc., {step:+g} K",
+            )
             ax.axhline(direct[(name, step)], color=colors[step], linestyle="--", linewidth=0.8)
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -1380,19 +1761,25 @@ def run_tt_curve(plant, ss, gains: dict, tables_dir: Path, figures_dir: Path) ->
 
 def _tt_grid(g) -> np.ndarray:
     """T_t values scanned for one loop: [0.525 dt, 10 T_i] plus T_d, sqrt(T_i T_d), T_i, dt, 0.1 T_t."""
-    return np.unique(np.concatenate([
-        # lower end: below ~dt/2 the discrete update (1 - dt/T_t) I diverges (no IAE)
-        np.geomspace(max(0.1 * g.td, 0.525 * SIM_DT), 10.0 * g.ti, 21),
-        [g.td, g.tt, g.ti, SIM_DT, 0.1 * g.tt],
-    ]))
+    return np.unique(
+        np.concatenate(
+            [
+                # lower end: below ~dt/2 the discrete update (1 - dt/T_t) I diverges (no IAE)
+                np.geomspace(max(0.1 * g.td, 0.525 * SIM_DT), 10.0 * g.ti, 21),
+                [g.td, g.tt, g.ti, SIM_DT, 0.1 * g.tt],
+            ]
+        )
+    )
 
 
 def _tt_cv(plant, ss, g, q_j: float = 100.0) -> float:
     """T_t^sel: the grid value inside [T_d, T_i] with the lowest IAE of back-calculation on -2 K."""
     grid = _tt_grid(g)
     grid = grid[(grid >= g.td - 1e-12) & (grid <= g.ti + 1e-12)]
-    iae = [_step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION, q_j=q_j).metrics.iae
-           for t in grid]
+    iae = [
+        _step_run(plant, ss, replace(g, tt=float(t)), AW.BACK_CALCULATION, q_j=q_j).metrics.iae
+        for t in grid
+    ]
     return float(grid[int(np.argmin(iae))])
 
 
@@ -1419,8 +1806,11 @@ class _Tap:
 def plot_mechanism(plant, ss, gains: dict, figures_dir: Path) -> None:
     """u_raw, u_act, e and the integrator state of ZN on the -2 K step under three policies."""
     g = gains["Ziegler-Nichols"]
-    policies = (("No anti-windup", AW.NONE), ("Sign-blind amp.", AW.CLAMPING_NAIVE),
-                ("Directional rate-aware", AW.CLAMPING))
+    policies = (
+        ("No anti-windup", AW.NONE),
+        ("Sign-blind amp.", AW.CLAMPING_NAIVE),
+        ("Directional rate-aware", AW.CLAMPING),
+    )
     setup_ieee_style(single_column=False)
     fig_w, _ = exp02.get_figure_dimensions(columns=2)
     fig, axes = plt.subplots(3, 3, figsize=(fig_w, 4.8), sharex=True, sharey="row", dpi=300)
@@ -1432,7 +1822,9 @@ def plot_mechanism(plant, ss, gains: dict, figures_dir: Path) -> None:
         i_state = np.array([r[0] for r in tap.rows])
         u_raw = np.array([r[1] for r in tap.rows])
         axes[0, col].plot(res.t, u_raw, color="#D55E00", linewidth=1.0, label=r"$u_{\mathrm{raw}}$")
-        axes[0, col].plot(res.t, res.u_applied, color="#0072B2", linewidth=1.0, label=r"$u_{\mathrm{act}}$")
+        axes[0, col].plot(
+            res.t, res.u_applied, color="#0072B2", linewidth=1.0, label=r"$u_{\mathrm{act}}$"
+        )
         axes[1, col].plot(res.t, (ss.T - 2.0) - res.states[:, 1], color="#333333", linewidth=1.0)
         axes[2, col].plot(res.t, i_state, color="#009E73", linewidth=1.0)
         axes[0, col].set_title(title, fontsize=8.0)
@@ -1460,14 +1852,19 @@ def run_predictive_clamping(plant, ss, gains: dict, tables_dir: Path) -> None:
         for i, step in enumerate(TT_STEPS):
             old = _step_run(plant, ss, g, AW.CLAMPING, step).metrics
             new = _step_run(plant, ss, g, AW.CLAMPING_PREDICTIVE, step).metrics
-            rows.append({
-                "Method": name if i == 0 else "", "Step": f"${step:+g}$ K",
-                "IAE, \\(k-1\\)": f"{old.iae:.3f}", "IAE, \\(k\\)": f"{new.iae:.3f}",
-                "TV, \\(k-1\\)": f"{old.tv:.1f}", "TV, \\(k\\)": f"{new.tv:.1f}",
-                "\\(M_p\\), \\(k-1\\)": f"{old.overshoot_pct:.1f}",
-                "\\(M_p\\), \\(k\\)": f"{new.overshoot_pct:.1f}",
-                "\\(\\Delta\\)IAE (\\%)": f"{100.0 * (new.iae / old.iae - 1.0):+.2f}",
-            })
+            rows.append(
+                {
+                    "Method": name if i == 0 else "",
+                    "Step": f"${step:+g}$ K",
+                    "IAE, \\(k-1\\)": f"{old.iae:.3f}",
+                    "IAE, \\(k\\)": f"{new.iae:.3f}",
+                    "TV, \\(k-1\\)": f"{old.tv:.1f}",
+                    "TV, \\(k\\)": f"{new.tv:.1f}",
+                    "\\(M_p\\), \\(k-1\\)": f"{old.overshoot_pct:.1f}",
+                    "\\(M_p\\), \\(k\\)": f"{new.overshoot_pct:.1f}",
+                    "\\(\\Delta\\)IAE (\\%)": f"{100.0 * (new.iae / old.iae - 1.0):+.2f}",
+                }
+            )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "predictive_clamping.tex",
@@ -1489,14 +1886,18 @@ def run_exact_backcalc(plant, ss, gains: dict, tables_dir: Path) -> None:
         for i, step in enumerate(TT_STEPS):
             eul = _step_run(plant, ss, g01, AW.BACK_CALCULATION, step).metrics
             ex = _step_run(plant, ss, g01, AW.BACK_CALCULATION_EXACT, step).metrics
-            rows.append({
-                "Method": name if i == 0 else "",
-                "\\(T_t\\) (min)": f"{g01.tt:.4f}" if i == 0 else "",
-                "\\(\\Delta t/T_t\\)": f"{SIM_DT / g01.tt:.2f}" if i == 0 else "",
-                "Step": f"${step:+g}$ K",
-                "IAE Euler": f"{eul.iae:.2f}", "IAE exact": f"{ex.iae:.2f}",
-                "TV Euler (L/min)": f"{eul.tv:.1f}", "TV exact (L/min)": f"{ex.tv:.1f}",
-            })
+            rows.append(
+                {
+                    "Method": name if i == 0 else "",
+                    "\\(T_t\\) (min)": f"{g01.tt:.4f}" if i == 0 else "",
+                    "\\(\\Delta t/T_t\\)": f"{SIM_DT / g01.tt:.2f}" if i == 0 else "",
+                    "Step": f"${step:+g}$ K",
+                    "IAE Euler": f"{eul.iae:.2f}",
+                    "IAE exact": f"{ex.iae:.2f}",
+                    "TV Euler (L/min)": f"{eul.tv:.1f}",
+                    "TV exact (L/min)": f"{ex.tv:.1f}",
+                }
+            )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "exact_backcalc.tex",
@@ -1524,7 +1925,11 @@ def run_latch_check(plant, ss, gains: dict) -> None:
     out = []
     for name in ("Ziegler-Nichols", "Cohen-Coon"):
         g = gains[name]
-        tap = _Tap(exp02.PIDController(g, exp02.BENCHMARK_LIMITS, AW.CLAMPING_NAIVE, u_bias=100.0, y_ss=ss.T))
+        tap = _Tap(
+            exp02.PIDController(
+                g, exp02.BENCHMARK_LIMITS, AW.CLAMPING_NAIVE, u_bias=100.0, y_ss=ss.T
+            )
+        )
         res = exp02.ClosedLoopSimulator().run(
             plant, tap, ss, (0.0, 10.0), SIM_DT, setpoint_func=lambda t: t_sp
         )
@@ -1535,34 +1940,56 @@ def run_latch_check(plant, ss, gains: dict) -> None:
         after = slice(k0 + 1, None)
         delta = max(t_inf - float(temp[after].min()), 0.0)
         i_star = u_max - 100.0 + abs(g.kp) * (t_sp - t_inf)
-        d_sharp = max(abs(d[k0]), abs(g.kp) * g.td * float(np.abs(np.diff(temp[k0:])).max()) / SIM_DT)
+        d_sharp = max(
+            abs(d[k0]), abs(g.kp) * g.td * float(np.abs(np.diff(temp[k0:])).max()) / SIM_DT
+        )
         d_band = max(abs(d[k0]), abs(g.kp) * g.td * (t_sp - t_inf + delta) / SIM_DT)
         need = i_star + abs(g.kp) * delta
-        out.append({
-            "Method": name, "T_inf_K": t_inf, "I_star": i_star, "t_k0_min": res.t[k0],
-            "T_k0_minus_Tsp": temp[k0] - t_sp, "I_k0": i_state[k0], "D_k0": d[k0], "delta_K": delta,
-            "I_frozen_after_k0": bool(np.all(i_state[k0:] == i_state[k0])),
-            "u_raw_ge_umax_after_k0": bool(np.all(u_raw[k0:] >= u_max)),
-            "e_pos_after_k0": bool(np.all(temp[after] < t_sp)),
-            "max_abs_D_after_k0": float(np.abs(d[after]).max()),
-            "D_bar_sharp": d_sharp, "D_bar_band": d_band,
-            "margin_sharp": i_state[k0] - need - d_sharp, "margin_band": i_state[k0] - need - d_band,
-            "Tf_minus_Tsp": temp[-1] - t_sp,
-        })
-    pd.DataFrame(out).to_csv(exp02.RESULTS_DIR / "latch_check.csv", index=False, float_format="%.4f")
+        out.append(
+            {
+                "Method": name,
+                "T_inf_K": t_inf,
+                "I_star": i_star,
+                "t_k0_min": res.t[k0],
+                "T_k0_minus_Tsp": temp[k0] - t_sp,
+                "I_k0": i_state[k0],
+                "D_k0": d[k0],
+                "delta_K": delta,
+                "I_frozen_after_k0": bool(np.all(i_state[k0:] == i_state[k0])),
+                "u_raw_ge_umax_after_k0": bool(np.all(u_raw[k0:] >= u_max)),
+                "e_pos_after_k0": bool(np.all(temp[after] < t_sp)),
+                "max_abs_D_after_k0": float(np.abs(d[after]).max()),
+                "D_bar_sharp": d_sharp,
+                "D_bar_band": d_band,
+                "margin_sharp": i_state[k0] - need - d_sharp,
+                "margin_band": i_state[k0] - need - d_band,
+                "Tf_minus_Tsp": temp[-1] - t_sp,
+            }
+        )
+    pd.DataFrame(out).to_csv(
+        exp02.RESULTS_DIR / "latch_check.csv", index=False, float_format="%.4f"
+    )
 
 
 def _second_op_loops(plant, q_j: float):
     """Steady state, re-identified FOPTD and re-tuned analytical loops at a second operating point."""
     ss2 = plant.find_steady_state(q_j=q_j)
     foptd2 = exp02.identify_nominal_foptd(plant, ss2, q_j)
-    return ss2, foptd2, {
-        "Ziegler-Nichols": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.ZIEGLER_NICHOLS_PID),
-        "Cohen-Coon": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.COHEN_COON_PID),
-        "Tyreus-Luyben": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.TYREUS_LUYBEN),
-        "AMIGO": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.AMIGO),
-        "Skogestad SIMC": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.SKOGESTAD_SIMC_PID, tau_c=0.4),
-    }
+    return (
+        ss2,
+        foptd2,
+        {
+            "Ziegler-Nichols": exp02.tune_analytical(
+                foptd2, rule=exp02.TuningRule.ZIEGLER_NICHOLS_PID
+            ),
+            "Cohen-Coon": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.COHEN_COON_PID),
+            "Tyreus-Luyben": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.TYREUS_LUYBEN),
+            "AMIGO": exp02.tune_analytical(foptd2, rule=exp02.TuningRule.AMIGO),
+            "Skogestad SIMC": exp02.tune_analytical(
+                foptd2, rule=exp02.TuningRule.SKOGESTAD_SIMC_PID, tau_c=0.4
+            ),
+        },
+    )
 
 
 def run_second_operating_point(q_j: float, tables_dir: Path) -> None:
@@ -1612,15 +2039,18 @@ def _loop_polys(plant, ss, g, k_scale: float, t_scale: float, extra_delay: float
     num_p, den_p = scale(num_p), scale(den_p)
     tau_f = g.td / g.n_filter if g.td > 0 else 0.0
     # C(s) = Kp [(Ti s)(tau_f s + 1) + (tau_f s + 1) + Ti Td s^2] / (Ti s (tau_f s + 1))
-    num_c = g.kp * np.polyadd(np.polyadd(np.polymul([g.ti, 0.0], [tau_f, 1.0]), [tau_f, 1.0]),
-                              [g.ti * g.td, 0.0, 0.0])
+    num_c = g.kp * np.polyadd(
+        np.polyadd(np.polymul([g.ti, 0.0], [tau_f, 1.0]), [tau_f, 1.0]), [g.ti * g.td, 0.0, 0.0]
+    )
     den_c = np.polymul([g.ti, 0.0], [tau_f, 1.0])
     theta = SIM_DT / 2.0 + extra_delay
     n = 4  # diagonal Pade: sum_k c_k (-theta s)^k / sum_k c_k (theta s)^k
-    c = [factorial(2 * n - k) * factorial(n) / (factorial(2 * n) * factorial(k) * factorial(n - k))
-         for k in range(n + 1)]
+    c = [
+        factorial(2 * n - k) * factorial(n) / (factorial(2 * n) * factorial(k) * factorial(n - k))
+        for k in range(n + 1)
+    ]
     num_d = np.array([c[k] * (-theta) ** k for k in range(n, -1, -1)])
-    den_d = np.array([c[k] * theta ** k for k in range(n, -1, -1)])
+    den_d = np.array([c[k] * theta**k for k in range(n, -1, -1)])
     return (num_p, den_p), (num_c, den_c), (num_d, den_d), theta
 
 
@@ -1631,7 +2061,11 @@ def _stability_and_ms(plant, ss, g, k_scale, t_scale, extra_delay):
     stable = bool(np.max(np.roots(char).real) < -1e-9)
     w = np.logspace(-3, 3, 4000)
     s = 1j * w
-    loop = (np.polyval(np_, s) / np.polyval(dp, s)) * (np.polyval(nc, s) / np.polyval(dc, s)) * np.exp(-s * theta)
+    loop = (
+        (np.polyval(np_, s) / np.polyval(dp, s))
+        * (np.polyval(nc, s) / np.polyval(dc, s))
+        * np.exp(-s * theta)
+    )
     return stable, float(np.max(np.abs(1.0 / (1.0 + loop))))
 
 
@@ -1647,15 +2081,19 @@ def run_model_error_test(plant, ss, foptd, gains: dict, extra: dict, tables_dir:
     for name, g in designs.items():
         res = [
             _stability_and_ms(plant, ss, g, k, t, d)
-            for k in (0.8, 1.0, 1.2) for t in (0.8, 1.0, 1.2) for d in (0.0, 0.2 * foptd.theta)
+            for k in (0.8, 1.0, 1.2)
+            for t in (0.8, 1.0, 1.2)
+            for d in (0.0, 0.2 * foptd.theta)
         ]
         ms_stable = [m for ok, m in res if ok]
-        rows.append({
-            "Tuning": name,
-            "\\(M_s^{\\mathrm{lin}}\\) nominal": f"{_ms_lin(plant, ss, g):.2f}",
-            "unstable corners (of 18)": str(sum(not ok for ok, _ in res)),
-            "worst \\(M_s\\), stable corners": f"{max(ms_stable):.2f}" if ms_stable else "--",
-        })
+        rows.append(
+            {
+                "Tuning": name,
+                "\\(M_s^{\\mathrm{lin}}\\) nominal": f"{_ms_lin(plant, ss, g):.2f}",
+                "unstable corners (of 18)": str(sum(not ok for ok, _ in res)),
+                "worst \\(M_s\\), stable corners": f"{max(ms_stable):.2f}" if ms_stable else "--",
+            }
+        )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "model_error_ms.tex",
@@ -1704,11 +2142,18 @@ def run_deadband_test(plant, ss, gains: dict, tt_cv: dict, tables_dir: Path) -> 
             row = {"Deadband (L/min)": f"{band:g}" if k == 0 else "", "Method": name}
             for label, method in ABLATION_VARIANTS:
                 pid = exp02.PIDController(
-                    _variant_gains(label, g, tt_cv[name]), exp02.BENCHMARK_LIMITS, method,
-                    u_bias=100.0, y_ss=ss.T,
+                    _variant_gains(label, g, tt_cv[name]),
+                    exp02.BENCHMARK_LIMITS,
+                    method,
+                    u_bias=100.0,
+                    y_ss=ss.T,
                 )
                 res = sim.run(
-                    plant, _Deadband(pid, band), ss, (0.0, 10.0), SIM_DT,
+                    plant,
+                    _Deadband(pid, band),
+                    ss,
+                    (0.0, 10.0),
+                    SIM_DT,
                     setpoint_func=lambda t: ss.T - 2.0,
                 )
                 row[label] = f"{res.metrics.iae:.2f}"
@@ -1737,12 +2182,17 @@ def run_smax_retuned(plant, ss, foptd, gains: dict, tables_dir: Path) -> None:
         g = _multistart(plant, ss, [opt, None], ok, limits=lim, foptd=foptd, ms_model="foptd")
         amp = _step_run(plant, ss, g, AW.CLAMPING_POS_DIRECTIONAL, limits=lim).metrics.iae
         rate = _step_run(plant, ss, g, AW.CLAMPING, limits=lim).metrics.iae
-        rows.append({
-            "\\(S_{\\max}\\) (L/min$^2$)": f"{smax:g}",
-            "\\(K_p\\)": f"{g.kp:.1f}", "\\(T_i\\) (min)": f"{g.ti:.3f}", "\\(T_d\\) (min)": f"{g.td:.3f}",
-            "IAE amp.-only": f"{amp:.2f}", "IAE rate-aware": f"{rate:.2f}",
-            "ratio": f"{amp / rate:.1f}",
-        })
+        rows.append(
+            {
+                "\\(S_{\\max}\\) (L/min$^2$)": f"{smax:g}",
+                "\\(K_p\\)": f"{g.kp:.1f}",
+                "\\(T_i\\) (min)": f"{g.ti:.3f}",
+                "\\(T_d\\) (min)": f"{g.td:.3f}",
+                "IAE amp.-only": f"{amp:.2f}",
+                "IAE rate-aware": f"{rate:.2f}",
+                "ratio": f"{amp / rate:.1f}",
+            }
+        )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "smax_retuned.tex",
@@ -1806,9 +2256,17 @@ def _multistart(plant, ss, starts, feasible, limits=None, **kw):
 
     def tune(g0):
         return tune_by_optimization(
-            plant=plant, nominal_state=ss, q_j_ss=100.0, target_dT=-2.0, initial_gains=g0,
-            criterion=OptimizationCriterion.ITAE, max_ms=1.6, t_sim=6.0, dt=SIM_DT,
-            limits=limits or exp02.BENCHMARK_LIMITS, **kw,
+            plant=plant,
+            nominal_state=ss,
+            q_j_ss=100.0,
+            target_dT=-2.0,
+            initial_gains=g0,
+            criterion=OptimizationCriterion.ITAE,
+            max_ms=1.6,
+            t_sim=6.0,
+            dt=SIM_DT,
+            limits=limits or exp02.BENCHMARK_LIMITS,
+            **kw,
         )
 
     best = None
@@ -1835,32 +2293,47 @@ def run_robust_constraint_cost(plant, ss, foptd, gains: dict, tables_dir: Path) 
         plant, ss, [w0(opt), opt], foptd_ok, foptd=foptd, ms_model="foptd", optimize_weights=True
     )
     joint_e = _multistart(
-        plant, ss, [w0(exact), exact, w0(opt)], lin_ok, foptd=foptd, ms_model="exact",
+        plant,
+        ss,
+        [w0(exact), exact, w0(opt)],
+        lin_ok,
+        foptd=foptd,
+        ms_model="exact",
         optimize_weights=True,
     )
     rows = []
     designs = (
-        (exp02.OPT_ITAE, opt), (exp02.OPT_ITAE_2DOF, gains[exp02.OPT_ITAE_2DOF]),
-        (NAME_JOINT_FOPTD, joint_f), (NAME_EXACT, exact), (NAME_JOINT_EXACT, joint_e),
+        (exp02.OPT_ITAE, opt),
+        (exp02.OPT_ITAE_2DOF, gains[exp02.OPT_ITAE_2DOF]),
+        (NAME_JOINT_FOPTD, joint_f),
+        (NAME_EXACT, exact),
+        (NAME_JOINT_EXACT, joint_e),
     )
     for name, g in designs:
         m = _step_run(plant, ss, g).metrics
         rob = linearized_robustness(plant, ss, 100.0, g, theta=SIM_DT / 2.0)
         w = np.logspace(-2, 3, 4000)
         pm = phase_margin_deg(loop_gain_linearized(plant, ss, 100.0, g, w, theta=SIM_DT / 2.0), w)
-        rows.append({
-            "Tuning": name,
-            "\\(K_p\\)": f"{g.kp:.2f}", "\\(T_i\\) (min)": f"{g.ti:.3f}", "\\(T_d\\) (min)": f"{g.td:.3f}",
-            "\\(\\beta\\)": f"{g.beta:.2f}", "\\(\\gamma\\)": f"{g.gamma:.2f}",
-            "\\(M_s^{\\mathrm{FOPTD}}\\)": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
-            "\\(M_s^{\\mathrm{lin}}\\)": f"{rob['ms']:.2f}",
-            "PM$^{\\mathrm{lin}}$ ($^\\circ$)": f"{pm:.1f}",
-            "\\(K_{\\mathrm{hf}}\\)": f"{rob['k_hf']:.0f}",
-            "IAE": f"{m.iae:.3f}", "ITAE": f"{m.itae:.3f}",
-            "\\(M_p\\) (\\%)": f"{m.overshoot_pct:.1f}", "TV": f"{m.tv:.1f}",
-            "ITAE $-5$ K": f"{_step_run(plant, ss, g, step=-5.0).metrics.itae:.3f}",
-            "ITAE $+5$ K": f"{_step_run(plant, ss, g, step=5.0).metrics.itae:.3f}",
-        })
+        rows.append(
+            {
+                "Tuning": name,
+                "\\(K_p\\)": f"{g.kp:.2f}",
+                "\\(T_i\\) (min)": f"{g.ti:.3f}",
+                "\\(T_d\\) (min)": f"{g.td:.3f}",
+                "\\(\\beta\\)": f"{g.beta:.2f}",
+                "\\(\\gamma\\)": f"{g.gamma:.2f}",
+                "\\(M_s^{\\mathrm{FOPTD}}\\)": f"{calculate_maximum_sensitivity_foptd(foptd, g):.2f}",
+                "\\(M_s^{\\mathrm{lin}}\\)": f"{rob['ms']:.2f}",
+                "PM$^{\\mathrm{lin}}$ ($^\\circ$)": f"{pm:.1f}",
+                "\\(K_{\\mathrm{hf}}\\)": f"{rob['k_hf']:.0f}",
+                "IAE": f"{m.iae:.3f}",
+                "ITAE": f"{m.itae:.3f}",
+                "\\(M_p\\) (\\%)": f"{m.overshoot_pct:.1f}",
+                "TV": f"{m.tv:.1f}",
+                "ITAE $-5$ K": f"{_step_run(plant, ss, g, step=-5.0).metrics.itae:.3f}",
+                "ITAE $+5$ K": f"{_step_run(plant, ss, g, step=5.0).metrics.itae:.3f}",
+            }
+        )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "robust_constraint_cost.tex",
@@ -1885,8 +2358,16 @@ def run_load_replicated(plant, ss, pids: dict, tables_dir: Path) -> None:
 
     def one(name: str, tau: float, seed: int):
         res = exp02.ClosedLoopSimulator().run(
-            plant, pids[name](), ss, (0.0, 15.0), SIM_DT, setpoint_func=lambda t: ss.T,
-            disturbance_func=load, noise_std=LOAD_SIGMA, seed=300 + seed, meas_filter_tau=tau,
+            plant,
+            pids[name](),
+            ss,
+            (0.0, 15.0),
+            SIM_DT,
+            setpoint_func=lambda t: ss.T,
+            disturbance_func=load,
+            noise_std=LOAD_SIGMA,
+            seed=300 + seed,
+            meas_filter_tau=tau,
         )
         dev = np.abs(res.states[:, 1] - ss.T)
         return name, tau, res.metrics.iae, float(dev[res.t >= 2.0].max()), res.metrics.tv
@@ -1900,13 +2381,16 @@ def run_load_replicated(plant, ss, pids: dict, tables_dir: Path) -> None:
         for tau in taus:
             sel = [o for o in out if o[0] == name and o[1] == tau]
             iae, peak, tv = (np.array([o[i] for o in sel]) for i in (2, 3, 4))
-            rows.append({
-                "Method": name, "\\(\\tau_m\\) (min)": f"{tau:.2f}",
-                "IAE": f"{iae.mean():.2f} $\\pm$ {_ci95(iae):.2f}",
-                "Peak dev. (K)": f"{peak.mean():.2f} $\\pm$ {_ci95(peak):.2f}",
-                "TV (L/min)": f"{tv.mean():.0f} $\\pm$ {_ci95(tv):.0f}",
-                "TV/ceiling (\\%)": f"{100.0 * tv.mean() / ceiling:.0f}",
-            })
+            rows.append(
+                {
+                    "Method": name,
+                    "\\(\\tau_m\\) (min)": f"{tau:.2f}",
+                    "IAE": f"{iae.mean():.2f} $\\pm$ {_ci95(iae):.2f}",
+                    "Peak dev. (K)": f"{peak.mean():.2f} $\\pm$ {_ci95(peak):.2f}",
+                    "TV (L/min)": f"{tv.mean():.0f} $\\pm$ {_ci95(tv):.0f}",
+                    "TV/ceiling (\\%)": f"{100.0 * tv.mean() / ceiling:.0f}",
+                }
+            )
     exp02.export_latex_table(
         data=rows,
         output_path=tables_dir / "load_replicated.tex",
@@ -1926,7 +2410,9 @@ def run_n_design_sweep(plant, ss, gains: dict, tables_dir: Path) -> None:
     sigmas = (0.01, 0.05)
 
     def noisy(g, sigma, seed):
-        res = _step_run(plant, ss, g, noise_std=sigma, seed=100 + seed)  # seeds of the noise campaign
+        res = _step_run(
+            plant, ss, g, noise_std=sigma, seed=100 + seed
+        )  # seeds of the noise campaign
         return res.metrics.iae, res.metrics.tv
 
     rows = []
@@ -1936,16 +2422,22 @@ def run_n_design_sweep(plant, ss, gains: dict, tables_dir: Path) -> None:
             rob = linearized_robustness(plant, ss, 100.0, g, theta=SIM_DT / 2.0)
             det = _step_run(plant, ss, g).metrics
             row = {
-                "Method": name, "\\(N\\)": str(n),
+                "Method": name,
+                "\\(N\\)": str(n),
                 "\\(K_{\\mathrm{hf}}\\) (L/min/K)": f"{rob['k_hf']:.0f}",
-                "IAE (noise-free)": f"{det.iae:.3f}", "\\(M_p\\) (\\%)": f"{det.overshoot_pct:.1f}",
+                "IAE (noise-free)": f"{det.iae:.3f}",
+                "\\(M_p\\) (\\%)": f"{det.overshoot_pct:.1f}",
             }
             for sigma in sigmas:
                 mc = np.array(
                     Parallel(n_jobs=-1)(delayed(noisy)(g, sigma, k) for k in range(N_SEEDS))
                 )
-                row[f"IAE ($\\sigma={sigma:g}$)"] = f"{mc[:, 0].mean():.2f} $\\pm$ {_ci95(mc[:, 0]):.2f}"
-                row[f"TV ($\\sigma={sigma:g}$)"] = f"{mc[:, 1].mean():.0f} $\\pm$ {_ci95(mc[:, 1]):.0f}"
+                row[f"IAE ($\\sigma={sigma:g}$)"] = (
+                    f"{mc[:, 0].mean():.2f} $\\pm$ {_ci95(mc[:, 0]):.2f}"
+                )
+                row[f"TV ($\\sigma={sigma:g}$)"] = (
+                    f"{mc[:, 1].mean():.0f} $\\pm$ {_ci95(mc[:, 1]):.0f}"
+                )
             rows.append(row)
     exp02.export_latex_table(
         data=rows,
@@ -1979,9 +2471,11 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
     names = exp02.CSTR_UNCERTAINTY_PROBLEM["names"]
 
     def plant_of(x):
-        return exp02.CSTRPlant(CSTRParameters(
-            E_over_R=nom.E_over_R * float(x[0]), UA=nom.UA * float(x[1]), C_Af=float(x[2])
-        ))
+        return exp02.CSTRPlant(
+            CSTRParameters(
+                E_over_R=nom.E_over_R * float(x[0]), UA=nom.UA * float(x[1]), C_Af=float(x[2])
+            )
+        )
 
     samples = next(iter(raw.values()))[0]
     u_req = np.array([plant_of(x).required_coolant_flow(target) for x in samples])
@@ -1992,14 +2486,16 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
         y = {m: np.array([o[m] for o in outs]) for m in ("IAE", "TV")}
         rho = {m: scipy_stats.spearmanr(u_req, y[m]) for m in y}
         rho_f = scipy_stats.spearmanr(u_req[feasible], y["IAE"][feasible])
-        rows.append({
-            "Method": name,
-            "\\(\\rho_s\\)(IAE, \\(u_{\\mathrm{req}}\\))": f"{rho['IAE'].statistic:+.2f}",
-            "\\(\\rho_s^2\\)": f"{rho['IAE'].statistic ** 2:.2f}",
-            "\\(\\rho_s\\) feasible": f"{rho_f.statistic:+.2f}",
-            "\\(\\rho_s\\)(TV, \\(u_{\\mathrm{req}}\\))": f"{rho['TV'].statistic:+.2f}",
-            "\\(u_{\\mathrm{req}} > u_{\\max}\\) (\\%)": f"{100.0 * np.mean(~feasible):.1f}",
-        })
+        rows.append(
+            {
+                "Method": name,
+                "\\(\\rho_s\\)(IAE, \\(u_{\\mathrm{req}}\\))": f"{rho['IAE'].statistic:+.2f}",
+                "\\(\\rho_s^2\\)": f"{rho['IAE'].statistic ** 2:.2f}",
+                "\\(\\rho_s\\) feasible": f"{rho_f.statistic:+.2f}",
+                "\\(\\rho_s\\)(TV, \\(u_{\\mathrm{req}}\\))": f"{rho['TV'].statistic:+.2f}",
+                "\\(u_{\\mathrm{req}} > u_{\\max}\\) (\\%)": f"{100.0 * np.mean(~feasible):.1f}",
+            }
+        )
         for m in y:
             full = rbd_fast.analyze(problem, samples, y[m], seed=2026, print_to_console=False)
             sub = rbd_fast.analyze(
@@ -2017,19 +2513,24 @@ def run_sobol_margin_test(plant, ss, gains: dict, figures_dir: Path, tables_dir:
         for m in ("IAE", "TV"):
             y_f = np.array([o[m] for o in outs])[feasible]
             reps = Parallel(n_jobs=-1)(  # estimator variability: forest seed and fold split
-                delayed(_shapley_effects)(samples[feasible], y_f, seed, 1) for seed in range(N_SEEDS)
+                delayed(_shapley_effects)(samples[feasible], y_f, seed, 1)
+                for seed in range(N_SEEDS)
             )
             phi = np.array([r[0] for r in reps])
             r2 = np.array([r[1] for r in reps])
             row = {"Method": name, "Metric": m}
-            row |= {exp02.SOBOL_LABELS[nm]: f"{round(phi[:, i].mean(), 2) + 0.0:.2f}"
-                    for i, nm in enumerate(names)}
+            row |= {
+                exp02.SOBOL_LABELS[nm]: f"{round(phi[:, i].mean(), 2) + 0.0:.2f}"
+                for i, nm in enumerate(names)
+            }
             row["\\(R^2\\) (all four)"] = f"{r2.mean():.2f}"
             rows_shap.append(row)
-            half.append({"Method": name, "Metric": m,
-                         "max_half_width": max(_ci95(v) for v in (*phi.T, r2))})
-    pd.DataFrame(half).to_csv(exp02.RESULTS_DIR / "sobol_shapley_halfwidth.csv", index=False,
-                              float_format="%.4f")
+            half.append(
+                {"Method": name, "Metric": m, "max_half_width": max(_ci95(v) for v in (*phi.T, r2))}
+            )
+    pd.DataFrame(half).to_csv(
+        exp02.RESULTS_DIR / "sobol_shapley_halfwidth.csv", index=False, float_format="%.4f"
+    )
     exp02.export_latex_table(
         data=rows_shap,
         output_path=tables_dir / "sobol_shapley.tex",
@@ -2154,16 +2655,31 @@ def remediate_jpc() -> Path:
     run_out_of_sample(plant, ss, {**gains, **extra}, tables_dir, base=tuple(gains))
     stage("load disturbance: deterministic and replicated")
     exp02.run_load_disturbance_campaign(
-        plant, ss, 100.0, pids, exp02.BENCHMARK_LIMITS, figures_dir, tables_dir,
-        dT_f=LOAD_DT_F, dC_frac=LOAD_DC_FRAC, noise_std=0.0,
+        plant,
+        ss,
+        100.0,
+        pids,
+        exp02.BENCHMARK_LIMITS,
+        figures_dir,
+        tables_dir,
+        dT_f=LOAD_DT_F,
+        dC_frac=LOAD_DC_FRAC,
+        noise_std=0.0,
     )
     run_load_replicated(plant, ss, pids, tables_dir)
     stage("derivative filter N")
     run_n_design_sweep(plant, ss, gains, tables_dir)
     stage("noise campaign")
     exp02.run_noise_and_pareto_campaign(
-        plant, ss, 100.0, pids, exp02.BENCHMARK_LIMITS, figures_dir, tables_dir,
-        noise_levels=NOISE_LEVELS, filter_taus=(0.0, MEASUREMENT_TAU_F),
+        plant,
+        ss,
+        100.0,
+        pids,
+        exp02.BENCHMARK_LIMITS,
+        figures_dir,
+        tables_dir,
+        noise_levels=NOISE_LEVELS,
+        filter_taus=(0.0, MEASUREMENT_TAU_F),
     )
     stage("Sobol + heat-removal margin test")
     run_sobol_margin_test(plant, ss, gains, figures_dir, tables_dir)
@@ -2232,6 +2748,11 @@ def build_cace() -> Path:
     exp02.TABLE_FLOAT_ENV = "table*"
 
     # Fouling event first, on an idle CPU: its table reports wall-clock step times
+    from experiments.exp_01b_nmpc_oracle_comparison import (
+        run_mhe_tuning_sensitivity,
+        run_nmpc_oracle_benchmark,
+    )
+
     run_nmpc_oracle_benchmark(figures_dir, tables_dir, exp02.RESULTS_DIR, CACE_CONTROLLERS)
     run_mhe_tuning_sensitivity(tables_dir=tables_dir)
 

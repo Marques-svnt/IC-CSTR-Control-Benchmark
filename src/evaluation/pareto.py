@@ -471,10 +471,10 @@ def run_sobol_global_sensitivity(
         "num_vars": 4,
         "names": ["alpha_UA", "E_over_R_scale", "C_Af", "T_f"],
         "bounds": [
-            [0.65, 1.05],   # Degradação de troca térmica (fouling)
-            [0.97, 1.03],   # Incerteza na energia de ativação E/R
-            [0.85, 1.15],   # Concentração de alimentação [mol/L]
-            [345.0, 355.0], # Temperatura de alimentação [K]
+            [0.65, 1.05],  # Degradação de troca térmica (fouling)
+            [0.97, 1.03],  # Incerteza na energia de ativação E/R
+            [0.85, 1.15],  # Concentração de alimentação [mol/L]
+            [345.0, 355.0],  # Temperatura de alimentação [K]
         ],
     }
 
@@ -524,11 +524,11 @@ if __name__ == "__main__":
 
     # Conjunto de candidatos simulando diferentes sintonias de PID na malha do CSTR
     pontos_candidatos = [
-        ParetoPoint(iae=3.5, tv=45.0,  ms=1.35, label="SIMC Muito Conservador"),
-        ParetoPoint(iae=2.4, tv=65.0,  ms=1.45, label="SIMC Padrão (tc=theta)"),
-        ParetoPoint(iae=1.8, tv=95.0,  ms=1.58, label="Otimização ITAE (Ms <= 1.6)"),
+        ParetoPoint(iae=3.5, tv=45.0, ms=1.35, label="SIMC Muito Conservador"),
+        ParetoPoint(iae=2.4, tv=65.0, ms=1.45, label="SIMC Padrão (tc=theta)"),
+        ParetoPoint(iae=1.8, tv=95.0, ms=1.58, label="Otimização ITAE (Ms <= 1.6)"),
         ParetoPoint(iae=1.4, tv=180.0, ms=1.85, label="Ziegler-Nichols (Inviável Ms>1.6)"),
-        ParetoPoint(iae=2.7, tv=85.0,  ms=1.50, label="Candidato Subótimo Dominado"),
+        ParetoPoint(iae=2.7, tv=85.0, ms=1.50, label="Candidato Subótimo Dominado"),
         ParetoPoint(iae=1.6, tv=130.0, ms=1.59, label="Otimização IAE Agressiva"),
     ]
 

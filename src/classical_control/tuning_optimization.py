@@ -35,8 +35,8 @@ class OptimizationCriterion(str, Enum):
     """Critérios de desempenho integral para otimização da resposta transitória."""
 
     ITAE = "itae"  # Integral do Erro Absoluto Ponderado no Tempo
-    IAE = "iae"    # Integral do Erro Absoluto
-    ISE = "ise"    # Integral do Erro Quadrático
+    IAE = "iae"  # Integral do Erro Absoluto
+    ISE = "ise"  # Integral do Erro Quadrático
 
 
 # %% [Cálculo da Sensibilidade Máxima no Domínio da Frequência]
@@ -92,9 +92,7 @@ def loop_gain_linearized(
     A, B = plant.linearize(state, q_j)
     c_row = np.array([[0.0, 1.0, 0.0]], dtype=np.float64)  # measured output T
     s = 1j * np.asarray(omegas, dtype=np.float64)
-    g_jw = np.array(
-        [complex((c_row @ np.linalg.solve(si * np.eye(3) - A, B))[0, 0]) for si in s]
-    )
+    g_jw = np.array([complex((c_row @ np.linalg.solve(si * np.eye(3) - A, B))[0, 0]) for si in s])
     return g_jw * np.exp(-s * theta) * _pid_frequency_response(gains, s)
 
 
@@ -244,11 +242,7 @@ def analyze_loop_margins_and_gang_of_4(
     P_sys = foptd.to_control_tf(pade_order=pade_order)
     tau_f = gains.td / gains.n_filter if gains.td > 0 else 1e-4
     s = ct.tf([1.0, 0.0], [1.0])
-    C_sys = (
-        gains.kp
-        + gains.kp / (gains.ti * s)
-        + (gains.kp * gains.td * s) / (tau_f * s + 1.0)
-    )
+    C_sys = gains.kp + gains.kp / (gains.ti * s) + (gains.kp * gains.td * s) / (tau_f * s + 1.0)
 
     L_sys = P_sys * C_sys
     gm, pm, wg, wp = ct.margin(L_sys)
@@ -355,8 +349,10 @@ def tune_by_optimization(
         if optimize_weights:
             beta, gamma = float(params[3]), float(params[4])
             box_penalty = 1e4 * (
-                max(0.0, -beta) ** 2 + max(0.0, beta - 1.0) ** 2
-                + max(0.0, -gamma) ** 2 + max(0.0, gamma - 1.0) ** 2
+                max(0.0, -beta) ** 2
+                + max(0.0, beta - 1.0) ** 2
+                + max(0.0, -gamma) ** 2
+                + max(0.0, gamma - 1.0) ** 2
             )
             weights = {"beta": min(max(beta, 0.0), 1.0), "gamma": min(max(gamma, 0.0), 1.0)}
         candidate_gains = PIDGains(kp=kp, ti=ti, td=td, **weights)
@@ -428,9 +424,9 @@ def tune_by_optimization(
         }
     opt_gains = PIDGains(kp=opt_kp, ti=max(opt_ti, 0.05), td=max(opt_td, 0.0), **weights)
     if ms_model == "exact":
-        final_ms = linearized_robustness(
-            plant, nominal_state, q_j_ss, opt_gains, theta=dt / 2.0
-        )["ms"]
+        final_ms = linearized_robustness(plant, nominal_state, q_j_ss, opt_gains, theta=dt / 2.0)[
+            "ms"
+        ]
     else:
         final_ms = calculate_maximum_sensitivity(
             plant, nominal_state, q_j_ss, opt_gains, foptd=foptd
@@ -467,8 +463,9 @@ if __name__ == "__main__":
         q_j_ss=q_j_nom,
         gains=gains_teste,
     )
-    print(f"Ganhos Teste: Kp={gains_teste.kp:.2f}, Ti={gains_teste.ti:.2f}, "
-          f"Td={gains_teste.td:.2f}")
+    print(
+        f"Ganhos Teste: Kp={gains_teste.kp:.2f}, Ti={gains_teste.ti:.2f}, Td={gains_teste.td:.2f}"
+    )
     print(f"Pico de Sensibilidade Máxima Ms: {ms_teste:.3f} (Limite Robusto: <= 1.60)")
 
     # 3. Execução de otimização rápida (t_sim curto para visualização no Spyder)

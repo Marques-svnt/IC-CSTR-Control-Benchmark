@@ -104,7 +104,6 @@ class TestAntiWindupStrategies:
         assert pid_bc._is_saturated is True
         assert pid_bc._integral_state < 30.0
 
-
     def test_valve_preview_does_not_move_the_valve(self) -> None:
         """preview returns what apply would return, without changing the valve position."""
         valve = ValveActuator(ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0), 100.0)
@@ -133,8 +132,10 @@ class TestAntiWindupStrategies:
         limits = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0)
         gains = PIDGains(kp=-20.0, ti=1e9, td=0.0, tt=tt)
         pid = PIDController(
-            gains=gains, actuator_limits=limits,
-            anti_windup=AntiWindupMethod.BACK_CALCULATION_EXACT, u_bias=100.0,
+            gains=gains,
+            actuator_limits=limits,
+            anti_windup=AntiWindupMethod.BACK_CALCULATION_EXACT,
+            u_bias=100.0,
         )
         pid._last_u_unconstrained, pid._last_u_applied = 100.0 + excess, 100.0
         _, diag = pid.compute(setpoint=400.0, measurement=400.0, dt=0.02)

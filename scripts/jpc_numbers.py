@@ -24,7 +24,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 RES = ROOT / "results" / "jpc"
-PAPER = ROOT / "papers" / "01_journal_of_process_control"
+_DEFAULT_PAPER = ROOT / "papers" / "01_journal_of_process_control"
+PAPER = _DEFAULT_PAPER if _DEFAULT_PAPER.exists() else ROOT / "outputs" / "jpc"
+REPO = ROOT / "repository" if (ROOT / "repository").exists() else PAPER / "repository"
 ONE_DOF = ("Ziegler-Nichols", "Cohen-Coon", "Tyreus-Luyben", "AMIGO", "Skogestad SIMC")
 OPT = "Optimal ITAE ($M_s^{\\mathrm{FOPTD}} \\leq 1.6$)"
 SIX = (*ONE_DOF, OPT)
@@ -74,12 +76,18 @@ def define(name: str, value: float | str, source: str, fmt: str = "{:.2f}") -> N
 
 
 def booktabs(
-    header: list[str], body: list[list[str]], caption: str, label: str, group: str = "",
+    header: list[str],
+    body: list[list[str]],
+    caption: str,
+    label: str,
+    group: str = "",
     env: str = "table*",
 ) -> str:
     """Starred booktabs float in the style of exp02.export_latex_table; `group` is an optional top row."""
     top = [group + r" \\"] if group else []
-    lines = top + [" & ".join(header) + r" \\", r"\midrule"] + [" & ".join(r) + r" \\" for r in body]
+    lines = (
+        top + [" & ".join(header) + r" \\", r"\midrule"] + [" & ".join(r) + r" \\" for r in body]
+    )
     return (
         f"\\begin{{{env}}}[t]\n\\centering\n\\footnotesize\n\\setlength{{\\tabcolsep}}{{3pt}}\n"
         f"\\caption{{{caption}}}\n\\label{{{label}}}\n"
@@ -98,7 +106,9 @@ def signblind_numbers() -> None:
     r = low[0]
     define("sbZNlowtime", float(r["t_lower_min"]), "smax_signblind_diagnostics", "{:.2f}")
     define("sbZNlowerr", float(r["final_error_K"]), "smax_signblind_diagnostics", "{:+.1f}")
-    define("sbZNlowrate", float(r["error_rate_end_K_per_min"]), "smax_signblind_diagnostics", "{:.2f}")
+    define(
+        "sbZNlowrate", float(r["error_rate_end_K_per_min"]), "smax_signblind_diagnostics", "{:.2f}"
+    )
 
 
 def ablation_numbers() -> None:
@@ -242,12 +252,19 @@ def latch_check_numbers() -> None:
         s = SHORT[r["Method"]]
         define(f"{s}tkzero", float(r["t_k0_min"]), "latch_check", "{:.2f}")
         define(f"{s}Ikzero", float(r["I_k0"]), "latch_check", "{:.0f}")
-        define(f"{s}Dbar", float(r["D_bar_band"]), "latch_check (D bound from Eq. 10 and the band)", "{:.0f}")
+        define(
+            f"{s}Dbar",
+            float(r["D_bar_band"]),
+            "latch_check (D bound from Eq. 10 and the band)",
+            "{:.0f}",
+        )
         define(f"{s}delta", float(r["delta_K"]), "latch_check", "{:.2f}")
         define(f"{s}latchmargin", float(r["margin_band"]), "latch_check", "{:.0f}")
         istar = next(v for n, v, _ in MACROS if n == f"{s}Istar")
         if istar != f"{float(r['I_star']):.0f}":
-            raise ValueError(f"I* of latch_check ({r['I_star']}) differs from Proposition 1 ({istar})")
+            raise ValueError(
+                f"I* of latch_check ({r['I_star']}) differs from Proposition 1 ({istar})"
+            )
 
 
 def back_calculation_numbers() -> None:
@@ -271,12 +288,23 @@ def back_calculation_detail() -> None:
     """Unrestricted design-step choice and the TV/overshoot comparison at T_t^sel."""
     tab = rows("antiwindup_tt_summary")
     out = [SHORT[r["Method"]] for r in tab if r["in range"] == "no"]
-    define("ttoutside", ", ".join(out[:-1]) + " and " + out[-1] if len(out) > 1 else out[0],
-           "antiwindup_tt_summary (unrestricted T_t^sel outside [T_d, T_i])")
+    define(
+        "ttoutside",
+        ", ".join(out[:-1]) + " and " + out[-1] if len(out) > 1 else out[0],
+        "antiwindup_tt_summary (unrestricted T_t^sel outside [T_d, T_i])",
+    )
     col_r, col_f = "sel: \\(\\pm 5\\)~K", "free: \\(\\pm 5\\)~K"
     gain = [num(r[col_r]) - num(r[col_f]) for r in tab if r["in range"] == "no"]
-    define("ttfreemaxgain", max(gain), "antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)")
-    define("ttfreemaxloss", -min(gain), "antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)")
+    define(
+        "ttfreemaxgain",
+        max(gain),
+        "antiwindup_tt_summary (largest drop of the +-5 K worst ratio when leaving the range)",
+    )
+    define(
+        "ttfreemaxloss",
+        -min(gain),
+        "antiwindup_tt_summary (largest rise of the +-5 K worst ratio when leaving the range)",
+    )
     lower, upper = [], []
     for r in tab:
         td, ti = (float(x) for x in r["\\([T_d, T_i]\\)"].strip("[]").split(","))
@@ -294,39 +322,82 @@ def back_calculation_detail() -> None:
     freex = {SHORT[r["Method"]]: float(r["free, exact"]) for r in tab}
     define("ttfreexZN", freex["ZN"], "antiwindup_tt_summary (free choice, exact factor)", "{:.3f}")
     define("ttfreexCC", freex["CC"], "antiwindup_tt_summary (free choice, exact factor)", "{:.3f}")
-    dif = [(abs(num(r[c]) - num(r["sel: \\(\\pm 5\\)~K"])), SHORT[r["Method"]])
-           for r in tab for c in ("free: \\(\\pm 5\\)~K", "exact: \\(\\pm 5\\)~K")]
+    dif = [
+        (abs(num(r[c]) - num(r["sel: \\(\\pm 5\\)~K"])), SHORT[r["Method"]])
+        for r in tab
+        for c in ("free: \\(\\pm 5\\)~K", "exact: \\(\\pm 5\\)~K")
+    ]
     top = max(dif)
-    define("ttfreediffmax", top[0], "antiwindup_tt_summary (largest |free - cv| of the +-5 K worst ratio)")
+    define(
+        "ttfreediffmax",
+        top[0],
+        "antiwindup_tt_summary (largest |free - cv| of the +-5 K worst ratio)",
+    )
     define("ttfreediffloop", top[1], "antiwindup_tt_summary")
-    define("ttfreediffrest", max(d for d, n in dif if n != top[1]), "antiwindup_tt_summary (other loops)")
-    define("ttfreexgain", max(num(r["sel: \\(\\pm 5\\)~K"]) - num(r["exact: \\(\\pm 5\\)~K"]) for r in tab),
-           "antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^sel)")
-    define("ttfreeSIMCovTi", free["SIMC"] / ti_simc, "antiwindup_tt_summary (free T_t^sel / T_i)", "{:.0f}")
+    define(
+        "ttfreediffrest",
+        max(d for d, n in dif if n != top[1]),
+        "antiwindup_tt_summary (other loops)",
+    )
+    define(
+        "ttfreexgain",
+        max(num(r["sel: \\(\\pm 5\\)~K"]) - num(r["exact: \\(\\pm 5\\)~K"]) for r in tab),
+        "antiwindup_tt_summary (largest drop of the +-5 K worst ratio, exact free choice vs T_t^sel)",
+    )
+    define(
+        "ttfreeSIMCovTi",
+        free["SIMC"] / ti_simc,
+        "antiwindup_tt_summary (free T_t^sel / T_i)",
+        "{:.0f}",
+    )
     for step, s in (("$-2$ K", "two"), ("$-5$ K", "m"), ("$+5$ K", "p")):
         m = {"Method": "Skogestad SIMC", "Step": step}
-        define(f"SIMCcv{s}", num(cell("antiwindup_tt_sweep", "IAE $T_t^{\\mathrm{sel}}$", **m)), "antiwindup_tt_sweep")
-        define(f"SIMCti{s}", num(cell("antiwindup_tt_sweep", "IAE $T_t=T_i$", **m)), "antiwindup_tt_sweep")
+        define(
+            f"SIMCcv{s}",
+            num(cell("antiwindup_tt_sweep", "IAE $T_t^{\\mathrm{sel}}$", **m)),
+            "antiwindup_tt_sweep",
+        )
+        define(
+            f"SIMCti{s}",
+            num(cell("antiwindup_tt_sweep", "IAE $T_t=T_i$", **m)),
+            "antiwindup_tt_sweep",
+        )
     tv = rows("antiwindup_tt_tvmp")
     emp = [r for r in tv if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
-    define("empTVlower", f"{sum(num(r['TV BC (L/min)']) < num(r['TV dir. (L/min)']) for r in emp)}",
-           "antiwindup_tt_tvmp (ZN and CC cases with lower TV under BC)")
-    define("empMplower", f"{sum(num(r['\\(M_p\\) BC (\\%)']) < num(r['\\(M_p\\) dir. (\\%)']) for r in emp)}",
-           "antiwindup_tt_tvmp (ZN and CC cases with lower overshoot under BC)")
+    define(
+        "empTVlower",
+        f"{sum(num(r['TV BC (L/min)']) < num(r['TV dir. (L/min)']) for r in emp)}",
+        "antiwindup_tt_tvmp (ZN and CC cases with lower TV under BC)",
+    )
+    define(
+        "empMplower",
+        f"{sum(num(r['\\(M_p\\) BC (\\%)']) < num(r['\\(M_p\\) dir. (\\%)']) for r in emp)}",
+        "antiwindup_tt_tvmp (ZN and CC cases with lower overshoot under BC)",
+    )
     define("empcases", f"{len(emp)}", "antiwindup_tt_tvmp")
     cc5 = {"Method": "Cohen-Coon", "Step": "$+5$ K"}
-    for col, tag in (("TV dir. (L/min)", "CCfiveTVdir"), ("TV BC (L/min)", "CCfiveTVbc"),
-                     ("\\(M_p\\) dir. (\\%)", "CCfiveMpdir"), ("\\(M_p\\) BC (\\%)", "CCfiveMpbc")):
+    for col, tag in (
+        ("TV dir. (L/min)", "CCfiveTVdir"),
+        ("TV BC (L/min)", "CCfiveTVbc"),
+        ("\\(M_p\\) dir. (\\%)", "CCfiveMpdir"),
+        ("\\(M_p\\) BC (\\%)", "CCfiveMpbc"),
+    ):
         define(tag, num(cell("antiwindup_tt_tvmp", col, **cc5)), "antiwindup_tt_tvmp", "{:.1f}")
     rest = [r for r in tv if r["Method"] in ("Tyreus-Luyben", "Skogestad SIMC", OPT)]
     mp = "\\(M_p\\) BC (\\%)", "\\(M_p\\) dir. (\\%)"
     define("restcases", f"{len(rest)}", "antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE)")
-    define("restTVhigher", f"{sum(num(r['TV BC (L/min)']) > num(r['TV dir. (L/min)']) for r in rest)}",
-           "antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher TV under BC)")
+    define(
+        "restTVhigher",
+        f"{sum(num(r['TV BC (L/min)']) > num(r['TV dir. (L/min)']) for r in rest)}",
+        "antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher TV under BC)",
+    )
     if any(num(r[mp[0]]) < num(r[mp[1]]) for r in rest):
         raise ValueError("text states that BC never overshoots less for TL, SIMC and Optimal ITAE")
-    define("restMphigher", f"{sum(num(r[mp[0]]) > num(r[mp[1]]) for r in rest)}",
-           "antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher overshoot under BC)")
+    define(
+        "restMphigher",
+        f"{sum(num(r[mp[0]]) > num(r[mp[1]]) for r in rest)}",
+        "antiwindup_tt_tvmp (TL, SIMC, Optimal ITAE cases with higher overshoot under BC)",
+    )
     for m, step, col, tag in (
         ("Skogestad SIMC", "$-5$ K", "TV dir. (L/min)", "SIMCfiveTVdir"),
         ("Skogestad SIMC", "$-5$ K", "TV BC (L/min)", "SIMCfiveTVbc"),
@@ -335,7 +406,12 @@ def back_calculation_detail() -> None:
         ("Tyreus-Luyben", "$+5$ K", mp[1], "TLfiveMpdir"),
         ("Tyreus-Luyben", "$+5$ K", mp[0], "TLfiveMpbc"),
     ):
-        define(tag, num(cell("antiwindup_tt_tvmp", col, Method=m, Step=step)), "antiwindup_tt_tvmp", "{:.1f}")
+        define(
+            tag,
+            num(cell("antiwindup_tt_tvmp", col, Method=m, Step=step)),
+            "antiwindup_tt_tvmp",
+            "{:.1f}",
+        )
     simc = [r for r in tv if r["Method"] == "Skogestad SIMC"]
     inc = [100.0 * (num(r["TV BC (L/min)"]) / num(r["TV dir. (L/min)"]) - 1.0) for r in simc]
     define("SIMCtvincmin", min(inc), "antiwindup_tt_tvmp", "{:.0f}")
@@ -414,16 +490,31 @@ def robustness_extension() -> list[list[str]]:
         for n in SIX
     ]
     define("dbsixworstpct", 100.0 * (max(ratios) - 1.0), "antiwindup_deadband", "{:.0f}")
-    define("dbampratiomin", min(
-        num(cell("antiwindup_deadband", "Amp. direct.", **{"Deadband (L/min)": "6", "Method": n}))
-        / num(cell("antiwindup_deadband", RATE, **{"Deadband (L/min)": "6", "Method": n}))
-        for n in ("Ziegler-Nichols", "Cohen-Coon")), "antiwindup_deadband (amp-only / rate, ZN and CC)", "{:.0f}")
+    define(
+        "dbampratiomin",
+        min(
+            num(
+                cell(
+                    "antiwindup_deadband", "Amp. direct.", **{"Deadband (L/min)": "6", "Method": n}
+                )
+            )
+            / num(cell("antiwindup_deadband", RATE, **{"Deadband (L/min)": "6", "Method": n}))
+            for n in ("Ziegler-Nichols", "Cohen-Coon")
+        ),
+        "antiwindup_deadband (amp-only / rate, ZN and CC)",
+        "{:.0f}",
+    )
     ratios_cv = [
         num(cell("antiwindup_deadband", RATE, **{"Deadband (L/min)": "6", "Method": n}))
         / num(cell("antiwindup_deadband", BC_CV, **{"Deadband (L/min)": "6", "Method": n}))
         for n in SIX
     ]
-    define("dbsixworstpctcv", 100.0 * (max(ratios_cv) - 1.0), "antiwindup_deadband (rate rule vs BC T_t^sel)", "{:.0f}")
+    define(
+        "dbsixworstpctcv",
+        100.0 * (max(ratios_cv) - 1.0),
+        "antiwindup_deadband (rate rule vs BC T_t^sel)",
+        "{:.0f}",
+    )
     for name in ("Ziegler-Nichols", "Cohen-Coon", "AMIGO", "Skogestad SIMC"):
         s = SHORT[name]
         for col, tag in (
@@ -444,34 +535,57 @@ def rate_trigger_numbers() -> None:
     """SIMC as the counterexample of the slew-rate trigger, and what the rate demand rho tells."""
     simc = "Skogestad SIMC"
     for col, tag in (("None", "none"), (RATE, "dir")):
-        define(f"SIMC{tag}", num(cell("antiwindup_ablation", col, Method=simc)), "antiwindup_ablation")
+        define(
+            f"SIMC{tag}", num(cell("antiwindup_ablation", col, Method=simc)), "antiwindup_ablation"
+        )
         for scen, s in (("$-5$ K step", "m"), ("$+5$ K step", "p")):
-            define(f"SIMCfive{s}{tag}", num(cell("antiwindup_scenarios", col, Scenario=scen, Method=simc)),
-                   "antiwindup_scenarios")
-        define(f"dbSIMC{tag}six",
-               num(cell("antiwindup_deadband", col, **{"Deadband (L/min)": "6", "Method": simc})),
-               "antiwindup_deadband")
+            define(
+                f"SIMCfive{s}{tag}",
+                num(cell("antiwindup_scenarios", col, Scenario=scen, Method=simc)),
+                "antiwindup_scenarios",
+            )
+        define(
+            f"dbSIMC{tag}six",
+            num(cell("antiwindup_deadband", col, **{"Deadband (L/min)": "6", "Method": simc})),
+            "antiwindup_deadband",
+        )
     grid = rows("rate_demand_grid")
     for r in grid:
         for k in ("ratio", "rho", "step_K", "S_max"):
             r[k] = float(r[k])
     for smax, tag in ((20.0, "twenty"), (45.0, "ff"), (80.0, "eighty"), (320.0, "last")):
-        r = next(x for x in grid if x["Method"] == simc and x["step_K"] == -2.0 and x["S_max"] == smax)
+        r = next(
+            x for x in grid if x["Method"] == simc and x["step_K"] == -2.0 and x["S_max"] == smax
+        )
         define(f"SIMCratio{tag}", r["ratio"], "rate_demand_grid (IAE_amp/IAE_rate, -2 K)")
     at80 = [r for r in grid if r["S_max"] == 80.0]
     trl = {r["Method"]: float(r["T_rl_min"]) for r in at80 if r["step_K"] == -2.0}
     define("TrlSIMC", trl[simc], "rate_demand_grid (time slew-limited, -2 K, S_max = 80)")
     define("Trlothersmin", min(v for k, v in trl.items() if k != simc), "rate_demand_grid")
     define("Trlothersmax", max(v for k, v in trl.items() if k != simc), "rate_demand_grid")
-    define("rhoSIMCmaxeighty", max(r["rho"] for r in at80 if r["Method"] == simc), "rate_demand_grid")
-    define("rhoothersmineighty", min(r["rho"] for r in at80 if r["Method"] != simc), "rate_demand_grid")
+    define(
+        "rhoSIMCmaxeighty", max(r["rho"] for r in at80 if r["Method"] == simc), "rate_demand_grid"
+    )
+    define(
+        "rhoothersmineighty", min(r["rho"] for r in at80 if r["Method"] != simc), "rate_demand_grid"
+    )
     hi, lo = [r for r in grid if r["rho"] >= 1.0], [r for r in grid if r["rho"] < 1.0]
     define("ncases", f"{len(grid)}", "rate_demand_grid (6 loops x 3 steps x 9 S_max)")
     define("nrhohi", f"{len(hi)}", "rate_demand_grid (cases with rho >= 1)")
-    define("nrhohihelp", f"{sum(r['ratio'] > 1.0 for r in hi)}", "rate_demand_grid (rho >= 1, ratio > 1)")
-    define("rhohiratiomin", min(r["ratio"] for r in hi), "rate_demand_grid (worst ratio with rho >= 1)")
-    define("rholoratiomin", min(r["ratio"] for r in lo), "rate_demand_grid (ratio range with rho < 1)")
-    define("rholoratiomax", max(r["ratio"] for r in lo), "rate_demand_grid (ratio range with rho < 1)")
+    define(
+        "nrhohihelp",
+        f"{sum(r['ratio'] > 1.0 for r in hi)}",
+        "rate_demand_grid (rho >= 1, ratio > 1)",
+    )
+    define(
+        "rhohiratiomin", min(r["ratio"] for r in hi), "rate_demand_grid (worst ratio with rho >= 1)"
+    )
+    define(
+        "rholoratiomin", min(r["ratio"] for r in lo), "rate_demand_grid (ratio range with rho < 1)"
+    )
+    define(
+        "rholoratiomax", max(r["ratio"] for r in lo), "rate_demand_grid (ratio range with rho < 1)"
+    )
     hurt_lo = [r for r in lo if r["ratio"] < 1.0]
     if {r["Method"] for r in hurt_lo} != {simc}:
         raise ValueError("text states that every rho < 1 case made worse by the trigger is SIMC")
@@ -491,7 +605,11 @@ def rate_demand_check_numbers() -> None:
     lo = [r for r in tab if num(r["\\(\\rho\\)"]) < 1.0]
     define("chkcases", f"{len(tab)}", "rate_demand_check")
     define("chkrhohi", f"{len(hi)}", "rate_demand_check (rho >= 1)")
-    define("chkrhohihelp", f"{sum(num(r[ratio]) > 1.0 for r in hi)}", "rate_demand_check (rho >= 1, ratio > 1)")
+    define(
+        "chkrhohihelp",
+        f"{sum(num(r[ratio]) > 1.0 for r in hi)}",
+        "rate_demand_check (rho >= 1, ratio > 1)",
+    )
     define("chkrholo", f"{len(lo)}", "rate_demand_check (rho < 1)")
     for name in ("AMIGO", "Skogestad SIMC"):
         vals = [num(r[ratio]) for r in lo if r["Method"] == name]
@@ -500,13 +618,19 @@ def rate_demand_check_numbers() -> None:
     loops = [SHORT[m] for m in SIX if any(r["Method"] == m for r in hi)]
     define("chkhiloops", f"{len(loops)}", "rate_demand_check (loops with a rho >= 1 case)")
     define("chkhilooplist", ", ".join(loops[:-1]) + " and " + loops[-1], "rate_demand_check")
-    near = sorted((r for r in hi if num(r["\\(\\rho\\)"]) < 2.0), key=lambda r: (SIX.index(r["Method"]), num(r["\\(\\rho\\)"])))
+    near = sorted(
+        (r for r in hi if num(r["\\(\\rho\\)"]) < 2.0),
+        key=lambda r: (SIX.index(r["Method"]), num(r["\\(\\rho\\)"])),
+    )
     by = {}
     for r in near:
         by.setdefault(SHORT[r["Method"]], []).append(r["\\(\\rho\\)"])
     define("chknear", f"{len(near)}", "rate_demand_check (rho >= 1 cases with rho < 2)")
-    define("chknearlist", "; ".join(f"{k} $\\rho = " + "$ and $".join(v) + "$" for k, v in by.items()),
-           "rate_demand_check (cases near the threshold, rho < 2)")
+    define(
+        "chknearlist",
+        "; ".join(f"{k} $\\rho = " + "$ and $".join(v) + "$" for k, v in by.items()),
+        "rate_demand_check (cases near the threshold, rho < 2)",
+    )
     if {r["Method"] for r in lo} != {"AMIGO", "Skogestad SIMC"}:
         raise ValueError("text names AMIGO and SIMC as the rho < 1 cases of the check")
 
@@ -525,12 +649,23 @@ def noise_policy_numbers() -> None:
             better = [SHORT[m] for m in SIX if ratio[m] < 1.0]
             join = lambda xs: ", ".join(xs[:-1]) + " and " + xs[-1] if len(xs) > 1 else xs[0]  # noqa: E731
             define("nzbcworse", join(worse), "noise_policies (BC worse than the rule, sigma 0.05)")
-            define("nzbcbetter", join(better), "noise_policies (BC better than the rule, sigma 0.05)")
+            define(
+                "nzbcbetter", join(better), "noise_policies (BC better than the rule, sigma 0.05)"
+            )
             simc = next(r for r in sel if r["Method"] == "Skogestad SIMC")
             define("nzSIMCdir", num(simc[dr]), "noise_policies (sigma 0.05)")
             define("nzSIMCnone", num(simc["IAE None"]), "noise_policies (sigma 0.05)")
-            emp = [num(r["IAE None"]) / num(r[dr]) for r in sel if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
-            define("nzempnonemin", min(emp), "noise_policies (IAE none / IAE directional, ZN and CC)", "{:.0f}")
+            emp = [
+                num(r["IAE None"]) / num(r[dr])
+                for r in sel
+                if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")
+            ]
+            define(
+                "nzempnonemin",
+                min(emp),
+                "noise_policies (IAE none / IAE directional, ZN and CC)",
+                "{:.0f}",
+            )
 
 
 def noise_round_numbers() -> None:
@@ -538,22 +673,60 @@ def noise_round_numbers() -> None:
     join = lambda xs: xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]  # noqa: E731
     tab = rows("noise_ttcv")
     ttcol = "\\(T_t^{\\mathrm{sel}}\\), \\(T_t^{\\mathrm{sel,noise}}\\) (min)"
-    bc, bcn, dr = "IAE BC ($T_t^{\\mathrm{sel}}$)", "IAE BC ($T_t^{\\mathrm{sel,noise}}$)", "IAE Directional"
+    bc, bcn, dr = (
+        "IAE BC ($T_t^{\\mathrm{sel}}$)",
+        "IAE BC ($T_t^{\\mathrm{sel,noise}}$)",
+        "IAE Directional",
+    )
     changed = [SHORT[r["Method"]] for r in tab if r[ttcol] and len(set(r[ttcol].split(", "))) == 2]
     define("nzttchanged", join(changed), "noise_ttcv (loops whose T_t changes under noise)")
     two = [r for r in tab if r["Step"] == "$-2$ K" and SHORT[r["Method"]] in changed]
-    define("nzttbeforemax", max(num(r[bc]) / num(r[dr]) for r in two), "noise_ttcv (-2 K, BC/dir, noise-free T_t)")
-    define("nzttaftermax", max(num(r[bcn]) / num(r[dr]) for r in two), "noise_ttcv (-2 K, BC/dir, noise T_t)")
+    define(
+        "nzttbeforemax",
+        max(num(r[bc]) / num(r[dr]) for r in two),
+        "noise_ttcv (-2 K, BC/dir, noise-free T_t)",
+    )
+    define(
+        "nzttaftermax",
+        max(num(r[bcn]) / num(r[dr]) for r in two),
+        "noise_ttcv (-2 K, BC/dir, noise T_t)",
+    )
     five = [r for r in tab if r["Step"] != "$-2$ K" and SHORT[r["Method"]] in changed]
-    define("nzttfiveaftermax", max(num(r[bcn]) / num(r[dr]) for r in five), "noise_ttcv (+-5 K, BC/dir, noise T_t)")
+    define(
+        "nzttfiveaftermax",
+        max(num(r[bcn]) / num(r[dr]) for r in five),
+        "noise_ttcv (+-5 K, BC/dir, noise T_t)",
+    )
     mech = rows("noise_mechanism")
     emp = [r for r in mech if r["Method"] in ("Ziegler-Nichols", "Cohen-Coon")]
     rb, rd = "RMS \\(I - I_0\\) BC ($T_t^{\\mathrm{sel}}$)", "RMS \\(I - I_0\\) Directional"
-    define("mechcutmin", min(num(r["cut share Directional"]) for r in emp), "noise_mechanism (ZN, CC)")
-    define("mechrmsratiomin", min(num(r[rb]) / num(r[rd]) for r in emp), "noise_mechanism (ZN, CC)", "{:.0f}")
-    define("mechrmsratiomax", max(num(r[rb]) / num(r[rd]) for r in emp), "noise_mechanism (ZN, CC)", "{:.0f}")
-    define("mechtrackmin", min(num(r["mean tracking step (L/min)"]) for r in emp), "noise_mechanism (ZN, CC)", "{:.1f}")
-    define("mechtrackmax", max(num(r["mean tracking step (L/min)"]) for r in emp), "noise_mechanism (ZN, CC)", "{:.1f}")
+    define(
+        "mechcutmin", min(num(r["cut share Directional"]) for r in emp), "noise_mechanism (ZN, CC)"
+    )
+    define(
+        "mechrmsratiomin",
+        min(num(r[rb]) / num(r[rd]) for r in emp),
+        "noise_mechanism (ZN, CC)",
+        "{:.0f}",
+    )
+    define(
+        "mechrmsratiomax",
+        max(num(r[rb]) / num(r[rd]) for r in emp),
+        "noise_mechanism (ZN, CC)",
+        "{:.0f}",
+    )
+    define(
+        "mechtrackmin",
+        min(num(r["mean tracking step (L/min)"]) for r in emp),
+        "noise_mechanism (ZN, CC)",
+        "{:.1f}",
+    )
+    define(
+        "mechtrackmax",
+        max(num(r["mean tracking step (L/min)"]) for r in emp),
+        "noise_mechanism (ZN, CC)",
+        "{:.1f}",
+    )
     if any(r["cut share Directional"] != r["cut share BC ($T_t^{\\mathrm{sel}}$)"] for r in emp):
         raise ValueError("text states that both policies are cut in the same share of samples")
     grid = rows("rho_noise_grid")
@@ -562,18 +735,41 @@ def noise_round_numbers() -> None:
             r[k] = float(r[k])
     for sg, tau, tag in ((0.0, 0.0, "free"), (0.05, 0.0, "raw"), (0.05, 0.05, "filt")):
         sel = [r for r in grid if r["sigma"] == sg and r["tau_m"] == tau]
-        define(f"rhonz{tag}wrong", f"{sum(r['rho'] >= 1.0 and r['R'] < 1.0 for r in sel)}",
-               "rho_noise_grid (rho >= 1 but the trigger makes the loop worse)")
-        define(f"rhonz{tag}SIMCmax", max(r["rho"] for r in sel if r["Method"] == "Skogestad SIMC"), "rho_noise_grid")
+        define(
+            f"rhonz{tag}wrong",
+            f"{sum(r['rho'] >= 1.0 and r['R'] < 1.0 for r in sel)}",
+            "rho_noise_grid (rho >= 1 but the trigger makes the loop worse)",
+        )
+        define(
+            f"rhonz{tag}SIMCmax",
+            max(r["rho"] for r in sel if r["Method"] == "Skogestad SIMC"),
+            "rho_noise_grid",
+        )
     define("rhonzcases", f"{sum(r['sigma'] == 0.0 for r in grid)}", "rho_noise_grid")
     ext = rows("noise_policies_ext_full")
-    iae = {(r["Method"], r["policy"], float(r["step_K"]), float(r["sigma"]), float(r["tau_m"])): float(r["IAE_mean"])
-           for r in ext}
+    iae = {
+        (r["Method"], r["policy"], float(r["step_K"]), float(r["sigma"]), float(r["tau_m"])): float(
+            r["IAE_mean"]
+        )
+        for r in ext
+    }
     keys = {k[:1] + k[2:] for k in iae}
     ratio = {k: iae[(k[0], "BC", *k[1:])] / iae[(k[0], "Dir", *k[1:])] for k in keys}
-    define("extrawmax", max(v for k, v in ratio.items() if k[2] == 0.05 and k[3] == 0.0), "noise_policies_ext_full (BC/dir, 0.05 K, raw)")
-    define("extfiltmax", max(v for k, v in ratio.items() if k[3] > 0.0), "noise_policies_ext_full (BC/dir, filtered)")
-    none = [iae[(k[0], "None", *k[1:])] / iae[(k[0], "Dir", *k[1:])] for k in keys if k[0] in ("Ziegler-Nichols", "Cohen-Coon")]
+    define(
+        "extrawmax",
+        max(v for k, v in ratio.items() if k[2] == 0.05 and k[3] == 0.0),
+        "noise_policies_ext_full (BC/dir, 0.05 K, raw)",
+    )
+    define(
+        "extfiltmax",
+        max(v for k, v in ratio.items() if k[3] > 0.0),
+        "noise_policies_ext_full (BC/dir, filtered)",
+    )
+    none = [
+        iae[(k[0], "None", *k[1:])] / iae[(k[0], "Dir", *k[1:])]
+        for k in keys
+        if k[0] in ("Ziegler-Nichols", "Cohen-Coon")
+    ]
     define("extempnonemin", min(none), "noise_policies_ext_full (none/dir, ZN and CC)", "{:.0f}")
 
 
@@ -585,11 +781,20 @@ def order_variant_numbers() -> None:
     for r in tab:
         t = tags[r["Variant"].split()[0]] + ("Noisy" if r["\\(\\sigma\\) (K)"] != "0" else "")
         define(f"order{t}dIAE", num(r[dcol]), "order_variants", "{:.1f}")
-        define(f"order{t}rank", "changes" if "changes" in (r["loop ranking"], r["policy ranking"]) else "same",
-               "order_variants")
+        define(
+            f"order{t}rank",
+            "changes" if "changes" in (r["loop ranking"], r["policy ranking"]) else "same",
+            "order_variants",
+        )
     seen = {n: v for n, v, _ in MACROS if n.startswith("order") and n.endswith("rank")}
-    expect = {"orderOnerank": "same", "orderTworank": "changes", "orderThreerank": "same",
-              "orderThreeNoisyrank": "changes", "orderFourrank": "changes", "orderFourNoisyrank": "changes"}
+    expect = {
+        "orderOnerank": "same",
+        "orderTworank": "changes",
+        "orderThreerank": "same",
+        "orderThreeNoisyrank": "changes",
+        "orderFourrank": "changes",
+        "orderFourNoisyrank": "changes",
+    }
     if seen != expect:
         raise ValueError(f"text states which order variants change a ranking: {seen}")
     fl = rows("order_variants_flips")
@@ -599,7 +804,10 @@ def order_variant_numbers() -> None:
     define("dtwopolflips", f"{len(pol)}", "order_variants_flips (policy-order swaps, all variants)")
     define("dtwoworkflips", f"{len(work)}", "order_variants_flips (swaps among Rate, BC, BC^sel)")
     full = rows("order_variants_full")
-    iae = {(r["Method"], r["policy"], r["variant"], r["sigma"], r["step_K"]): float(r["IAE"]) for r in full}
+    iae = {
+        (r["Method"], r["policy"], r["variant"], r["sigma"], r["step_K"]): float(r["IAE"])
+        for r in full
+    }
     combos = {(k[2], k[3]) for k in iae}
     sb, amp = [], []
     for v, sg in combos:
@@ -608,34 +816,57 @@ def order_variant_numbers() -> None:
                 rate = iae[(n, "Rate", v, sg, st)]
                 sb.append(iae[(n, "SB", v, sg, st)] / rate)
                 amp.append(iae[(n, "Amp.", v, sg, st)] / rate)
-    define("dtwosbmin", min(sb), "order_variants_full (SB/Rate, ZN and CC, every variant)", "{:.0f}")
-    define("dtwoampmin", min(amp), "order_variants_full (Amp/Rate, ZN and CC, every variant)", "{:.1f}")
+    define(
+        "dtwosbmin", min(sb), "order_variants_full (SB/Rate, ZN and CC, every variant)", "{:.0f}"
+    )
+    define(
+        "dtwoampmin", min(amp), "order_variants_full (Amp/Rate, ZN and CC, every variant)", "{:.1f}"
+    )
 
 
 def hx_numbers() -> list[list[str]]:
     """C1: second plant (hx_model, hx_ablation, hx_rate_demand_grid); returns the condensed table."""
     mod = rows("hx_model")[0]
-    for k, tag, fmt in (("K", "K", "{:.3f}"), ("tau_min", "tau", "{:.3f}"), ("theta_min", "theta", "{:.3f}"),
-                        ("r", "r", "{:.2f}"), ("T2_ss_K", "Tss", "{:.1f}"), ("T2_at_umax_K", "Tinf", "{:.1f}"),
-                        ("eig_1", "eigfast", "{:.2f}"), ("eig_3", "eigslow", "{:.2f}")):
+    for k, tag, fmt in (
+        ("K", "K", "{:.3f}"),
+        ("tau_min", "tau", "{:.3f}"),
+        ("theta_min", "theta", "{:.3f}"),
+        ("r", "r", "{:.2f}"),
+        ("T2_ss_K", "Tss", "{:.1f}"),
+        ("T2_at_umax_K", "Tinf", "{:.1f}"),
+        ("eig_1", "eigfast", "{:.2f}"),
+        ("eig_3", "eigslow", "{:.2f}"),
+    ):
         define(f"hx{tag}", float(mod[k]), "hx_model", fmt)
     ab = rows("hx_ablation")
-    iae = {(r["Step"], r["Method"], c): num(r[c]) for r in ab for c in r if c not in ("Step", "Method")}
+    iae = {
+        (r["Step"], r["Method"], c): num(r[c]) for r in ab for c in r if c not in ("Step", "Method")
+    }
     steps = ("$-2$ K", "$-5$ K", "$+5$ K")
     emp = ("Ziegler-Nichols", "Cohen-Coon")
     amp, sb, none = "Amp. direct.", "Sign-blind amp.", "None"
-    define("hxampratemin", min(iae[(s, n, amp)] / iae[(s, n, RATE)] for s in steps[1:] for n in emp),
-           "hx_ablation (Amp/Rate, ZN and CC, +-5 K)", "{:.0f}")
+    define(
+        "hxampratemin",
+        min(iae[(s, n, amp)] / iae[(s, n, RATE)] for s in steps[1:] for n in emp),
+        "hx_ablation (Amp/Rate, ZN and CC, +-5 K)",
+        "{:.0f}",
+    )
     sbr = [iae[(s, n, sb)] / iae[(s, n, none)] for s in steps[1:] for n in emp]
     define("hxsbnonemin", min(sbr), "hx_ablation (SB/None, ZN and CC, +-5 K)")
     define("hxsbnonemax", max(sbr), "hx_ablation (SB/None, ZN and CC, +-5 K)")
     if any(num(r["SB at \\(u_{\\max}\\) (min)"]) > 0.0 for r in ab):
-        raise ValueError("text states that sign-blind clamping never rests at the upper stop on the HX")
+        raise ValueError(
+            "text states that sign-blind clamping never rests at the upper stop on the HX"
+        )
     tl = [iae[(s, "Tyreus-Luyben", RATE)] / iae[(s, "Tyreus-Luyben", none)] for s in steps]
     define("hxTLratemin", min(tl), "hx_ablation (TL rate/none)")
     define("hxTLratemax", max(tl), "hx_ablation (TL rate/none)")
     simc = [iae[(s, "Skogestad SIMC", RATE)] / iae[(s, "Skogestad SIMC", none)] for s in steps]
-    define("hxSIMCworse", f"{sum(v > 1.0 for v in simc)}", "hx_ablation (steps where the rule worsens SIMC)")
+    define(
+        "hxSIMCworse",
+        f"{sum(v > 1.0 for v in simc)}",
+        "hx_ablation (steps where the rule worsens SIMC)",
+    )
     bc = [iae[(s, n, BC_CV)] / iae[(s, n, RATE)] for s in steps for n in SIX]
     define("hxbcmin", min(bc), "hx_ablation (BC T_t^sel / rate, all loops and steps)")
     define("hxbcmax", max(bc), "hx_ablation (BC T_t^sel / rate, all loops and steps)")
@@ -644,7 +875,9 @@ def hx_numbers() -> list[list[str]]:
         r["R"], r["rho"] = float(r["R"]), float(r["rho"])
     hi = [r for r in grid if r["rho"] >= 1.0]
     define("hxnrhohi", f"{len(hi)}", "hx_rate_demand_grid (rho >= 1)")
-    define("hxnrhohihelp", f"{sum(r['R'] > 1.0 for r in hi)}", "hx_rate_demand_grid (rho >= 1, R > 1)")
+    define(
+        "hxnrhohihelp", f"{sum(r['R'] > 1.0 for r in hi)}", "hx_rate_demand_grid (rho >= 1, R > 1)"
+    )
     bad = [r for r in hi if r["R"] <= 1.0]
     badl = [SHORT[m] for m in SIX if any(r["Method"] == m for r in bad)]
     define("hxbadloops", " and ".join(badl), "hx_rate_demand_grid (rho >= 1, R <= 1)")
@@ -653,8 +886,11 @@ def hx_numbers() -> list[list[str]]:
     define("hxncases", f"{len(grid)}", "hx_rate_demand_grid")
     body = []
     for n in SIX:
-        body.append([SHORT[n]] + [f"{iae[('$-5$ K', n, c)]:.2f}" for c in (none, sb, amp, RATE, BC_CV)]
-                    + [f"{iae[('$-2$ K', n, c)]:.2f}" for c in (none, RATE)])
+        body.append(
+            [SHORT[n]]
+            + [f"{iae[('$-5$ K', n, c)]:.2f}" for c in (none, sb, amp, RATE, BC_CV)]
+            + [f"{iae[('$-2$ K', n, c)]:.2f}" for c in (none, RATE)]
+        )
     return body
 
 
@@ -668,20 +904,48 @@ def stiction_numbers() -> None:
     work = ("Amp.", "Rate", "BC", "BC$^{\\mathrm{sel}}$")
     for sev in ("moderate", "severe"):
         sel = [r for r in d if r["severity"] == sev and r["policy"] in work]
-        define(f"stick{sev}hunt", 100.0 * sum(r["hunting"] == "True" for r in sel) / len(sel),
-               "stiction_full (share of hunting runs, policies other than SB)", "{:.0f}")
+        define(
+            f"stick{sev}hunt",
+            100.0 * sum(r["hunting"] == "True" for r in sel) / len(sel),
+            "stiction_full (share of hunting runs, policies other than SB)",
+            "{:.0f}",
+        )
     stuck = [r for r in d if r["severity"] != "none"]
     emp = ("Ziegler-Nichols", "Cohen-Coon")
-    define("sticksbmin", min(iae[(r["severity"], r["Method"], "SB", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
-                             for r in stuck if r["Method"] in emp), "stiction_full (SB/Rate, ZN and CC)", "{:.0f}")
-    define("stickampmin", min(iae[(r["severity"], r["Method"], "Amp.", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
-                              for r in stuck if r["Method"] in emp), "stiction_full (Amp/Rate, ZN and CC)", "{:.1f}")
-    bc = [iae[(r["severity"], r["Method"], "BC$^{\\mathrm{sel}}$", r["step_K"])] / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
-          for r in stuck]
+    define(
+        "sticksbmin",
+        min(
+            iae[(r["severity"], r["Method"], "SB", r["step_K"])]
+            / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
+            for r in stuck
+            if r["Method"] in emp
+        ),
+        "stiction_full (SB/Rate, ZN and CC)",
+        "{:.0f}",
+    )
+    define(
+        "stickampmin",
+        min(
+            iae[(r["severity"], r["Method"], "Amp.", r["step_K"])]
+            / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
+            for r in stuck
+            if r["Method"] in emp
+        ),
+        "stiction_full (Amp/Rate, ZN and CC)",
+        "{:.1f}",
+    )
+    bc = [
+        iae[(r["severity"], r["Method"], "BC$^{\\mathrm{sel}}$", r["step_K"])]
+        / iae[(r["severity"], r["Method"], "Rate", r["step_K"])]
+        for r in stuck
+    ]
     define("stickbcmin", min(bc), "stiction_full (BC^sel/Rate)")
     define("stickbcmax", max(bc), "stiction_full (BC^sel/Rate)")
-    simc = [iae[(s, "Skogestad SIMC", "Rate", st)] / iae[(s, "Skogestad SIMC", "Amp.", st)]
-            for s in ("moderate", "severe") for st in (-2.0, -5.0, 5.0)]
+    simc = [
+        iae[(s, "Skogestad SIMC", "Rate", st)] / iae[(s, "Skogestad SIMC", "Amp.", st)]
+        for s in ("moderate", "severe")
+        for st in (-2.0, -5.0, 5.0)
+    ]
     define("stickSIMCmin", min(simc), "stiction_full (SIMC Rate/Amp = Rate/None)")
     define("stickSIMCmax", max(simc), "stiction_full (SIMC Rate/Amp = Rate/None)")
 
@@ -698,18 +962,38 @@ def measured_position_numbers() -> None:
     bca, bcm = "BC$^{\\mathrm{sel}}$, $u_{\\text{act}}$", "BC$^{\\mathrm{sel}}$, $u_{\\text{meas}}$"
     keys = {(r["Method"], r["step_K"]) for r in d}
     sp = [get[(n, meas, s)]["spurious_freeze"] for n, s in keys]
-    define("posspurmin", 100 * min(sp), "measured_position_full (spurious freezes, no band)", "{:.0f}")
-    define("posspurmax", 100 * max(sp), "measured_position_full (spurious freezes, no band)", "{:.0f}")
-    define("posspurbandmax", 100 * max(get[(n, band, s)]["spurious_freeze"] for n, s in keys),
-           "measured_position_full (spurious freezes, band)", "{:.0f}")
+    define(
+        "posspurmin", 100 * min(sp), "measured_position_full (spurious freezes, no band)", "{:.0f}"
+    )
+    define(
+        "posspurmax", 100 * max(sp), "measured_position_full (spurious freezes, no band)", "{:.0f}"
+    )
+    define(
+        "posspurbandmax",
+        100 * max(get[(n, band, s)]["spurious_freeze"] for n, s in keys),
+        "measured_position_full (spurious freezes, band)",
+        "{:.0f}",
+    )
     worse = max(keys, key=lambda k: get[(k[0], meas, k[1])]["IAE"] / get[(k[0], base, k[1])]["IAE"])
-    define("posworstpct", 100 * (get[(worse[0], meas, worse[1])]["IAE"] / get[(worse[0], base, worse[1])]["IAE"] - 1),
-           "measured_position_full (largest IAE rise, no band)", "{:.0f}")
+    define(
+        "posworstpct",
+        100 * (get[(worse[0], meas, worse[1])]["IAE"] / get[(worse[0], base, worse[1])]["IAE"] - 1),
+        "measured_position_full (largest IAE rise, no band)",
+        "{:.0f}",
+    )
     define("posworstloop", SHORT[worse[0]], "measured_position_full")
-    define("posbandpct", 100 * max(abs(get[(n, band, s)]["IAE"] / get[(n, base, s)]["IAE"] - 1) for n, s in keys),
-           "measured_position_full (largest |IAE change| with the band)", "{:.0f}")
-    define("posbcpct", 100 * max(get[(n, bcm, s)]["IAE"] / get[(n, bca, s)]["IAE"] - 1 for n, s in keys),
-           "measured_position_full (largest IAE rise of BC with u_meas)", "{:.0f}")
+    define(
+        "posbandpct",
+        100 * max(abs(get[(n, band, s)]["IAE"] / get[(n, base, s)]["IAE"] - 1) for n, s in keys),
+        "measured_position_full (largest |IAE change| with the band)",
+        "{:.0f}",
+    )
+    define(
+        "posbcpct",
+        100 * max(get[(n, bcm, s)]["IAE"] / get[(n, bca, s)]["IAE"] - 1 for n, s in keys),
+        "measured_position_full (largest IAE rise of BC with u_meas)",
+        "{:.0f}",
+    )
 
 
 def c2_numbers() -> None:
@@ -728,17 +1012,41 @@ def c2_numbers() -> None:
         raise ValueError("text states that the -5 K setpoint is beyond the valve at the C2 point")
     define("ctwoureq", ureq, "CSTRPlant.required_coolant_flow(T_ss - 5) at the C2 point", "{:.0f}")
     ab = rows("c2_ablation")
-    iae = {(r["Method"], r["Step"], c): num(r[c]) for r in ab for c in r if c not in ("Method", "Step")}
+    iae = {
+        (r["Method"], r["Step"], c): num(r[c]) for r in ab for c in r if c not in ("Method", "Step")
+    }
     loops = ("Ziegler-Nichols", "Cohen-Coon", "AMIGO")
     p5 = "$+5$ K"
-    define("ctwosbmin", min(iae[(n, p5, "Sign-blind amp.")] / iae[(n, p5, "None")] for n in loops), "c2_ablation")
-    define("ctwoampmin", min(iae[(n, p5, "Amp. direct.")] / iae[(n, p5, RATE)] for n in loops), "c2_ablation", "{:.1f}")
-    define("ctwoampmax", max(iae[(n, p5, "Amp. direct.")] / iae[(n, p5, RATE)] for n in loops), "c2_ablation", "{:.1f}")
+    define(
+        "ctwosbmin",
+        min(iae[(n, p5, "Sign-blind amp.")] / iae[(n, p5, "None")] for n in loops),
+        "c2_ablation",
+    )
+    define(
+        "ctwoampmin",
+        min(iae[(n, p5, "Amp. direct.")] / iae[(n, p5, RATE)] for n in loops),
+        "c2_ablation",
+        "{:.1f}",
+    )
+    define(
+        "ctwoampmax",
+        max(iae[(n, p5, "Amp. direct.")] / iae[(n, p5, RATE)] for n in loops),
+        "c2_ablation",
+        "{:.1f}",
+    )
     rd = rows("c2_rate_demand")
     hi = [r for r in rd if float(r["rho"]) >= 1.0]
     define("ctworhohi", f"{len(hi)}", "c2_rate_demand (rho >= 1)")
-    define("ctworhohelp", f"{sum(float(r['R']) > 1.005 for r in hi)}", "c2_rate_demand (rho >= 1, R > 1.005)")
-    define("ctworhotie", f"{sum(abs(float(r['R']) - 1.0) <= 0.005 for r in hi)}", "c2_rate_demand (rho >= 1, |R - 1| <= 0.005)")
+    define(
+        "ctworhohelp",
+        f"{sum(float(r['R']) > 1.005 for r in hi)}",
+        "c2_rate_demand (rho >= 1, R > 1.005)",
+    )
+    define(
+        "ctworhotie",
+        f"{sum(abs(float(r['R']) - 1.0) <= 0.005 for r in hi)}",
+        "c2_rate_demand (rho >= 1, |R - 1| <= 0.005)",
+    )
     tl = next(r for r in rd if r["Method"] == "Tyreus-Luyben" and float(r["step_K"]) == -2.0)
     define("ctwoTLrho", float(tl["rho"]), "c2_rate_demand")
     define("ctwoTLR", float(tl["R"]), "c2_rate_demand")
@@ -746,41 +1054,70 @@ def c2_numbers() -> None:
 
 def literature_audit_numbers() -> list[list[str]]:
     """D1: counts of the literature audit (repository/literature_audit.csv); returns the table."""
-    with open(PAPER / "repository" / "literature_audit.csv", newline="", encoding="utf-8") as fh:
+    with open(REPO / "literature_audit.csv", newline="", encoding="utf-8") as fh:
         rows_ = list(csv.DictReader(fh))
     counted = [r for r in rows_ if r["status"] == "counted"]
     define("litcandidates", f"{len(rows_)}", "literature_audit (candidates screened)")
     define("litcounted", f"{len(counted)}", "literature_audit (full text read and included)")
-    define("litabstract", f"{sum(r['status'] == 'abstract only' for r in rows_)}", "literature_audit (abstract only)")
-    items = (("actuator_model", "Actuator limits declared (amplitude)"), ("rate_limit", "Slew-rate limit declared"),
-             ("backlash", "Backlash or deadband declared"), ("anti_windup", "Anti-windup logic declared"),
-             ("loop_sign", "Loop action (reverse or direct) stated"),
-             ("dt_and_method", "Sampling interval and discretization method stated"),
-             ("measurement_path", "Measurement noise or filter stated"))
+    define(
+        "litabstract",
+        f"{sum(r['status'] == 'abstract only' for r in rows_)}",
+        "literature_audit (abstract only)",
+    )
+    items = (
+        ("actuator_model", "Actuator limits declared (amplitude)"),
+        ("rate_limit", "Slew-rate limit declared"),
+        ("backlash", "Backlash or deadband declared"),
+        ("anti_windup", "Anti-windup logic declared"),
+        ("loop_sign", "Loop action (reverse or direct) stated"),
+        ("dt_and_method", "Sampling interval and discretization method stated"),
+        ("measurement_path", "Measurement noise or filter stated"),
+    )
     body = []
     for key, label in items:
         vals = [r[key] for r in counted]
         n = {v: vals.count(v) for v in ("yes", "no", "not applicable", "not verifiable")}
         define(f"lit{key.replace('_', '')}", f"{n['yes']}", f"literature_audit ({key} = yes)")
-        define(f"lit{key.replace('_', '')}na", f"{n['not applicable']}", f"literature_audit ({key} = not applicable)")
-        body.append([label, *(str(n[v]) for v in ("yes", "no", "not applicable", "not verifiable"))])
-        define(f"lit{key.replace('_', '')}app", f"{len(vals) - n['not applicable']}", f"literature_audit ({key} applicable)")
-    with open(PAPER / "repository" / "audit_coding.csv", newline="", encoding="utf-8") as fh:
+        define(
+            f"lit{key.replace('_', '')}na",
+            f"{n['not applicable']}",
+            f"literature_audit ({key} = not applicable)",
+        )
+        body.append(
+            [label, *(str(n[v]) for v in ("yes", "no", "not applicable", "not verifiable"))]
+        )
+        define(
+            f"lit{key.replace('_', '')}app",
+            f"{len(vals) - n['not applicable']}",
+            f"literature_audit ({key} applicable)",
+        )
+    with open(REPO / "audit_coding.csv", newline="", encoding="utf-8") as fh:
         coding = {r["id"]: r for r in csv.DictReader(fh)}
     if set(coding) != {r["rank"] for r in counted} or any(
         coding[r["rank"]][k] != r[k] for r in counted for k, _ in items
     ):
         raise ValueError("audit_coding.csv disagrees with the counted rows of literature_audit.csv")
-    open_ids = [i for i, r in coding.items() if r["controller_class"] != "predictive" and r["uses_pid"] not in ("yes", "no")]
+    open_ids = [
+        i
+        for i, r in coding.items()
+        if r["controller_class"] != "predictive" and r["uses_pid"] not in ("yes", "no")
+    ]
     if open_ids:
-        raise ValueError(f"audit_coding.csv: uses_pid is empty for {open_ids}; the author must code it yes/no before regenerating")
+        raise ValueError(
+            f"audit_coding.csv: uses_pid is empty for {open_ids}; the author must code it yes/no before regenerating"
+        )
     pid = [r for r in coding.values() if r["uses_pid"] == "yes"]
     define("litpid", f"{len(pid)}", "audit_coding (uses_pid = yes)")
-    if any((r["loop_sign"] == "not applicable") == (r["uses_pid"] == "yes")
-           for r in coding.values() if r["controller_class"] != "predictive"):
+    if any(
+        (r["loop_sign"] == "not applicable") == (r["uses_pid"] == "yes")
+        for r in coding.values()
+        if r["controller_class"] != "predictive"
+    ):
         raise ValueError("loop_sign must be 'not applicable' exactly for non-PID laws")
     if len(pid) != sum(r["loop_sign"] != "not applicable" for r in counted):
-        raise ValueError("number of PID articles differs from the articles where loop action is applicable")
+        raise ValueError(
+            "number of PID articles differs from the articles where loop action is applicable"
+        )
     return body
 
 
@@ -792,14 +1129,31 @@ def predictive_and_exact_numbers() -> None:
     for r in pc:
         worst[r["Method"]] = max(worst.get(r["Method"], 0.0), abs(num(r[dpc])))
     for name in ("Ziegler-Nichols", "Cohen-Coon"):
-        define(f"pc{SHORT[name]}maxpct", worst[name], "predictive_clamping (largest |dIAE| over 3 steps)", "{:.1f}")
+        define(
+            f"pc{SHORT[name]}maxpct",
+            worst[name],
+            "predictive_clamping (largest |dIAE| over 3 steps)",
+            "{:.1f}",
+        )
         for col, tag in (("IAE, \\(k-1\\)", "old"), ("IAE, \\(k\\)", "new")):
-            define(f"pc{SHORT[name]}five{tag}", num(cell("predictive_clamping", col, Method=name, Step="$+5$ K")),
-                   "predictive_clamping", "{:.2f}")
-    define("pcnommaxpct", max(abs(num(r[dpc])) for r in pc if r["Step"] == "$-2$ K"),
-           "predictive_clamping (largest |dIAE| on the nominal -2 K step)", "{:.1f}")
-    define("pcrestmaxpct", max(v for n, v in worst.items() if n not in ("Ziegler-Nichols", "Cohen-Coon")),
-           "predictive_clamping (largest |dIAE| of TL, AMIGO, SIMC, Optimal ITAE)", "{:.1f}")
+            define(
+                f"pc{SHORT[name]}five{tag}",
+                num(cell("predictive_clamping", col, Method=name, Step="$+5$ K")),
+                "predictive_clamping",
+                "{:.2f}",
+            )
+    define(
+        "pcnommaxpct",
+        max(abs(num(r[dpc])) for r in pc if r["Step"] == "$-2$ K"),
+        "predictive_clamping (largest |dIAE| on the nominal -2 K step)",
+        "{:.1f}",
+    )
+    define(
+        "pcrestmaxpct",
+        max(v for n, v in worst.items() if n not in ("Ziegler-Nichols", "Cohen-Coon")),
+        "predictive_clamping (largest |dIAE| of TL, AMIGO, SIMC, Optimal ITAE)",
+        "{:.1f}",
+    )
     simc = [r for r in pc if r["Method"] == "Skogestad SIMC"]
     none = [num(cell("antiwindup_ablation", "None", Method="Skogestad SIMC"))] + [
         num(cell("antiwindup_scenarios", "None", Scenario=sc, Method="Skogestad SIMC"))
@@ -813,15 +1167,38 @@ def predictive_and_exact_numbers() -> None:
         if (r["Method"], r["Step"]) != (p["Method"], p["Step"]):
             raise ValueError("antiwindup_tt_tvmp and predictive_clamping rows are not aligned")
         if r["Step"] != "$-2$ K":
-            ratios[r["Method"]] = max(ratios.get(r["Method"], 0.0), num(r["IAE BC"]) / num(p["IAE, \\(k\\)"]))
-    define("pcttcvmin", min(ratios.values()), "antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)")
-    define("pcttcvmax", max(ratios.values()), "antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)")
+            ratios[r["Method"]] = max(
+                ratios.get(r["Method"], 0.0), num(r["IAE BC"]) / num(p["IAE, \\(k\\)"])
+            )
+    define(
+        "pcttcvmin",
+        min(ratios.values()),
+        "antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)",
+    )
+    define(
+        "pcttcvmax",
+        max(ratios.values()),
+        "antiwindup_tt_tvmp / predictive_clamping (+-5 K worst ratio)",
+    )
     for name in ("Ziegler-Nichols", "Cohen-Coon"):
         m = {"Method": name, "Step": "$-2$ K"}
-        define(f"ex{SHORT[name]}ratio", num(cell("exact_backcalc", "\\(\\Delta t/T_t\\)", **m)), "exact_backcalc")
-        define(f"ex{SHORT[name]}euler", num(cell("exact_backcalc", "IAE Euler", **m)), "exact_backcalc")
-        define(f"ex{SHORT[name]}exact", num(cell("exact_backcalc", "IAE exact", **m)), "exact_backcalc")
-        define(f"ex{SHORT[name]}TVeuler", num(cell("exact_backcalc", "TV Euler (L/min)", **m)), "exact_backcalc", "{:.0f}")
+        define(
+            f"ex{SHORT[name]}ratio",
+            num(cell("exact_backcalc", "\\(\\Delta t/T_t\\)", **m)),
+            "exact_backcalc",
+        )
+        define(
+            f"ex{SHORT[name]}euler", num(cell("exact_backcalc", "IAE Euler", **m)), "exact_backcalc"
+        )
+        define(
+            f"ex{SHORT[name]}exact", num(cell("exact_backcalc", "IAE exact", **m)), "exact_backcalc"
+        )
+        define(
+            f"ex{SHORT[name]}TVeuler",
+            num(cell("exact_backcalc", "TV Euler (L/min)", **m)),
+            "exact_backcalc",
+            "{:.0f}",
+        )
 
 
 def shapley_numbers() -> None:
@@ -847,7 +1224,12 @@ def shapley_numbers() -> None:
     define("shapTVrtwomin", min(rt), "sobol_shapley (TV)")
     define("shapTVrtwomax", max(rt), "sobol_shapley (TV)")
     hw = [float(r["max_half_width"]) for r in rows("sobol_shapley_halfwidth")]
-    define("shaphwmax", max(hw), "sobol_shapley_halfwidth (largest 95 % half-width over seeds)", "{:.3f}")
+    define(
+        "shaphwmax",
+        max(hw),
+        "sobol_shapley_halfwidth (largest 95 % half-width over seeds)",
+        "{:.3f}",
+    )
 
 
 def testbed_table() -> list[list[str]]:
@@ -941,7 +1323,9 @@ def advisor_audit_numbers() -> None:
         by_ms: dict[tuple[str, str], dict[float, float]] = {}
         for r in ext:
             if abs(float(r["sigma"]) - sigma_val) < 1e-9 and r["policy"] == pol_name:
-                by_ms.setdefault((r["Method"], r["step_K"]), {})[float(r["tau_m"])] = float(r["IAE_mean"])
+                by_ms.setdefault((r["Method"], r["step_K"]), {})[float(r["tau_m"])] = float(
+                    r["IAE_mean"]
+                )
         better = worse = 0
         worst_pct, worst_m, worst_st = 0.0, "", ""
         for (m, st), d in by_ms.items():
@@ -960,22 +1344,50 @@ def advisor_audit_numbers() -> None:
     _, dir_w_lo, n_lo, _, _, _ = _filter_counts(0.01, "Dir")
     _, bc_w_lo, _, _, _, _ = _filter_counts(0.01, "BC")
 
-    define("filtbcbetterhi", f"{bc_b_hi}", "noise_policies_ext_full (sigma=0.05, BC improved by filter)")
+    define(
+        "filtbcbetterhi",
+        f"{bc_b_hi}",
+        "noise_policies_ext_full (sigma=0.05, BC improved by filter)",
+    )
     define("filtbcnhi", f"{bc_n_hi}", "noise_policies_ext_full (sigma=0.05, total BC pairs)")
-    define("filtdirworsehi", f"{dir_w_hi}", "noise_policies_ext_full (sigma=0.05, Dir degraded by filter)")
+    define(
+        "filtdirworsehi",
+        f"{dir_w_hi}",
+        "noise_policies_ext_full (sigma=0.05, Dir degraded by filter)",
+    )
     define("filtdirnhi", f"{dir_n_hi}", "noise_policies_ext_full (sigma=0.05, total Dir pairs)")
-    define("filtdirmaxpcthi", dir_pct_hi, "noise_policies_ext_full (sigma=0.05, worst Dir %)", "{:.0f}")
-    define("filtdirworstloop", dir_m_hi, "noise_policies_ext_full (sigma=0.05, worst Dir loop)", "{}")
-    define("filtdirworststep", dir_st_hi, "noise_policies_ext_full (sigma=0.05, worst Dir step)", "{}")
-    define("filtdirworselo", f"{dir_w_lo}", "noise_policies_ext_full (sigma=0.01, Dir degraded by filter)")
-    define("filtbcworselo", f"{bc_w_lo}", "noise_policies_ext_full (sigma=0.01, BC degraded by filter)")
+    define(
+        "filtdirmaxpcthi", dir_pct_hi, "noise_policies_ext_full (sigma=0.05, worst Dir %)", "{:.0f}"
+    )
+    define(
+        "filtdirworstloop", dir_m_hi, "noise_policies_ext_full (sigma=0.05, worst Dir loop)", "{}"
+    )
+    define(
+        "filtdirworststep", dir_st_hi, "noise_policies_ext_full (sigma=0.05, worst Dir step)", "{}"
+    )
+    define(
+        "filtdirworselo",
+        f"{dir_w_lo}",
+        "noise_policies_ext_full (sigma=0.01, Dir degraded by filter)",
+    )
+    define(
+        "filtbcworselo", f"{bc_w_lo}", "noise_policies_ext_full (sigma=0.01, BC degraded by filter)"
+    )
     define("filtnlo", f"{n_lo}", "noise_policies_ext_full (sigma=0.01, total pairs)")
 
     pt = rows("noise_filter_paired_tests")
     tv_col = next(c for c in pt[0] if "TV (L/min)" in c)
     iae_col = next(c for c in pt[0] if "IAE (K" in c)
-    define("filttvbetter", f"{sum(num(r[tv_col]) < 0 for r in pt)}", "noise_filter_paired_tests (Delta TV < 0)")
-    define("filtiaeworse", f"{sum(num(r[iae_col]) > 0 for r in pt)}", "noise_filter_paired_tests (Delta IAE > 0)")
+    define(
+        "filttvbetter",
+        f"{sum(num(r[tv_col]) < 0 for r in pt)}",
+        "noise_filter_paired_tests (Delta TV < 0)",
+    )
+    define(
+        "filtiaeworse",
+        f"{sum(num(r[iae_col]) > 0 for r in pt)}",
+        "noise_filter_paired_tests (Delta IAE > 0)",
+    )
     define("filtiaen", f"{len(pt)}", "noise_filter_paired_tests (total loop-noise pairs)")
 
 
@@ -1007,6 +1419,7 @@ def main() -> None:
     advisor_audit_numbers()
 
     tables = PAPER / "tables"
+    tables.mkdir(parents=True, exist_ok=True)
     (tables / "v7_testbed.tex").write_text(
         booktabs(
             [

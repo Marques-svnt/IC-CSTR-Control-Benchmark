@@ -80,6 +80,7 @@ IEEE_LINESTYLES: Dict[str, str] = {k: v[1] for k, v in _STYLE.items()}
 IEEE_LINESTYLES.update({"Setpoint": ":", "Constraint": "-."})
 IEEE_MARKERS: Dict[str, str] = {k: v[2] for k, v in _STYLE.items()}
 
+
 # %% [4. Configuração Global de rcParams do Matplotlib]
 def setup_ieee_style(single_column: bool = False) -> None:
     """Configura os parâmetros globais do Matplotlib (rcParams) no padrão IEEE Transactions.
@@ -108,7 +109,6 @@ def setup_ieee_style(single_column: bool = False) -> None:
         # Backend e embutimento vetorial de fontes compatível com IEEE Xplore
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
-
         # Família serifada idêntica à do LaTeX do artigo
         "font.family": "serif",
         "font.serif": [
@@ -119,14 +119,12 @@ def setup_ieee_style(single_column: bool = False) -> None:
             "serif",
         ],
         "font.size": base_font_size,
-
         # Títulos e rótulos de eixos
         "axes.titlesize": title_font_size,
         "axes.labelsize": label_font_size,
         "axes.titleweight": "bold",
         "axes.labelweight": "normal",
         "axes.linewidth": 0.8,
-
         # Marcações de eixos (Ticks) apontando para dentro
         "xtick.labelsize": base_font_size,
         "ytick.labelsize": base_font_size,
@@ -138,20 +136,17 @@ def setup_ieee_style(single_column: bool = False) -> None:
         "ytick.minor.size": 1.5,
         "xtick.top": True,
         "ytick.right": True,
-
         # Caixas de legenda discretas e translúcidas
         "legend.fontsize": base_font_size - 0.5,
         "legend.frameon": True,
         "legend.framealpha": 0.92,
         "legend.edgecolor": "#CCCCCC",
         "legend.fancybox": False,
-
         # Linhas de grade sutis para facilitar a leitura de valores
         "grid.linestyle": ":",
         "grid.linewidth": 0.5,
         "grid.alpha": 0.6,
         "grid.color": "#AAAAAA",
-
         # Espessura de traço e resolução de exportação (300 DPI mínimo editorial)
         "lines.linewidth": 1.2,
         "lines.markersize": 5.0,
@@ -162,6 +157,7 @@ def setup_ieee_style(single_column: bool = False) -> None:
     }
 
     mpl.rcParams.update(params)
+
 
 # %% [5. Cálculo Didático de Dimensões de Figuras]
 def get_figure_dimensions(
@@ -240,4 +236,3 @@ def apply_repulsive_annotations(
             expand=(1.2, 1.2),
         )
     return texts
-

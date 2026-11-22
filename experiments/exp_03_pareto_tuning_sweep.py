@@ -116,18 +116,20 @@ def run_simc_sweep(
             logger.warning("Falha na simulação para tau_c=%.3f: %s", tc, e)
             continue
 
-        results.append({
-            "tau_c": float(tc),
-            "kp": gains.kp,
-            "ti": gains.ti,
-            "td": gains.td,
-            "ms": ms,
-            "iae": iae,
-            "itae": itae,
-            "tv": tv,
-            "overshoot": overshoot,
-            "settling_time": ts,
-        })
+        results.append(
+            {
+                "tau_c": float(tc),
+                "kp": gains.kp,
+                "ti": gains.ti,
+                "td": gains.td,
+                "ms": ms,
+                "iae": iae,
+                "itae": itae,
+                "tv": tv,
+                "overshoot": overshoot,
+                "settling_time": ts,
+            }
+        )
 
     return results
 
@@ -175,6 +177,7 @@ def run_scalarized_multiobjective_sweep(
     x0 = np.array([-4.5, 1.2, 0.15], dtype=np.float64)
 
     for lam in lambdas:
+
         def objective(params: np.ndarray) -> float:
             kp, ti, td = float(params[0]), float(params[1]), float(params[2])
             if kp >= 0.0 or ti <= 0.05 or td < 0.0:
@@ -237,18 +240,20 @@ def run_scalarized_multiobjective_sweep(
             setpoint_func=lambda t: ss.T - 2.0,
         )
 
-        results.append({
-            "lambda": float(lam),
-            "kp": opt_gains.kp,
-            "ti": opt_gains.ti,
-            "td": opt_gains.td,
-            "ms": ms_opt,
-            "iae": res_opt.metrics.iae,
-            "itae": res_opt.metrics.itae,
-            "tv": res_opt.metrics.tv,
-            "overshoot": res_opt.metrics.overshoot_pct,
-            "settling_time": res_opt.metrics.settling_time or 10.0,
-        })
+        results.append(
+            {
+                "lambda": float(lam),
+                "kp": opt_gains.kp,
+                "ti": opt_gains.ti,
+                "td": opt_gains.td,
+                "ms": ms_opt,
+                "iae": res_opt.metrics.iae,
+                "itae": res_opt.metrics.itae,
+                "tv": res_opt.metrics.tv,
+                "overshoot": res_opt.metrics.overshoot_pct,
+                "settling_time": res_opt.metrics.settling_time or 10.0,
+            }
+        )
         # Partida a quente para aceleração da convergência no próximo peso
         x0 = np.array([opt_gains.kp, opt_gains.ti, opt_gains.td], dtype=np.float64)
 
@@ -351,19 +356,40 @@ def plot_true_pareto_frontier(
     off_scale = []  # discrete points are identified by marker in the legend only
     for name, pt in discrete_points.items():
         if pt["tv"] <= x_max and pt["iae"] <= y_max:
-            ax1.scatter([pt["tv"]], [pt["iae"]], color=IEEE_PALETTE[name], marker=IEEE_MARKERS[name],
-                        s=48, edgecolors="black", linewidth=0.7, zorder=5,
-                        label=f"{name.split(' (')[0]} ($M_s = {pt['ms']:.2f}$)")
+            ax1.scatter(
+                [pt["tv"]],
+                [pt["iae"]],
+                color=IEEE_PALETTE[name],
+                marker=IEEE_MARKERS[name],
+                s=48,
+                edgecolors="black",
+                linewidth=0.7,
+                zorder=5,
+                label=f"{name.split(' (')[0]} ($M_s = {pt['ms']:.2f}$)",
+            )
         else:
             off_scale.append(
                 f"{name}: TV$={pt['tv']:.0f}$, IAE$={pt['iae']:.1f}$ ($M_s={pt['ms']:.2f}$)"
             )
     if off_scale:
-        ax1.text(0.98, 0.98, "Off-scale:\n" + "\n".join(off_scale), transform=ax1.transAxes,
-                 ha="right", va="top", fontsize=5.8,
-                 bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "edgecolor": "#999999"})
-    ax1.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=2, fontsize=6.0,
-               framealpha=0.95, labelspacing=0.25)
+        ax1.text(
+            0.98,
+            0.98,
+            "Off-scale:\n" + "\n".join(off_scale),
+            transform=ax1.transAxes,
+            ha="right",
+            va="top",
+            fontsize=5.8,
+            bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "edgecolor": "#999999"},
+        )
+    ax1.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.16),
+        ncol=2,
+        fontsize=6.0,
+        framealpha=0.95,
+        labelspacing=0.25,
+    )
     ax1.set_xscale("log")  # front lives at TV 10-45 L/min, high-gain tail reaches ~450
     ax1.set_xlim(0.8 * float(np.min(front_tv)), x_max)
     ax1.xaxis.set_major_formatter(plt.ScalarFormatter())
@@ -492,6 +518,7 @@ def run_experiment() -> None:
     if cache_file.exists():
         logger.info("Carregando resultados da otimização de Pareto do cache local: %s", cache_file)
         import pickle
+
         with open(cache_file, "rb") as f:
             simc_results, opt_results, discrete_points = pickle.load(f)
     else:
@@ -520,6 +547,7 @@ def run_experiment() -> None:
             ref_tv=ref_tv,
         )
         import pickle
+
         with open(cache_file, "wb") as f:
             pickle.dump((simc_results, opt_results, discrete_points), f)
         logger.info("Resultados de Pareto salvos em cache: %s", cache_file)
@@ -532,28 +560,32 @@ def run_experiment() -> None:
     target_tcs = [0.03, 0.10, 0.25, 0.40, 0.80, 1.50]
     for target in target_tcs:
         closest = min(simc_results, key=lambda r: abs(r["tau_c"] - target))
-        table_rows.append({
-            "Strategy": f"SIMC ($\\tau_c={closest['tau_c']:.2f}$)",
-            "$K_{p}$": f"{closest['kp']:.2f}",
-            "$T_{i}$ (min)": f"{closest['ti']:.2f}",
-            "$T_{d}$ (min)": f"{closest['td']:.2f}",
-            "$M_{s}$": f"{closest['ms']:.2f}",
-            "IAE (K$\\cdot$min)": f"{closest['iae']:.2f}",
-            "TV (L/min)": f"{closest['tv']:.1f}",
-            "$M_{p}$ (\\%)": f"{closest['overshoot']:.1f}",
-        })
+        table_rows.append(
+            {
+                "Strategy": f"SIMC ($\\tau_c={closest['tau_c']:.2f}$)",
+                "$K_{p}$": f"{closest['kp']:.2f}",
+                "$T_{i}$ (min)": f"{closest['ti']:.2f}",
+                "$T_{d}$ (min)": f"{closest['td']:.2f}",
+                "$M_{s}$": f"{closest['ms']:.2f}",
+                "IAE (K$\\cdot$min)": f"{closest['iae']:.2f}",
+                "TV (L/min)": f"{closest['tv']:.1f}",
+                "$M_{p}$ (\\%)": f"{closest['overshoot']:.1f}",
+            }
+        )
 
     for name, pt in discrete_points.items():
-        table_rows.append({
-            "Strategy": name,
-            "$K_{p}$": f"{pt['gains'].kp:.2f}",
-            "$T_{i}$ (min)": f"{pt['gains'].ti:.2f}",
-            "$T_{d}$ (min)": f"{pt['gains'].td:.2f}",
-            "$M_{s}$": f"{pt['ms']:.2f}",
-            "IAE (K$\\cdot$min)": f"{pt['iae']:.2f}",
-            "TV (L/min)": f"{pt['tv']:.1f}",
-            "$M_{p}$ (\\%)": f"{pt['overshoot']:.1f}",
-        })
+        table_rows.append(
+            {
+                "Strategy": name,
+                "$K_{p}$": f"{pt['gains'].kp:.2f}",
+                "$T_{i}$ (min)": f"{pt['gains'].ti:.2f}",
+                "$T_{d}$ (min)": f"{pt['gains'].td:.2f}",
+                "$M_{s}$": f"{pt['ms']:.2f}",
+                "IAE (K$\\cdot$min)": f"{pt['iae']:.2f}",
+                "TV (L/min)": f"{pt['tv']:.1f}",
+                "$M_{p}$ (\\%)": f"{pt['overshoot']:.1f}",
+            }
+        )
 
     export_latex_table(
         data=table_rows,

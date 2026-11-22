@@ -51,11 +51,14 @@ class HeatExchanger:
         p, (t1, t2, tc) = self.p, x
         ua = self.ua(q_c)
         cell = (ua / 2.0) / (p.rho_cp_p * p.v_p / 2.0)
-        return np.array([
-            (2.0 * p.q_p / p.v_p) * (p.t_p_in - t1) - cell * (t1 - tc),
-            (2.0 * p.q_p / p.v_p) * (t1 - t2) - cell * (t2 - tc),
-            (q_c / p.v_c) * (p.t_c_in - tc) + ua / (p.rho_cp_c * p.v_c) * ((t1 + t2) / 2.0 - tc),
-        ])
+        return np.array(
+            [
+                (2.0 * p.q_p / p.v_p) * (p.t_p_in - t1) - cell * (t1 - tc),
+                (2.0 * p.q_p / p.v_p) * (t1 - t2) - cell * (t2 - tc),
+                (q_c / p.v_c) * (p.t_c_in - tc)
+                + ua / (p.rho_cp_c * p.v_c) * ((t1 + t2) / 2.0 - tc),
+            ]
+        )
 
     def steady_state(self, q_c: float) -> np.ndarray:
         """Equilibrium for a constant coolant flow."""
@@ -67,10 +70,12 @@ class HeatExchanger:
 
     def jacobian(self, x: np.ndarray, q_c: float, h: float = 1e-6) -> np.ndarray:
         """State Jacobian by central differences (the model is smooth in x)."""
-        return np.column_stack([
-            (self.derivatives(x + h * e, q_c) - self.derivatives(x - h * e, q_c)) / (2.0 * h)
-            for e in np.eye(3)
-        ])
+        return np.column_stack(
+            [
+                (self.derivatives(x + h * e, q_c) - self.derivatives(x - h * e, q_c)) / (2.0 * h)
+                for e in np.eye(3)
+            ]
+        )
 
     def step(self, x: np.ndarray, q_c: float, dt: float, substeps: int = 4) -> np.ndarray:
         """Advances the state over one sample with constant input (classical RK4, dt/substeps).

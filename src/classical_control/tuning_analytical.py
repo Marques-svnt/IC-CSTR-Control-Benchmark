@@ -47,9 +47,7 @@ class TuningRule(str, Enum):
 
 
 # %% [Regras Modernas: Tyreus-Luyben (1992) e AMIGO (Åström & Hägglund, 2004)]
-def tune_tyreus_luyben(
-    foptd: FOPTDModel, mode: str = "PID", n_filter: float = 10.0
-) -> PIDGains:
+def tune_tyreus_luyben(foptd: FOPTDModel, mode: str = "PID", n_filter: float = 10.0) -> PIDGains:
     """Tyreus-Luyben tuning from the exact FOPTD ultimate point.
 
     Solves theta*w_u + arctan(tau*w_u) - pi = 0 on (pi/(2 theta), pi/theta) with brentq,
@@ -78,8 +76,9 @@ def tune_tyreus_luyben(
     p_u = 2.0 * np.pi / w_u
     k_u = np.sign(k) * np.sqrt(1.0 + (tau * w_u) ** 2) / abs(k)
     if mode == "PID":
-        return PIDGains(kp=float(k_u / 2.2), ti=float(2.2 * p_u), td=float(p_u / 6.3),
-                        n_filter=n_filter)
+        return PIDGains(
+            kp=float(k_u / 2.2), ti=float(2.2 * p_u), td=float(p_u / 6.3), n_filter=n_filter
+        )
     if mode == "PI":
         return PIDGains(kp=float(k_u / 3.2), ti=float(2.2 * p_u), td=0.0, n_filter=n_filter)
     raise ValueError(f"Unknown mode {mode!r}; expected 'PID' or 'PI'")
@@ -227,8 +226,10 @@ if __name__ == "__main__":
 
     # Modelo representativo da malha de temperatura do CSTR
     cstr_model = FOPTDModel(k_p=-0.15, tau=1.20, theta=0.25)
-    print(f"Modelo FOPTD da Planta: Kp = {cstr_model.k_p:.3f} K/(L/min), "
-          f"tau = {cstr_model.tau:.2f} min, theta = {cstr_model.theta:.2f} min\n")
+    print(
+        f"Modelo FOPTD da Planta: Kp = {cstr_model.k_p:.3f} K/(L/min), "
+        f"tau = {cstr_model.tau:.2f} min, theta = {cstr_model.theta:.2f} min\n"
+    )
 
     regras = [
         ("Ziegler-Nichols PID", TuningRule.ZIEGLER_NICHOLS_PID, None),

@@ -1,7 +1,0 @@
-Point,Architecture,$t_{\mathrm{pred}}$ (min),$t_{\mathrm{sat}}$ (min),$UA(t_{\mathrm{sat}})/UA_0$ (\%),$t_{\mathrm{runaway}}$ (min),$UA(t_{\mathrm{runaway}})/UA_0$ (\%),$T(80$ min) (K)
-Nominal,SISO SIMC,8.92,10.02,57.0,13.18,49.9,416.40
-Nominal,Cascade,8.92,9.26,59.0,13.18,49.9,416.40
-Saddle,SISO SIMC,46.36,32.32,44.8,28.06,51.6,387.87
-Saddle,SISO optimal,46.36,34.88,45.6,34.00,46.3,387.81
-Saddle,Cascade,46.36,33.06,43.3,4.06,88.4,387.88
-Saddle,Cascade + gain sched.,46.36,32.78,43.7,4.06,88.4,387.88

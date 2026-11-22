@@ -108,10 +108,7 @@ gains = tune_analytical(foptd, rule=TuningRule.SKOGESTAD_SIMC_PID, tau_c=0.40)
 # 3. Instancia controlador PID industrial com anti-windup direcional
 limits = ActuatorLimits(u_min=0.0, u_max=300.0, max_slew_rate=80.0)
 controller = PIDController(
-    gains=gains,
-    actuator_limits=limits,
-    anti_windup=AntiWindupMethod.CLAMPING,
-    u_bias=100.0
+    gains=gains, actuator_limits=limits, anti_windup=AntiWindupMethod.CLAMPING, u_bias=100.0
 )
 
 # 4. Simulação em malha fechada
@@ -122,8 +119,10 @@ res = sim.run(
     initial_state=ss,
     t_span=(0.0, 10.0),
     dt=0.02,
-    setpoint_func=lambda t: ss.T - 2.0
+    setpoint_func=lambda t: ss.T - 2.0,
 )
 
-print(f"Resultado SIMC: IAE = {res.metrics.iae:.3f} K*min, TV = {res.metrics.tv:.1f} L/min, Ms = {res.metrics.ms:.2f}")
+print(
+    f"Resultado SIMC: IAE = {res.metrics.iae:.3f} K*min, TV = {res.metrics.tv:.1f} L/min, Ms = {res.metrics.ms:.2f}"
+)
 ```

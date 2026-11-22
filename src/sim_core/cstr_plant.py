@@ -237,9 +237,7 @@ class CSTRPlant:
         T_j = T - removal * p.V * p.rho_cp / p.UA
         return float(p.UA * (T - T_j) / (p.rho_j_cp_j * (T_j - p.T_jf)))
 
-    def find_steady_state(
-        self, q_j: float, initial_guess: Optional[CSTRState] = None
-    ) -> CSTRState:
+    def find_steady_state(self, q_j: float, initial_guess: Optional[CSTRState] = None) -> CSTRState:
         """Determina o estado estacionário de equilíbrio x_ss onde f(x_ss, q_j) = 0.
 
         Utiliza o método Powell híbrido ('hybr') da biblioteca SciPy para resolver
@@ -282,9 +280,7 @@ class CSTRPlant:
         )
         return ss_state
 
-    def linearize(
-        self, state_ss: CSTRState, q_j_ss: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def linearize(self, state_ss: CSTRState, q_j_ss: float) -> Tuple[np.ndarray, np.ndarray]:
         """Calcula analiticamente as matrizes Jacobianas do espaço de estados (A e B).
 
         Realiza a expansão em série de Taylor de primeira ordem em torno do ponto
@@ -317,11 +313,7 @@ class CSTRPlant:
 
         # Derivadas parciais para a Linha 2: d(dT/dt) / d[C_A, T, T_j]
         a21 = (-p.delta_H / p.rho_cp) * k
-        a22 = (
-            -(p.q / p.V)
-            + (-p.delta_H / p.rho_cp) * (dk_dT * C_A)
-            - (p.UA / (p.V * p.rho_cp))
-        )
+        a22 = -(p.q / p.V) + (-p.delta_H / p.rho_cp) * (dk_dT * C_A) - (p.UA / (p.V * p.rho_cp))
         a23 = p.UA / (p.V * p.rho_cp)
 
         # Derivadas parciais para a Linha 3: d(dT_j/dt) / d[C_A, T, T_j]
